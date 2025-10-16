@@ -13,6 +13,6 @@ requireLogin();
 <body>
   <h1>Selamat datang, <?= htmlspecialchars($_SESSION['name']) ?>!</h1>
   <p>Role kamu: <?= htmlspecialchars($_SESSION['role']) ?></p>
-  <a href="logout.php">Logout</a>
+  <a href="/authentication/logout.php">Logout</a>
 </body>
 </html>

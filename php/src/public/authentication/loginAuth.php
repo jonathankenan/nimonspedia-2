@@ -1,7 +1,7 @@
 <?php
 session_start();
-include_once(__DIR__ . '/../app/config/db.php');
-include_once(__DIR__ . '/../app/models/user.php');
+include_once(__DIR__ . '/../../app/config/db.php');
+include_once(__DIR__ . '/../../app/models/user.php');
 
 $userModel = new User($conn);
 

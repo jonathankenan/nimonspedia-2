@@ -1,4 +1,4 @@
-<form action="/registerAuth.php" method="POST">
+<form action="/authentication/registerAuth.php" method="POST">
   <label>Nama:</label><br>
   <input type="text" name="name" required><br><br>
 

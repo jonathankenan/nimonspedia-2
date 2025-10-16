@@ -17,7 +17,7 @@ session_start();
   <?php if (isset($_GET['error'])): ?>
     <p style="color:red;">Email atau password salah!</p>
   <?php endif; ?>
-  <form action="/loginAuth.php" method="POST">
+  <form action="/authentication/loginAuth.php" method="POST">
     <label>Email:</label><br>
     <input type="email" name="email" required><br><br>
 
@@ -26,6 +26,6 @@ session_start();
 
     <button type="submit">Login</button>
   </form>
-  <p>Belum punya akun? <a href="register.php">Daftar</a></p>
+  <p>Belum punya akun? <a href="/authentication/register.php">Daftar</a></p>
 </body>
 </html>
