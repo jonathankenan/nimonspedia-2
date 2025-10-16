@@ -1,8 +1,33 @@
+version: '3.8'
+
 services:
-  php:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    # TODO
+  web:
+    build: .
+    container_name: nimonspedia_web
+    ports:
+      - "8080:80"
+    volumes:
+      - ./php/src:/var/www/html
+    working_dir: /var/www/html
+    user: "www-data"
+    depends_on:
+      - db
+    restart: always
+
   db:
-# TODO
+    image: mysql:8.0
+    container_name: nimonspedia_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: nimonspedia
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./init:/docker-entrypoint-initdb.d
+
+volumes:
+  db_data:
