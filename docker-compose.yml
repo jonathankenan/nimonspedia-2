@@ -5,9 +5,11 @@ services:
     build: .
     container_name: nimonspedia_web
     ports:
-      - "8080:80"                  # akses di localhost:8080
+      - "8080:80"
     volumes:
-      - ./php/src:/var/www/html    # sinkronisasi file lokal
+      - ./php/src:/var/www/html
+    working_dir: /var/www/html
+    user: "www-data"
     depends_on:
       - db
     restart: always

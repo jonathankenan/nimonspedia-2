@@ -2,8 +2,13 @@ Options -Indexes
 
 RewriteEngine On
 
-# Stop processing if already in the /public directory
-RewriteRule ^public/ - [L]
+# Jangan rewrite file/folder yang ada
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
 
-# Push every other request to index.php
-RewriteRule ^(.+)$ index.php [QSA]
+# Jangan rewrite file auth
+RewriteCond %{REQUEST_URI} !^/registerAuth\.php$
+RewriteCond %{REQUEST_URI} !^/loginAuth\.php$
+
+# Rewrite semua request lain ke index.php
+RewriteRule ^(.+)$ index.php [QSA,L]

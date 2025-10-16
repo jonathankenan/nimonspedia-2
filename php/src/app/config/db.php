@@ -1,14 +1,11 @@
 <?php
-$host = 'db';            
-$user = 'user';
-$pass = 'password';
-$db   = 'nimonspedia';
+$servername = "db";
+$username = "user";
+$password = "password";
+$database = "nimonspedia";
 
-$conn = new mysqli($host, $user, $pass, $db);
+$conn = new mysqli($servername, $username, $password, $database);
 
 if ($conn->connect_error) {
-  die("<p style='color:red'> Database connection failed: " . $conn->connect_error . "</p>");
-} else {
-  echo "<p style='color:green'> Connected to database successfully!</p>";
+    die("Database connection failed: " . $conn->connect_error);
 }
-?>
