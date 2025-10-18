@@ -1,3 +1,5 @@
+--  CREATION --
+
 CREATE DATABASE IF NOT EXISTS nimonspedia;
 USE nimonspedia;
 
@@ -90,3 +92,19 @@ CREATE TABLE IF NOT EXISTS order_items (
     FOREIGN KEY (order_id) REFERENCES orders(order_id),
     FOREIGN KEY (product_id) REFERENCES products(product_id)
 );
+
+-- DUMMY DATA --
+INSERT IGNORE INTO users (email, password, role, name, address, balance)
+VALUES
+('a@gmail.com',  '$2y$10$YphE6zvExfxXpqZfJykcIuUdr9JrAfmVqj6zpgKk3M/IFSt/wkWJS', 'BUYER',  'Budi Pembeli',  'Jl. Mawar No.1', 500000), -- hash dari 123456
+('b@gmail.com', '$2y$10$YphE6zvExfxXpqZfJykcIuUdr9JrAfmVqj6zpgKk3M/IFSt/wkWJS', 'SELLER', 'Susi Penjual', 'Jl. Melati No.2', 0);
+
+INSERT IGNORE INTO stores (user_id, store_name, store_description, store_logo_path, balance)
+VALUES
+(1, 'Toko Susi', 'Menjual berbagai perlengkapan rumah tangga', '/assets/images/logo.png', 1500000);
+
+INSERT IGNORE INTO products (store_id, product_name, description, price, stock, main_image_path)
+VALUES
+(1, 'Gelas Cantik', 'Gelas kaca bening ukuran 300ml', 25000, 30, '/assets/images/gelas.jpg'),
+(1, 'Piring Elegan', 'Piring putih porselen diameter 20cm', 40000, 50, '/assets/images/piring.jpg'),
+(1, 'Sendok Stainless', 'Sendok makan dari bahan stainless steel', 10000, 100, '/assets/images/sendok.jpg');

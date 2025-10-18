@@ -1,0 +1,143 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f5f5f5;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.filters input, .filters select, .filters button {
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.filters button {
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+.filters button:hover {
+    background-color: #155fc0;
+}
+
+.product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+}
+
+.product-card {
+    background: white;
+    border-radius: 10px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    position: relative;
+}
+
+.product-card img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.product-card h3 {
+    font-size: 1.1em;
+    margin: 10px 0;
+}
+
+.product-card .seller-name {
+    font-size: 0.9em;
+    color: #666;
+    margin-bottom: 10px;
+}
+
+.product-card button, .product-card a.btn {
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.product-card button:hover, .product-card a.btn:hover {
+    background-color: #155fc0;
+}
+
+.product-card.out-of-stock {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.stock-label {
+    display: block;
+    color: red;
+    font-weight: bold;
+    margin-top: 5px;
+}
+
+.pagination {
+    text-align: center;
+    margin: 20px 0;
+}
+
+.pagination a {
+    margin: 0 5px;
+    padding: 8px 12px;
+    border-radius: 5px;
+    text-decoration: none;
+    background: #ddd;
+    color: #333;
+}
+
+.pagination a.active {
+    background: #1a73e8;
+    color: white;
+}
+
+.empty-state {
+    text-align: center;
+    grid-column: 1 / -1;
+    font-size: 1.2em;
+    color: #777;
+}
+
+/* Skeleton Loader */
+.product-card.skeleton {
+    background: #eee;
+    height: 200px;
+    border-radius: 10px;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .filters {
+        flex-direction: column;
+        gap: 5px;
+    }
+}
