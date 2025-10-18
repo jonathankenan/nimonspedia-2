@@ -10,7 +10,8 @@ $cart_count = $_SESSION['cart_count'] ?? 0;
 ?>
 
 <link rel="stylesheet" href="/assets/css/navbar.css">
-<script src="/assets/js/navbar.js" defer></script>
+<script src="/assets/js/dropdown.js" defer></script>
+<script src="/assets/js/topup.js" defer></script>
 
 <nav>
     <div class="nav-left">
@@ -64,3 +65,18 @@ $cart_count = $_SESSION['cart_count'] ?? 0;
         <?php endif; ?>
     </div>
 </nav>
+
+<?php if ($role === 'BUYER'): ?>
+<div id="topup-modal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Top Up Balance</h3>
+        <form id="topup-form">
+            <label for="topup-amount">Jumlah Top Up (Rp)</label>
+            <input type="number" id="topup-amount" name="amount" min="1000" required>
+            <button type="submit">Top Up</button>
+        </form>
+        <p id="topup-msg" style="color:red;"></p>
+    </div>
+</div>
+<?php endif; ?>

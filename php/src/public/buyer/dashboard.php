@@ -97,23 +97,28 @@ while ($row = $catRes->fetch_assoc()) {
           <?php while ($p = $products->fetch_assoc()): 
             $outOfStock = $p['stock'] == 0;
           ?>
-            <div class="product-card <?= $outOfStock ? 'out-of-stock' : '' ?>">
+          <div class="product-card <?= $outOfStock ? 'out-of-stock' : '' ?>">
               <img loading="lazy" src="<?= htmlspecialchars($p['main_image_path'] ?: '../assets/images/default-product.png') ?>" alt="Product Image">
               <h3><?= htmlspecialchars($p['product_name']) ?></h3>
               <p>Rp <?= number_format($p['price'], 0, ',', '.') ?></p>
               <p class="seller-name"><?= htmlspecialchars($p['store_name'] ?? 'Toko Tidak Diketahui') ?></p>
 
-              <?php if ($outOfStock): ?>
-                <span class="stock-label">Stok Habis</span>
-              <?php elseif ($role === 'BUYER'): ?>
-                <form action="/buyer/add_to_cart.php" method="POST">
-                  <input type="hidden" name="product_id" value="<?= $p['product_id'] ?>">
-                  <button type="submit" class="btn">Add to Cart</button>
-                </form>
+              <!-- Quantity display -->
+              <p class="stock-info">
+                  <?= $outOfStock ? 'Stok Habis' : 'Stok: ' . htmlspecialchars($p['stock']) ?>
+              </p>
+
+              <?php if (!$outOfStock && $role === 'BUYER'): ?>
+                  <form action="/buyer/add_to_cart.php" method="POST">
+                      <input type="hidden" name="product_id" value="<?= $p['product_id'] ?>">
+                      <button type="submit" class="btn">Add to Cart</button>
+                  </form>
+              <?php elseif ($outOfStock): ?>
+                  <span class="stock-label">Stok Habis</span>
               <?php else: ?>
-                <a href="/authentication/login.php" class="btn btn-secondary">Login untuk membeli</a>
+                  <a href="/authentication/login.php" class="btn btn-secondary">Login untuk membeli</a>
               <?php endif; ?>
-            </div>
+          </div>
           <?php endwhile; ?>
         <?php endif; ?>
       </div>
