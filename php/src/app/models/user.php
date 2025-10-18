@@ -51,7 +51,7 @@ class User {
         return $stmt->num_rows > 0;
     }
 
-    public function getById($id) {
+    public function findById($id) {
         $query = "SELECT * FROM {$this->table} WHERE user_id = ?";
         $stmt = $this->conn->prepare($query);
         $stmt->bind_param("i", $id);
