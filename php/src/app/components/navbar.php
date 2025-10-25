@@ -29,7 +29,7 @@ $cart_count = $_SESSION['cart_count'] ?? 0;
             <!-- Guest -->
             <a href="/buyer/dashboard.php">Home</a>
             <a href="/authentication/login.php">Login</a>
-            <a href="/authentication/register.php">Daftar</a>
+            <a href="/authentication/register_role.php">Daftar</a>
 
         <?php elseif ($role === 'BUYER'): ?>
             <!-- Buyer -->

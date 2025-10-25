@@ -96,8 +96,8 @@ CREATE TABLE IF NOT EXISTS order_items (
 -- DUMMY DATA --
 INSERT IGNORE INTO users (email, password, role, name, address, balance)
 VALUES
-('a@gmail.com',  '$2y$10$YphE6zvExfxXpqZfJykcIuUdr9JrAfmVqj6zpgKk3M/IFSt/wkWJS', 'BUYER',  'Budi Pembeli',  'Jl. Mawar No.1', 500000), -- hash dari 123456
-('b@gmail.com', '$2y$10$YphE6zvExfxXpqZfJykcIuUdr9JrAfmVqj6zpgKk3M/IFSt/wkWJS', 'SELLER', 'Susi Penjual', 'Jl. Melati No.2', 0);
+('a@gmail.com',  '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'BUYER',  'Budi Pembeli',  'Jl. Mawar No.1', 500000), -- hash dari "a"
+('b@gmail.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'SELLER', 'Susi Penjual', 'Jl. Melati No.2', 0);
 
 INSERT IGNORE INTO stores (user_id, store_name, store_description, store_logo_path, balance)
 VALUES
