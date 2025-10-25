@@ -2,10 +2,9 @@ Options -Indexes
 
 RewriteEngine On
 
+# Abaikan file dan folder yang benar-benar ada
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 
-RewriteCond %{REQUEST_URI} !^/registerAuth\.php$
-RewriteCond %{REQUEST_URI} !^/loginAuth\.php$
-
-RewriteRule ^(.+)$ index.php [QSA,L]
+# Arahkan semua request ke index.php
+RewriteRule ^ index.php [QSA,L]

@@ -1,4 +1,6 @@
 <?php
+use App\Models\Product;
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -27,7 +29,9 @@ $products = $productModel->getAll();
   <link rel="stylesheet" href="/assets/css/style.css">
 </head>
 <body>
-  <h1>Selamat Datang di Nimonspedia!</h1>
-  <p>Temukan produk menarik dari berbagai toko!</p>
+  <div class="container">
+    <h1>Selamat Datang di Nimonspedia!</h1>
+    <p>Temukan produk menarik dari berbagai toko!</p>
+  </div>
 </body>
 </html>
