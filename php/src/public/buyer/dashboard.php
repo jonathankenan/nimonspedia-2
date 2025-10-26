@@ -1,62 +1,34 @@
 <?php
-include_once(__DIR__ . '/../../app/utils/session.php');
+require_once(__DIR__ . '/../../app/utils/session.php');
+require_once(__DIR__ . '/../../app/config/db.php');
+require_once(__DIR__ . '/../../app/utils/pagination.php');
+require_once(__DIR__ . '/../../app/models/product.php');
+
 $role = $_SESSION['role'] ?? 'GUEST';
+use App\Models\Product;
 
-include_once(__DIR__ . '/../../app/config/db.php');
-include_once(__DIR__ . '/../../app/utils/pagination.php');
+$productModel = new Product($conn);
 
-// Pagination
+// Ambil filter dari GET
+$filters = [
+    'category' => $_GET['category'] ?? '',
+    'search' => $_GET['search'] ?? '',
+    'min_price' => $_GET['min_price'] ?? '',
+    'max_price' => $_GET['max_price'] ?? ''
+];
+
 $page = isset($_GET['page']) ? max((int)$_GET['page'], 1) : 1;
 $perPage = 12;
 
-// Filter & Search
-$where = ["p.deleted_at IS NULL"];
-$join = "INNER JOIN stores s ON p.store_id = s.store_id";
+// Ambil produk & total pages
+$data = $productModel->getFilteredProducts($filters, $page, $perPage);
+$products = $data['products'];
+$totalPages = $data['totalPages'];
 
-// Category filter
-if (!empty($_GET['category'])) {
-    $cat = $conn->real_escape_string($_GET['category']);
-    $join .= " INNER JOIN category_item ci ON p.product_id = ci.product_id
-               INNER JOIN category c ON ci.category_id = c.category_id";
-    $where[] = "c.name = '$cat'";
-}
-
-// Search
-if (!empty($_GET['search'])) {
-    $search = $conn->real_escape_string($_GET['search']);
-    $where[] = "LOWER(p.product_name) LIKE LOWER('%$search%')";
-}
-
-// Price filter
-if (!empty($_GET['min_price'])) {
-    $min = (int)$_GET['min_price'];
-    $where[] = "p.price >= $min";
-}
-
-if (!empty($_GET['max_price'])) {
-    $max = (int)$_GET['max_price'];
-    $where[] = "p.price <= $max";
-}
-
-$whereSQL = implode(' AND ', $where);
-
-// Query products with pagination
-$sql = "SELECT p.*, s.store_name, s.store_logo_path
-        FROM products p
-        $join
-        WHERE $whereSQL
-        ORDER BY p.created_at DESC";
-
-$products = paginate($conn, $sql, $perPage, $page);
-$totalPages = getTotalPages($conn, "($sql) AS sub", $perPage);
-
-// Get all categories
-$catRes = $conn->query("SELECT * FROM categories ORDER BY name ASC");
-$categories = [];
-while ($row = $catRes->fetch_assoc()) {
-    $categories[] = $row['name'];
-}
+// Ambil kategori untuk dropdown
+$categories = $productModel->getAllCategories();
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
   <head>

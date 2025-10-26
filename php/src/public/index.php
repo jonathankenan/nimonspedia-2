@@ -1,5 +1,4 @@
 <?php
-use App\Models\Product;
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -15,11 +14,8 @@ if ($role === 'BUYER') {
 }
 
 include_once(__DIR__ . '/../app/config/db.php');
-include_once(__DIR__ . '/../app/models/product.php');
 include_once(__DIR__ . '/../app/components/navbar.php');
 
-$productModel = new Product($conn);
-$products = $productModel->getAll();
 ?>
 <!DOCTYPE html>
 <html lang="en">
