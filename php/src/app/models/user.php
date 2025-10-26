@@ -69,4 +69,26 @@ class User {
     public function getLastInsertId() {
         return $this->conn->insert_id;
     }
+
+    public function updateProfile($userId, $name, $address): bool {
+        $stmt = $this->conn->prepare("UPDATE users SET name = ?, address = ? WHERE user_id = ?");
+        $stmt->bind_param("ssi", $name, $address, $userId);
+        return $stmt->execute();
+    }
+
+    public function changePassword($userId, $oldPassword, $newPassword): bool {
+        $stmt = $this->conn->prepare("SELECT password FROM users WHERE user_id = ?");
+        $stmt->bind_param("i", $userId);
+        $stmt->execute();
+        $res = $stmt->get_result()->fetch_assoc();
+
+        if (!$res || !password_verify($oldPassword, $res['password'])) {
+            return false;
+        }
+
+        $hashed = password_hash($newPassword, PASSWORD_BCRYPT);
+        $stmt2 = $this->conn->prepare("UPDATE users SET password = ? WHERE user_id = ?");
+        $stmt2->bind_param("si", $hashed, $userId);
+        return $stmt2->execute();
+    }
 }
