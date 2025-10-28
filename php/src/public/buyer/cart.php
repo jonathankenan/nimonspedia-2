@@ -57,7 +57,7 @@ $_SESSION['cart_count'] = $cartModel->getCartItemCount($_SESSION['user_id']);
                                     <div class="item-actions">
                                         <div class="quantity-selector">
                                             <button class="quantity-btn minus">-</button>
-                                            <input type="number" class="quantity-input" value="<?= $item['quantity'] ?>" min="1" max="<?= $item['stock'] ?>">
+                                            <input type="number" class="quantity-input" value="<?= $item['quantity'] ?>" max="<?= $item['stock'] ?>">
                                             <button class="quantity-btn plus">+</button>
                                         </div>
                                         <button class="delete-btn">Hapus</button>

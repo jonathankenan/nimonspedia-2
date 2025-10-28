@@ -1,12 +1,10 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Dapatkan elemen modal dan loading
     const confirmModal = document.getElementById('confirm-delete-modal');
     const confirmBtn = document.getElementById('confirm-delete-btn');
     const cancelBtn = document.getElementById('cancel-delete-btn');
     const loadingOverlay = document.getElementById('loading-overlay');
     let itemToDelete = null;
 
-    // Fungsi untuk menampilkan dan menyembunyikan loading
     function showLoading() {
         loadingOverlay.classList.add('show');
     }
@@ -63,12 +61,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function handleQuantityChange(cartItemId, newQuantity) {
-        showLoading(); 
+        const quantity = parseInt(newQuantity);
+
+        if (quantity < 1) {
+            const itemEl = document.querySelector(`.cart-item[data-item-id='${cartItemId}']`);
+            if (itemEl) {
+                openModal(itemEl);
+            }
+            return;
+        }
+
+        showLoading();
         try {
             const response = await fetch('/buyer/update_cart_item.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ cart_item_id: cartItemId, quantity: newQuantity })
+                body: JSON.stringify({ cart_item_id: cartItemId, quantity: quantity })
             });
             const result = await response.json();
             if (result.success) {
@@ -80,13 +88,12 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error:', error);
             alert('Terjadi kesalahan koneksi.');
         } finally {
-            hideLoading(); 
+            hideLoading();
         }
     }
 
     async function executeDelete() {
         if (!itemToDelete) return;
-
         showLoading();
         try {
             const response = await fetch('/buyer/remove_from_cart.php', {
@@ -107,8 +114,8 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Error:', error);
             alert('Terjadi kesalahan koneksi.');
         } finally {
-            closeModal();
-            hideLoading(); 
+            closeModal(true);
+            hideLoading();
         }
     }
     
@@ -117,12 +124,18 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmModal.classList.add('show');
     }
 
-    function closeModal() {
+    function closeModal(isDeleted = false) {
+        if (!isDeleted && itemToDelete) {
+            const quantityInput = itemToDelete.querySelector('.quantity-input');
+            if (parseInt(quantityInput.value) < 1) {
+                quantityInput.value = 1;
+            }
+        }
         itemToDelete = null;
         confirmModal.classList.remove('show');
     }
 
-    cancelBtn.addEventListener('click', closeModal);
+    cancelBtn.addEventListener('click', () => closeModal(false));
     confirmBtn.addEventListener('click', executeDelete);
     
     let debounceTimeout;
@@ -141,14 +154,18 @@ document.addEventListener('DOMContentLoaded', () => {
             quantityInput.stepUp();
             debouncedUpdate(itemEl.dataset.itemId, quantityInput.value);
         });
+        
         itemEl.querySelector('.minus').addEventListener('click', () => {
-            if (quantityInput.value > 1) {
-                quantityInput.stepDown();
-                debouncedUpdate(itemEl.dataset.itemId, quantityInput.value);
-            }
+            quantityInput.stepDown(); 
+            handleQuantityChange(itemEl.dataset.itemId, quantityInput.value);
         });
+
         quantityInput.addEventListener('change', () => {
-            debouncedUpdate(itemEl.dataset.itemId, quantityInput.value);
+            // Pastikan nilai tidak negatif jika diketik manual
+            if (parseInt(quantityInput.value) < 0 || isNaN(parseInt(quantityInput.value))) {
+                quantityInput.value = 0;
+            }
+            handleQuantityChange(itemEl.dataset.itemId, quantityInput.value);
         });
 
         itemEl.querySelector('.delete-btn').addEventListener('click', () => {
