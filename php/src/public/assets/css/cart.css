@@ -122,7 +122,7 @@ h1, h2 {
 .summary-panel h2 {
     margin-top: 0;
 }
-.summary-per-store, .grand-total {
+.summary-item, .summary-per-store, .grand-total {
     display: flex;
     justify-content: space-between;
     padding: 0.5rem 0;
@@ -147,10 +147,8 @@ h1, h2 {
     background: #fff;
     border-radius: 8px;
 }
-
-/* Targetkan .empty-state ketika berada di dalam .cart-layout */
 .cart-layout .empty-state {
-    width: 100%; /* Paksa untuk mengambil seluruh lebar yang tersedia */
+    width: 100%;
 }
 
 /* General button */
@@ -170,7 +168,7 @@ h1, h2 {
 
 /* Styling untuk Custom Modal Konfirmasi */
 .modal-overlay {
-    display: none; /* Sembunyi secara default */
+    display: none;
     position: fixed;
     top: 0;
     left: 0;
@@ -222,7 +220,6 @@ h1, h2 {
     gap: 1rem;
 }
 
-/* Tombol tambahan untuk modal */
 .btn-secondary {
     background-color: #6c757d;
 }

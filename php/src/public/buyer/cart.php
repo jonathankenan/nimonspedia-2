@@ -73,6 +73,10 @@ $_SESSION['cart_count'] = $cartModel->getCartItemCount($_SESSION['user_id']);
 
                 <div class="summary-panel">
                     <h2>Ringkasan Belanja</h2>
+                    <div class="summary-item">
+                        <p>Total Item</p>
+                        <p id="summary-total-items">0</p>
+                    </div>
                     <div id="summary-details">
                         </div>
                     <div class="grand-total">

@@ -1,13 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Dapatkan elemen-elemen modal
     const confirmModal = document.getElementById('confirm-delete-modal');
     const confirmBtn = document.getElementById('confirm-delete-btn');
     const cancelBtn = document.getElementById('cancel-delete-btn');
-    let itemToDelete = null; // Variabel untuk menyimpan item mana yang akan dihapus
+    let itemToDelete = null;
 
     function updateSummary() {
         const stores = {};
         let grandTotal = 0;
+        let totalItems = 0;
 
         document.querySelectorAll('.store-group').forEach(storeEl => {
             let storeTotal = 0;
@@ -17,8 +17,10 @@ document.addEventListener('DOMContentLoaded', () => {
             storeEl.querySelectorAll('.cart-item').forEach(itemEl => {
                 const price = parseFloat(itemEl.querySelector('.product-price').textContent.replace(/[^0-9]/g, ''));
                 const quantity = parseInt(itemEl.querySelector('.quantity-input').value);
-                const subtotal = price * quantity;
+                
+                totalItems += quantity;
 
+                const subtotal = price * quantity;
                 itemEl.querySelector('.subtotal-value').textContent = subtotal.toLocaleString('id-ID');
                 storeTotal += subtotal;
             });
@@ -44,6 +46,9 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
+        const totalItemsEl = document.getElementById('summary-total-items');
+        if(totalItemsEl) totalItemsEl.textContent = totalItems;
+
         const grandTotalEl = document.getElementById('grand-total-value');
         if(grandTotalEl) grandTotalEl.textContent = `Rp ${grandTotal.toLocaleString('id-ID')}`;
 
@@ -92,7 +97,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(badge) badge.textContent = result.new_cart_count;
                 updateSummary();
             } else {
-                alert(result.message || 'Gagal menghapus barang.');
+                alert(result.message || 'Gagal menghapus item.');
             }
         } catch (error) {
             console.error('Error:', error);
@@ -112,7 +117,6 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmModal.classList.remove('show');
     }
 
-    // Event listener untuk tombol-tombol di modal
     cancelBtn.addEventListener('click', closeModal);
     confirmBtn.addEventListener('click', executeDelete);
     
