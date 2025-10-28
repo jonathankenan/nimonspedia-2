@@ -84,5 +84,17 @@ $_SESSION['cart_count'] = $cartModel->getCartItemCount($_SESSION['user_id']);
             </div>
         <?php endif; ?>
     </div>
+
+    <div id="confirm-delete-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Konfirmasi Penghapusan</h3>
+            <p>Anda yakin ingin menghapus item ini dari keranjang?</p>
+            <div class="modal-actions">
+                <button id="cancel-delete-btn" class="btn btn-secondary">Batal</button>
+                <button id="confirm-delete-btn" class="btn btn-danger">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

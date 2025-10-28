@@ -1,4 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Dapatkan elemen-elemen modal
+    const confirmModal = document.getElementById('confirm-delete-modal');
+    const confirmBtn = document.getElementById('confirm-delete-btn');
+    const cancelBtn = document.getElementById('cancel-delete-btn');
+    let itemToDelete = null; // Variabel untuk menyimpan item mana yang akan dihapus
 
     function updateSummary() {
         const stores = {};
@@ -28,16 +33,19 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         const summaryDetails = document.getElementById('summary-details');
-        summaryDetails.innerHTML = '';
-        for (const storeId in stores) {
-            const store = stores[storeId];
-            const storeDiv = document.createElement('div');
-            storeDiv.className = 'summary-per-store';
-            storeDiv.innerHTML = `<p>${store.name}</p><p>Rp ${store.total.toLocaleString('id-ID')}</p>`;
-            summaryDetails.appendChild(storeDiv);
+        if(summaryDetails) {
+            summaryDetails.innerHTML = '';
+            for (const storeId in stores) {
+                const store = stores[storeId];
+                const storeDiv = document.createElement('div');
+                storeDiv.className = 'summary-per-store';
+                storeDiv.innerHTML = `<p>${store.name}</p><p>Rp ${store.total.toLocaleString('id-ID')}</p>`;
+                summaryDetails.appendChild(storeDiv);
+            }
         }
-
-        document.getElementById('grand-total-value').textContent = `Rp ${grandTotal.toLocaleString('id-ID')}`;
+        
+        const grandTotalEl = document.getElementById('grand-total-value');
+        if(grandTotalEl) grandTotalEl.textContent = `Rp ${grandTotal.toLocaleString('id-ID')}`;
 
         if (Object.keys(stores).length === 0 && document.querySelector('.cart-items')) {
             document.querySelector('.cart-layout').innerHTML = `
@@ -67,34 +75,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function handleDeleteItem(cartItemEl) {
-        if (confirm('Anda yakin ingin menghapus item ini dari keranjang?')) {
-            const cartItemId = cartItemEl.dataset.itemId;
-            try {
-                const response = await fetch('/buyer/remove_from_cart.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ cart_item_id: cartItemId })
-                });
-                const result = await response.json();
-                if (result.success) {
-                    cartItemEl.remove();
-                    // Update badge di navbar
-                    const badge = document.querySelector('.cart .badge');
-                    if(badge) badge.textContent = result.new_cart_count;
-                    
-                    updateSummary();
-                } else {
-                    alert(result.message || 'Gagal menghapus barang.');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Terjadi kesalahan koneksi.');
+    async function executeDelete() {
+        if (!itemToDelete) return;
+
+        const cartItemId = itemToDelete.dataset.itemId;
+        try {
+            const response = await fetch('/buyer/remove_from_cart.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cart_item_id: cartItemId })
+            });
+            const result = await response.json();
+            if (result.success) {
+                itemToDelete.remove();
+                const badge = document.querySelector('.cart .badge');
+                if(badge) badge.textContent = result.new_cart_count;
+                updateSummary();
+            } else {
+                alert(result.message || 'Gagal menghapus barang.');
             }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Terjadi kesalahan koneksi.');
+        } finally {
+            closeModal();
         }
     }
+    
+    function openModal(itemElement) {
+        itemToDelete = itemElement;
+        confirmModal.classList.add('show');
+    }
 
-    // Debounce function to prevent excessive AJAX calls
+    function closeModal() {
+        itemToDelete = null;
+        confirmModal.classList.remove('show');
+    }
+
+    // Event listener untuk tombol-tombol di modal
+    cancelBtn.addEventListener('click', closeModal);
+    confirmBtn.addEventListener('click', executeDelete);
+    
     let debounceTimeout;
     function debounce(func, delay) {
         return function(...args) {
@@ -122,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
 
         itemEl.querySelector('.delete-btn').addEventListener('click', () => {
-            handleDeleteItem(itemEl);
+            openModal(itemEl);
         });
     });
 
