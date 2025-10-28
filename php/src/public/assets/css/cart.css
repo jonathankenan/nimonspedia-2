@@ -148,6 +148,11 @@ h1, h2 {
     border-radius: 8px;
 }
 
+/* Targetkan .empty-state ketika berada di dalam .cart-layout */
+.cart-layout .empty-state {
+    width: 100%; /* Paksa untuk mengambil seluruh lebar yang tersedia */
+}
+
 /* General button */
 .btn {
     background-color: #1a73e8;
