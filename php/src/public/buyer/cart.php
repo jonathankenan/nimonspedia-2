@@ -100,5 +100,9 @@ $_SESSION['cart_count'] = $cartModel->getCartItemCount($_SESSION['user_id']);
         </div>
     </div>
 
+    <div id="loading-overlay" class="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
 </body>
 </html>

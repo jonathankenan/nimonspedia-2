@@ -1,39 +1,43 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Dapatkan elemen modal dan loading
     const confirmModal = document.getElementById('confirm-delete-modal');
     const confirmBtn = document.getElementById('confirm-delete-btn');
     const cancelBtn = document.getElementById('cancel-delete-btn');
+    const loadingOverlay = document.getElementById('loading-overlay');
     let itemToDelete = null;
+
+    // Fungsi untuk menampilkan dan menyembunyikan loading
+    function showLoading() {
+        loadingOverlay.classList.add('show');
+    }
+
+    function hideLoading() {
+        loadingOverlay.classList.remove('show');
+    }
 
     function updateSummary() {
         const stores = {};
         let grandTotal = 0;
         let totalItems = 0;
-
         document.querySelectorAll('.store-group').forEach(storeEl => {
             let storeTotal = 0;
             const storeId = storeEl.dataset.storeId;
             const storeName = storeEl.querySelector('h2').textContent;
-
             storeEl.querySelectorAll('.cart-item').forEach(itemEl => {
                 const price = parseFloat(itemEl.querySelector('.product-price').textContent.replace(/[^0-9]/g, ''));
                 const quantity = parseInt(itemEl.querySelector('.quantity-input').value);
-                
                 totalItems += quantity;
-
                 const subtotal = price * quantity;
                 itemEl.querySelector('.subtotal-value').textContent = subtotal.toLocaleString('id-ID');
                 storeTotal += subtotal;
             });
-
             if (storeEl.querySelectorAll('.cart-item').length > 0) {
                  stores[storeId] = { name: storeName, total: storeTotal };
             } else {
                 storeEl.remove();
             }
-           
             grandTotal += storeTotal;
         });
-
         const summaryDetails = document.getElementById('summary-details');
         if(summaryDetails) {
             summaryDetails.innerHTML = '';
@@ -45,13 +49,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 summaryDetails.appendChild(storeDiv);
             }
         }
-        
         const totalItemsEl = document.getElementById('summary-total-items');
         if(totalItemsEl) totalItemsEl.textContent = totalItems;
-
         const grandTotalEl = document.getElementById('grand-total-value');
         if(grandTotalEl) grandTotalEl.textContent = `Rp ${grandTotal.toLocaleString('id-ID')}`;
-
         if (Object.keys(stores).length === 0 && document.querySelector('.cart-items')) {
             document.querySelector('.cart-layout').innerHTML = `
                 <div class="empty-state">
@@ -62,6 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function handleQuantityChange(cartItemId, newQuantity) {
+        showLoading(); 
         try {
             const response = await fetch('/buyer/update_cart_item.php', {
                 method: 'POST',
@@ -77,18 +79,20 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error('Error:', error);
             alert('Terjadi kesalahan koneksi.');
+        } finally {
+            hideLoading(); 
         }
     }
 
     async function executeDelete() {
         if (!itemToDelete) return;
 
-        const cartItemId = itemToDelete.dataset.itemId;
+        showLoading();
         try {
             const response = await fetch('/buyer/remove_from_cart.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ cart_item_id: cartItemId })
+                body: JSON.stringify({ cart_item_id: itemToDelete.dataset.itemId })
             });
             const result = await response.json();
             if (result.success) {
@@ -97,13 +101,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 if(badge) badge.textContent = result.new_cart_count;
                 updateSummary();
             } else {
-                alert(result.message || 'Gagal menghapus item.');
+                alert(result.message || 'Gagal menghapus barang.');
             }
         } catch (error) {
             console.error('Error:', error);
             alert('Terjadi kesalahan koneksi.');
         } finally {
             closeModal();
+            hideLoading(); 
         }
     }
     
