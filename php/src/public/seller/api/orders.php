@@ -1,6 +1,9 @@
 <?php
 require_once __DIR__ . '/../../../app/controllers/orderController.php';
 require_once __DIR__ . '/../../../app/config/db.php';
+require_once __DIR__ . '/../../../app/utils/json_response.php';
+
+ensureJsonResponse();
 
 use App\Controllers\OrderController;
 

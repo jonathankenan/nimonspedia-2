@@ -13,13 +13,10 @@ $storeId = $_SESSION['store_id'];
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Order Management</title>
-    <link rel="stylesheet" href="/assets/css/style.css">
-    <link rel="stylesheet" href="/assets/css/navbar.css">
     <link rel="stylesheet" href="/assets/css/orderManagement.css">
 </head>
 <body>
     <?php include_once(__DIR__ . '/../../app/components/navbar.php'); ?>
-    
     
     <div class="order-management">
         <h1>Order Management</h1>

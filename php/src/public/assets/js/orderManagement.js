@@ -72,23 +72,20 @@ function loadOrders() {
         .then(response => response.json())
         .then(data => {
             if (data.error) {
-                throw new Error(data.error);
+                let errorMsg = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
+                throw new Error(errorMsg);
             }
             displayOrders(data.orders);
             displayPagination(data.total_pages);
         })
         .catch(error => {
-            console.error('Error loading orders:', error);
-            alert('Failed to load orders. Please try again.');
+            console.error('Error loading orders:', error.message || error);
+            alert('Failed to load orders: ' + (error.message || error));
         });
 }
 
 function displayOrders(orders) {
     const ordersList = document.getElementById('orders-list');
-    if (!orders.length) {
-        ordersList.innerHTML = '<p class="no-orders">No orders found</p>';
-        return;
-    }
 
     ordersList.innerHTML = orders.map(order => `
         <div class="order-item">
@@ -141,32 +138,36 @@ function displayPagination(totalPages) {
     }
 
     let html = '';
+    // Previous button
     if (currentPage > 1) {
-        html += `<button class="page-btn" onclick="changePage(${currentPage - 1})">Previous</button>`;
+        html += `<a href="#" class="page-btn" onclick="changePage(${currentPage - 1}); return false;">&laquo; Previous</a>`;
     }
 
-    for (let i = 1; i <= totalPages; i++) {
-        if (
-            i === 1 ||
-            i === totalPages ||
-            (i >= currentPage - 2 && i <= currentPage + 2)
-        ) {
-            html += `
-                <button class="page-btn ${i === currentPage ? 'active' : ''}" 
-                        onclick="changePage(${i})">
-                    ${i}
-                </button>
-            `;
-        } else if (
-            i === currentPage - 3 ||
-            i === currentPage + 3
-        ) {
-            html += '<span class="page-btn">...</span>';
+    // Range logic
+    let start = Math.max(1, currentPage - 2);
+    let end = Math.min(totalPages, currentPage + 2);
+
+    if (start > 1) {
+        html += `<a href="#" class="page-btn" onclick="changePage(1); return false;">1</a>`;
+        if (start > 2) {
+            html += `<span class="page-btn">...</span>`;
         }
     }
 
+    for (let i = start; i <= end; i++) {
+        html += `<a href="#" class="page-btn ${i === currentPage ? 'active' : ''}" onclick="changePage(${i}); return false;">${i}</a>`;
+    }
+
+    if (end < totalPages) {
+        if (end < totalPages - 1) {
+            html += `<span class="page-btn">...</span>`;
+        }
+        html += `<a href="#" class="page-btn" onclick="changePage(${totalPages}); return false;">${totalPages}</a>`;
+    }
+
+    // Next button
     if (currentPage < totalPages) {
-        html += `<button class="page-btn" onclick="changePage(${currentPage + 1})">Next</button>`;
+        html += `<a href="#" class="page-btn" onclick="changePage(${currentPage + 1}); return false;">Next &raquo;</a>`;
     }
 
     pagination.innerHTML = html;

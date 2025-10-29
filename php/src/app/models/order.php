@@ -70,6 +70,11 @@ class Order {
             throw new \Exception("Query preparation failed: " . $this->conn->error);
         }
 
+        // Simpan params/types untuk count sebelum LIMIT/OFFSET
+        $countParams = $params;
+        $countTypes = $types;
+
+        // Tambahkan LIMIT/OFFSET untuk query utama
         $params[] = $perPage;
         $params[] = $offset;
         $types .= "ii";
@@ -91,10 +96,15 @@ class Order {
                      FROM {$this->table} o
                      INNER JOIN users u ON o.buyer_id = u.user_id
                      WHERE {$whereClause}";
-        
+
         $stmt = $this->conn->prepare($countSql);
-        $stmt->bind_param($types, ...$params);
-        $stmt->execute();
+        if (!$stmt) {
+            throw new \Exception("Count query preparation failed: " . $this->conn->error);
+        }
+        $stmt->bind_param($countTypes, ...$countParams);
+        if (!$stmt->execute()) {
+            throw new \Exception("Count query execution failed: " . $stmt->error);
+        }
         $totalResult = $stmt->get_result()->fetch_assoc();
         $total = $totalResult['total'];
 
