@@ -94,14 +94,83 @@ CREATE TABLE IF NOT EXISTS order_items (
 );
 
 -- DUMMY DATA --
-INSERT IGNORE INTO users (email, password, role, name, address, balance)
-VALUES
-('a@gmail.com',  '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'BUYER',  'Budi Pembeli',  'Jl. Mawar No.1', 500000), -- hash dari "a"
-('b@gmail.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'SELLER', 'Susi Penjual', 'Jl. Melati No.2', 0);
 
-INSERT IGNORE INTO stores (user_id, store_name, store_description, store_logo_path, balance)
+-- Clear all existing data first to avoid conflicts
+SET FOREIGN_KEY_CHECKS=0;
+TRUNCATE TABLE order_items;
+TRUNCATE TABLE orders;
+TRUNCATE TABLE category_items;
+TRUNCATE TABLE products;
+TRUNCATE TABLE stores;
+TRUNCATE TABLE users;
+SET FOREIGN_KEY_CHECKS=1;
+
+-- Insert users with same password
+INSERT INTO users (email, password, role, name, address, balance)
 VALUES
-(1, 'Toko Susi', 'Menjual berbagai perlengkapan rumah tangga', '/assets/images/logo.png', 1500000);
+('buyer@test.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'BUYER', 'Budi Pembeli', 'Jl. Mawar No. 1, Jakarta', 500000),
+('seller@test.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'SELLER', 'Susi Penjual', 'Jl. Melati No. 2, Jakarta', 0);
+
+-- Create store for seller user with initial balance 0
+INSERT INTO stores (user_id, store_name, store_description, store_logo_path, balance)
+SELECT user_id, 'Susy Peralatan Rumah Tangga', 'Menjual berbagai macam peralatan rumah tangga dan dapur berkualitas', '/assets/images/storeLogo/susy_store.jpg', 0
+FROM users WHERE role = 'SELLER' LIMIT 1;
+
+-- Insert categories
+INSERT INTO categories (name)
+VALUES 
+('Peralatan Makan'),
+('Peralatan Dapur'),
+('Perlengkapan Rumah'),
+('Alat Minum'),
+('Aksesoris Dapur');
+
+-- Insert products for store
+INSERT INTO products (store_id, product_name, description, price, stock, main_image_path)
+VALUES
+(1, 'Gelas Kristal Premium', 'Gelas kristal elegan untuk jamuan minum teh', 75000, 15, '/assets/images/products/gelas_kristal.jpg'),
+(1, 'Set Piring Makan', 'Set 6 piring makan premium dengan motif bunga', 250000, 20, '/assets/images/products/set_piring.jpg'),
+(1, 'Set Sendok Garpu Gold', 'Set sendok dan garpu lapisan emas 24 pieces', 800000, 10, '/assets/images/products/sendok_garpu.jpg'),
+(1, 'Mangkok Keramik', 'Mangkok keramik handmade dengan motif tradisional', 45000, 8, '/assets/images/products/mangkok.jpg'),
+(1, 'Teko Traditional', 'Teko keramik traditional dengan filter teh', 120000, 12, '/assets/images/products/teko.jpg'),
+(1, 'Tempat Bumbu 6 in 1', 'Set tempat bumbu dengan 6 kompartemen', 150000, 25, '/assets/images/products/tempat_bumbu.jpg'),
+(1, 'Tatakan Piring', 'Tatakan piring dengan motif elegant', 35000, 30, '/assets/images/products/tatakan.jpg'),
+(1, 'Rak Piring Mini', 'Rak piring mini untuk dapur minimalis', 200000, 18, '/assets/images/products/rak_piring.jpg');
+
+-- Link products to categories
+INSERT INTO category_items (category_id, product_id)
+VALUES
+(1, 1), (4, 1), -- Gelas Kristal: Peralatan Makan, Alat Minum
+(1, 2), (3, 2), -- Set Piring: Peralatan Makan, Perlengkapan Rumah
+(1, 3), (2, 3), (5, 3), -- Set Sendok Garpu: Peralatan Makan, Peralatan Dapur, Aksesoris Dapur
+(1, 4), (2, 4), -- Mangkok: Peralatan Makan, Peralatan Dapur
+(4, 5), (2, 5), -- Teko: Alat Minum, Peralatan Dapur
+(2, 6), (5, 6), -- Tempat Bumbu: Peralatan Dapur, Aksesoris Dapur
+(1, 7), (5, 7), -- Tatakan Piring: Peralatan Makan, Aksesoris Dapur
+(2, 8), (3, 8); -- Rak Piring: Peralatan Dapur, Perlengkapan Rumah
+
+
+-- Insert some completed orders to show revenue (produk dapur, makan, rumah, minum, aksesoris)
+INSERT INTO orders (buyer_id, store_id, total_price, shipping_address, status)
+VALUES
+(1, 1, 75000, 'Jl. Mawar No. 1, Jakarta', 'received'),      -- Order 1: 1x Gelas Kristal Premium
+(1, 1, 250000, 'Jl. Mawar No. 1, Jakarta', 'received'),     -- Order 2: 1x Set Piring Makan
+(1, 1, 800000, 'Jl. Mawar No. 1, Jakarta', 'received'),     -- Order 3: 1x Set Sendok Garpu Gold
+(1, 1, 45000, 'Jl. Mawar No. 1, Jakarta', 'received'),      -- Order 4: 1x Mangkok Keramik
+(1, 1, 120000, 'Jl. Mawar No. 1, Jakarta', 'waiting_approval'), -- Order 5: 1x Teko Traditional
+(1, 1, 150000, 'Jl. Mawar No. 1, Jakarta', 'approved'),     -- Order 6: 1x Tempat Bumbu 6 in 1
+(1, 1, 35000, 'Jl. Mawar No. 1, Jakarta', 'on_delivery');   -- Order 7: 1x Tatakan Piring
+
+
+INSERT INTO order_items (order_id, product_id, quantity, price_at_order, subtotal)
+VALUES
+(1, 1, 1, 75000, 75000),      -- 1x Gelas Kristal Premium
+(2, 2, 1, 250000, 250000),    -- 1x Set Piring Makan
+(3, 3, 1, 800000, 800000),    -- 1x Set Sendok Garpu Gold
+(4, 4, 1, 45000, 45000),      -- 1x Mangkok Keramik
+(5, 5, 1, 120000, 120000),    -- 1x Teko Traditional
+(6, 6, 1, 150000, 150000),    -- 1x Tempat Bumbu 6 in 1
+(7, 7, 1, 35000, 35000);      -- 1x Tatakan Piring
 
 INSERT IGNORE INTO products (store_id, product_name, description, price, stock, main_image_path)
 VALUES
