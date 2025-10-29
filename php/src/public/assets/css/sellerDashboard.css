@@ -376,6 +376,23 @@ body {
     100% { opacity: 1; }
 }
 
+/* Toast Notification */
+.toast {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: #4CAF50;
+  color: white;
+  padding: 14px 24px;
+  border-radius: 6px;
+  font-size: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  z-index: 2000;
+  opacity: 0;
+  transition: opacity 0.5s;
+  display: none;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .filters {

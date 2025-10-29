@@ -36,6 +36,20 @@ async function loadStoreStats() {
     }
 }
 
+// Toast notification function
+function showToast(message, duration = 3000) {
+    const toast = document.getElementById('toast');
+    toast.textContent = message;
+    toast.style.display = 'block';
+    toast.style.opacity = '1';
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 500);
+    }, duration);
+}
+
 // Initialize event listeners when DOM is ready
 document.addEventListener('DOMContentLoaded', function() {
     // Setup logo preview
@@ -101,7 +115,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('storeLogoPreview').src = result.data.store_logo_path;
                 }
                 
-                alert('Informasi toko berhasil diperbarui!');
+                showToast('Informasi toko berhasil diperbarui!');
             } else {
                 throw new Error(result.message || 'Gagal memperbarui informasi toko');
             }

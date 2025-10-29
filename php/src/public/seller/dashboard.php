@@ -82,6 +82,8 @@ $store = $storeModel->getById($_SESSION['store_id']);
       </div>
     </div>
 
-    <script src="/assets/js/sellerDashboard.js"></script>
+  <!-- Toast Notification -->
+  <div id="toast" class="toast"></div>
+  <script src="/assets/js/sellerDashboard.js"></script>
   </body>
 </html>
