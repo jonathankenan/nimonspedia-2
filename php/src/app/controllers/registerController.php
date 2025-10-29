@@ -31,13 +31,11 @@ class registerController {
         $storeDescription = trim($_POST['store_description'] ?? '');
         $storeLogo        = $_FILES['store_logo'] ?? null;
 
-        // Validasi input dasar
         if (empty($name) || empty($email) || empty($password) || empty($address)) {
             header("Location: /authentication/register.php?error=empty_fields");
             exit;
         }
 
-        // Upload logo jika SELLER
         $storeLogoPath = null;
         if ($role === 'SELLER') {
             if (empty($storeName) || empty($storeDescription) || !$storeLogo || $storeLogo['error'] === UPLOAD_ERR_NO_FILE) {
@@ -45,8 +43,18 @@ class registerController {
                 exit;
             }
 
-            $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-            if (!in_array($storeLogo['type'], $allowedTypes)) {
+            $detectedType = mime_content_type($storeLogo['tmp_name']);
+            $allowedTypes = [
+                'image/jpeg',
+                'image/jpg',
+                'image/png',
+                'image/x-png',
+                'image/pjpeg',
+                'image/x-jpg'
+            ];
+
+            if (!in_array($detectedType, $allowedTypes)) {
+                error_log('Invalid logo type detected: ' . $detectedType);
                 header("Location: /authentication/register.php?error=invalid_logo_type");
                 exit;
             }
@@ -57,7 +65,7 @@ class registerController {
                 exit;
             }
 
-            $ext = pathinfo($storeLogo['name'], PATHINFO_EXTENSION);
+            $ext = strtolower(pathinfo($storeLogo['name'], PATHINFO_EXTENSION));
             $fileName = uniqid('logo_', true) . '.' . $ext;
             $targetPath = $uploadDir . DIRECTORY_SEPARATOR . $fileName;
 
@@ -69,13 +77,11 @@ class registerController {
             }
         }
 
-        // Cek user sudah ada
         if ($userModel->exists($email)) {
             header("Location: /authentication/register.php?error=exists");
             exit;
         }
 
-        // Insert user
         $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
         $success = $userModel->register(
             $name,
@@ -93,7 +99,6 @@ class registerController {
 
         $userId = $userModel->getLastInsertId();
 
-        // Buat store jika SELLER
         if ($role === 'SELLER' && $storeName && $storeDescription && $storeLogoPath) {
             $storeModel = new Store($this->conn);
             $storeCreated = $storeModel->create($userId, $storeName, $storeDescription, $storeLogoPath);
@@ -104,7 +109,6 @@ class registerController {
             }
         }
 
-        // Redirect ke login
         header("Location: /authentication/login.php?success=1");
         exit;
     }
