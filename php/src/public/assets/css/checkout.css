@@ -5,29 +5,29 @@
     padding: 1rem;
 }
 
-/* Layout Utama (Konten & Panel Pembayaran) */
+/* Layout Utama */
 .checkout-layout {
     display: flex;
     gap: 2rem;
     align-items: flex-start;
 }
 
-/* Konten Utama (Alamat & Ringkasan) */
+/* Konten Utama */
 .main-content {
-    flex: 2; /* Mengambil ruang 2 kali lebih besar dari panel pembayaran */
+    flex: 2;
 }
 
-/* Panel Pembayaran di Sisi Kanan */
+/* Panel Pembayaran */
 .payment-panel {
     flex: 1;
     background: #f9f9f9;
     padding: 1.5rem;
     border-radius: 8px;
     position: sticky;
-    top: 90px; /* Agar tetap terlihat saat scroll, di bawah navbar */
+    top: 90px;
 }
 
-/* Setiap Bagian di dalam Konten Utama */
+/* Setiap Bagian */
 .checkout-section {
     background: #fff;
     padding: 1.5rem;
@@ -35,7 +35,7 @@
     margin-bottom: 1.5rem;
 }
 
-/* Area Teks untuk Alamat */
+/* Area Teks */
 textarea {
     width: 100%;
     min-height: 80px;
@@ -46,14 +46,21 @@ textarea {
     font-family: inherit;
 }
 
-/* Ringkasan per Item di Checkout */
+/* Ringkasan per Toko */
+.store-summary {
+    margin-bottom: 1.5rem;
+}
+.store-summary:last-child {
+    margin-bottom: 0;
+}
+
+/* Ringkasan per Item */
 .item-summary {
     display: flex;
     align-items: center;
     gap: 1rem;
     margin-bottom: 0.5rem;
 }
-
 .item-summary img {
     width: 50px;
     height: 50px;
@@ -61,22 +68,30 @@ textarea {
     border-radius: 4px;
 }
 
-/* Info Saldo di Panel Pembayaran */
+/* Total per Toko */
+.store-total {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    margin-top: 1rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid #eee;
+}
+
+/* Info Saldo */
 .balance-info {
     display: flex;
     justify-content: space-between;
     margin-bottom: 0.5rem;
 }
-
 .balance-info.final {
     font-weight: bold;
 }
-
 .insufficient {
-    color: #dc3545; /* Merah untuk saldo tidak cukup */
+    color: #dc3545;
 }
 
-/* Tombol Utama */
+/* Tombol */
 .btn {
     width: 100%;
     padding: 0.8rem;
@@ -84,26 +99,88 @@ textarea {
     cursor: pointer;
     border: none;
     border-radius: 6px;
+    background-color: #1a73e8;
+    color: white;
+    transition: background-color 0.2s;
 }
-
+.btn:hover {
+    background-color: #155fc0;
+}
 .btn:disabled {
     background-color: #ccc;
     cursor: not-allowed;
 }
+.btn:disabled:hover {
+    background-color: #ccc;
+}
 
-/* Kotak Notifikasi (Alert) */
+/* Notifikasi */
 .alert {
     padding: 1rem;
     border-radius: 6px;
     margin-bottom: 1rem;
 }
-
 .alert-error {
     background-color: #f8d7da;
     color: #721c24;
 }
-
 .alert-warning {
     background-color: #fff3cd;
     color: #856404;
+}
+
+/* Styling Modal */
+.modal-overlay {
+    display: none; 
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+.modal-overlay.show {
+    display: flex;
+    opacity: 1;
+}
+.modal-content {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 400px;
+    text-align: center;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    transform: scale(0.95);
+    transition: transform 0.2s ease-in-out;
+}
+.modal-overlay.show .modal-content {
+    transform: scale(1);
+}
+.modal-content h3 {
+    margin-top: 0;
+    font-size: 1.5rem;
+    color: #333;
+}
+.modal-content p {
+    margin-bottom: 1.5rem;
+    color: #666;
+}
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+}
+
+/* Warna tombol didalam modal */
+.btn-danger {
+    background-color: #dc3545; 
+}
+.btn-danger:hover {
+    background-color: #c82333;
 }
