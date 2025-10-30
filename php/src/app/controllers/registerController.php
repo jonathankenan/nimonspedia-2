@@ -43,18 +43,8 @@ class registerController {
                 exit;
             }
 
-            $detectedType = mime_content_type($storeLogo['tmp_name']);
-            $allowedTypes = [
-                'image/jpeg',
-                'image/jpg',
-                'image/png',
-                'image/x-png',
-                'image/pjpeg',
-                'image/x-jpg'
-            ];
-
-            if (!in_array($detectedType, $allowedTypes)) {
-                error_log('Invalid logo type detected: ' . $detectedType);
+            $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
+            if (!in_array($storeLogo['type'], $allowedTypes)) {
                 header("Location: /authentication/register.php?error=invalid_logo_type");
                 exit;
             }
@@ -82,34 +72,53 @@ class registerController {
             exit;
         }
 
-        $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-        $success = $userModel->register(
-            $name,
-            $email,
-            $hashedPassword,
-            $role,
-            $address
-        );
+        try {
+            // Start transaction
+            $this->conn->begin_transaction();
 
-        if (!$success) {
-            error_log("Register failed: " . $userModel->getLastError());
-            header("Location: /authentication/register.php?error=register_failed");
+            // Insert user
+            $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+            $success = $userModel->register(
+                $name,
+                $email,
+                $hashedPassword,
+                $role,
+                $address
+            );
+
+            if (!$success) {
+                throw new \Exception("Register failed: " . $userModel->getLastError());
+            }
+
+            $userId = $userModel->getLastInsertId();
+
+            // For sellers, store creation is mandatory
+            if ($role === 'SELLER') {
+                if (!$storeName || !$storeDescription || !$storeLogoPath) {
+                    throw new \Exception("Store information is required for seller accounts");
+                }
+
+                $storeModel = new Store($this->conn);
+                $storeCreated = $storeModel->create($userId, $storeName, $storeDescription, $storeLogoPath);
+
+                if (!$storeCreated) {
+                    throw new \Exception("Failed to create store");
+                }
+            }
+
+            // Commit transaction
+            $this->conn->commit();
+
+            // Redirect ke login
+            header("Location: /authentication/login.php?success=1");
+            exit;
+
+        } catch (\Exception $e) {
+            // Rollback on any error
+            $this->conn->rollback();
+            error_log("Registration failed: " . $e->getMessage());
+            header("Location: /authentication/register.php?error=registration_failed");
             exit;
         }
-
-        $userId = $userModel->getLastInsertId();
-
-        if ($role === 'SELLER' && $storeName && $storeDescription && $storeLogoPath) {
-            $storeModel = new Store($this->conn);
-            $storeCreated = $storeModel->create($userId, $storeName, $storeDescription, $storeLogoPath);
-
-            if (!$storeCreated) {
-                header("Location: /authentication/register.php?error=store_create_failed");
-                exit;
-            }
-        }
-
-        header("Location: /authentication/login.php?success=1");
-        exit;
     }
 }

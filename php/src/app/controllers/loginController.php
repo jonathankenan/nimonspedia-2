@@ -29,6 +29,15 @@ class LoginController
             $_SESSION['role'] = $user['role'];
             $_SESSION['balance'] = $user['balance'];
 
+            if ($user['role'] === 'SELLER') {
+                require_once dirname(__DIR__) . '/models/store.php';
+                $storeModel = new \App\Models\Store($this->conn);
+                $store = $storeModel->getByUserId($user['user_id']);
+                if ($store) {
+                    $_SESSION['store_id'] = $store['store_id'];
+                }
+            }
+
             header("Location: /index.php");
             exit;
         } else {
