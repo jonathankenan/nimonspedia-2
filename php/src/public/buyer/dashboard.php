@@ -79,7 +79,7 @@ $categories = $productModel->getAllCategories();
               </p>
 
               <?php if (!$outOfStock && $role === 'BUYER'): ?>
-                  <form action="/buyer/add_to_cart.php" method="POST">
+                      <form action="/buyer/cart.php?action=add" method="POST">
                       <input type="hidden" name="product_id" value="<?= $p['product_id'] ?>">
                       <button type="submit" class="btn">Add to Cart</button>
                   </form>

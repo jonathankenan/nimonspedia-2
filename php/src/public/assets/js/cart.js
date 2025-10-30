@@ -62,18 +62,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     async function handleQuantityChange(cartItemId, newQuantity) {
         const quantity = parseInt(newQuantity);
-
         if (quantity < 1) {
             const itemEl = document.querySelector(`.cart-item[data-item-id='${cartItemId}']`);
-            if (itemEl) {
-                openModal(itemEl);
-            }
+            if (itemEl) openModal(itemEl);
             return;
         }
-
         showLoading();
         try {
-            const response = await fetch('/buyer/update_cart_item.php', {
+            // PERBARUI URL FETCH
+            const response = await fetch('/buyer/cart.php?action=update', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ cart_item_id: cartItemId, quantity: quantity })
@@ -96,7 +93,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!itemToDelete) return;
         showLoading();
         try {
-            const response = await fetch('/buyer/remove_from_cart.php', {
+            // PERBARUI URL FETCH
+            const response = await fetch('/buyer/cart.php?action=remove', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ cart_item_id: itemToDelete.dataset.itemId })
@@ -156,12 +154,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         
         itemEl.querySelector('.minus').addEventListener('click', () => {
-            quantityInput.stepDown(); 
+            quantityInput.stepDown();
             handleQuantityChange(itemEl.dataset.itemId, quantityInput.value);
         });
 
         quantityInput.addEventListener('change', () => {
-            // Pastikan nilai tidak negatif jika diketik manual
             if (parseInt(quantityInput.value) < 0 || isNaN(parseInt(quantityInput.value))) {
                 quantityInput.value = 0;
             }
