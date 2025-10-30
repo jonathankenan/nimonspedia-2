@@ -9,7 +9,6 @@ use App\Models\Product;
 
 $productModel = new Product($conn);
 
-// Ambil filter dari GET
 $filters = [
     'category' => $_GET['category'] ?? '',
     'search' => $_GET['search'] ?? '',
@@ -20,12 +19,10 @@ $filters = [
 $page = isset($_GET['page']) ? max((int)$_GET['page'], 1) : 1;
 $perPage = 12;
 
-// Ambil produk & total pages
 $data = $productModel->getFilteredProducts($filters, $page, $perPage);
 $products = $data['products'];
 $totalPages = $data['totalPages'];
 
-// Ambil kategori untuk dropdown
 $categories = $productModel->getAllCategories();
 ?>
 
@@ -70,18 +67,19 @@ $categories = $productModel->getAllCategories();
             $outOfStock = $p['stock'] == 0;
           ?>
           <div class="product-card <?= $outOfStock ? 'out-of-stock' : '' ?>">
-              <img loading="lazy" src="<?= htmlspecialchars($p['main_image_path'] ?: '../assets/images/default-product.png') ?>" alt="Product Image">
-              <h3><?= htmlspecialchars($p['product_name']) ?></h3>
+              <a href="/buyer/product.php?id=<?= (int)$p['product_id'] ?>">
+                <img loading="lazy" src="<?= htmlspecialchars($p['main_image_path'] ?: '../assets/images/default.png') ?>" alt="Product Image">
+              </a>
+              <h3><a href="/buyer/product.php?id=<?= (int)$p['product_id'] ?>" style="text-decoration:none;color:inherit;"><?= htmlspecialchars($p['product_name']) ?></a></h3>
               <p>Rp <?= number_format($p['price'], 0, ',', '.') ?></p>
-              <p class="seller-name"><?= htmlspecialchars($p['store_name'] ?? 'Toko Tidak Diketahui') ?></p>
+              <p class="seller-name"><a href="/store/detail.php?id=<?= (int)$p['store_id'] ?>" style="text-decoration:none;"><?= htmlspecialchars($p['store_name'] ?? 'Toko Tidak Diketahui') ?></a></p>
 
-              <!-- Quantity display -->
               <p class="stock-info">
                   <?= $outOfStock ? 'Stok Habis' : 'Stok: ' . htmlspecialchars($p['stock']) ?>
               </p>
 
               <?php if (!$outOfStock && $role === 'BUYER'): ?>
-                  <form action="/buyer/add_to_cart.php" method="POST">
+                      <form action="/buyer/cart.php?action=add" method="POST">
                       <input type="hidden" name="product_id" value="<?= $p['product_id'] ?>">
                       <button type="submit" class="btn">Add to Cart</button>
                   </form>

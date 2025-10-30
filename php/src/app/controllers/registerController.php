@@ -31,13 +31,11 @@ class registerController {
         $storeDescription = trim($_POST['store_description'] ?? '');
         $storeLogo        = $_FILES['store_logo'] ?? null;
 
-        // Validasi input dasar
         if (empty($name) || empty($email) || empty($password) || empty($address)) {
             header("Location: /authentication/register.php?error=empty_fields");
             exit;
         }
 
-        // Upload logo jika SELLER
         $storeLogoPath = null;
         if ($role === 'SELLER') {
             if (empty($storeName) || empty($storeDescription) || !$storeLogo || $storeLogo['error'] === UPLOAD_ERR_NO_FILE) {
@@ -57,7 +55,7 @@ class registerController {
                 exit;
             }
 
-            $ext = pathinfo($storeLogo['name'], PATHINFO_EXTENSION);
+            $ext = strtolower(pathinfo($storeLogo['name'], PATHINFO_EXTENSION));
             $fileName = uniqid('logo_', true) . '.' . $ext;
             $targetPath = $uploadDir . DIRECTORY_SEPARATOR . $fileName;
 
@@ -69,7 +67,6 @@ class registerController {
             }
         }
 
-        // Cek user sudah ada
         if ($userModel->exists($email)) {
             header("Location: /authentication/register.php?error=exists");
             exit;

@@ -1,5 +1,6 @@
 <?php
 namespace App\Models;
+use mysqli;
 
 class Order {
     private $conn;
@@ -19,6 +20,13 @@ class Order {
         $result = $stmt->get_result();
         $row = $result->fetch_assoc();
         return $row['total'] ?? 0;
+    public function create($buyerId, $storeId, $totalPrice, $shippingAddress, $status = 'waiting_approval') {
+        $stmt = $this->conn->prepare("
+            INSERT INTO {$this->table} (buyer_id, store_id, total_price, shipping_address, status)
+            VALUES (?, ?, ?, ?, ?)
+        ");
+        $stmt->bind_param("iiiss", $buyerId, $storeId, $totalPrice, $shippingAddress, $status);
+        return $stmt->execute();
     }
 
     public function calculateTotalRevenueByStoreId($storeId) {
@@ -224,6 +232,72 @@ class Order {
         } catch (\Exception $e) {
             $this->conn->rollback();
             throw $e;
+        }
+    }
+
+    // Membuat order baru dan item-itemnya dari keranjang dalam satu transaksi. 
+    // Ini memastikan semua proses (kurangi saldo, stok, dll) berhasil atau semuanya dibatalkan.
+
+    public function createOrderFromCart(int $buyerId, array $itemsByStore, string $shippingAddress): bool {
+        // 1. Mulai Transaksi Database
+        $this->conn->begin_transaction();
+
+        try {
+            // Loop untuk setiap toko di keranjang
+            foreach ($itemsByStore as $storeId => $storeData) {
+                $totalPrice = $storeData['total_price'];
+
+                // 2. Kurangi saldo buyer (Hold Balance)
+                $stmt = $this->conn->prepare("UPDATE users SET balance = balance - ? WHERE user_id = ? AND balance >= ?");
+                $stmt->bind_param("iii", $totalPrice, $buyerId, $totalPrice);
+                if (!$stmt->execute() || $stmt->affected_rows === 0) {
+                    throw new \Exception("Saldo tidak mencukupi untuk salah satu pesanan.");
+                }
+
+                // 3. Buat entri di tabel 'orders'
+                $stmt = $this->conn->prepare("INSERT INTO orders (buyer_id, store_id, total_price, shipping_address) VALUES (?, ?, ?, ?)");
+                $stmt->bind_param("iiis", $buyerId, $storeId, $totalPrice, $shippingAddress);
+                if (!$stmt->execute()) {
+                    throw new \Exception("Gagal membuat data order.");
+                }
+                $orderId = $this->conn->insert_id;
+
+                // Loop untuk setiap item di dalam toko
+                foreach ($storeData['items'] as $item) {
+                    // 4. Kurangi stok produk
+                    $stmt = $this->conn->prepare("UPDATE products SET stock = stock - ? WHERE product_id = ? AND stock >= ?");
+                    $stmt->bind_param("iii", $item['quantity'], $item['product_id'], $item['quantity']);
+                    if (!$stmt->execute() || $stmt->affected_rows === 0) {
+                        throw new \Exception("Stok produk '{$item['product_name']}' tiba-tiba habis.");
+                    }
+
+                    // 5. Buat entri di tabel 'order_items'
+                    $subtotal = $item['price'] * $item['quantity'];
+                    $stmt = $this->conn->prepare("INSERT INTO order_items (order_id, product_id, quantity, price_at_order, subtotal) VALUES (?, ?, ?, ?, ?)");
+                    $stmt->bind_param("iiiii", $orderId, $item['product_id'], $item['quantity'], $item['price'], $subtotal);
+                    if (!$stmt->execute()) {
+                        throw new \Exception("Gagal menyimpan detail item pesanan.");
+                    }
+                }
+            }
+
+            // 6. Jika semua order berhasil, hapus semua item dari keranjang buyer
+            $stmt = $this->conn->prepare("DELETE FROM cart_items WHERE buyer_id = ?");
+            $stmt->bind_param("i", $buyerId);
+            if (!$stmt->execute()) {
+                throw new \Exception("Gagal membersihkan keranjang setelah checkout.");
+            }
+
+            // 7. Jika semua proses berhasil, simpan semua perubahan secara permanen
+            $this->conn->commit();
+            return true;
+
+        } catch (\Exception $e) {
+            // 8. Jika ada SATU saja yang gagal, batalkan SEMUA perubahan
+            $this->conn->rollback();
+            // Simpan pesan error di session untuk ditampilkan di halaman checkout
+            $_SESSION['checkout_error'] = $e->getMessage();
+            return false;
         }
     }
 }

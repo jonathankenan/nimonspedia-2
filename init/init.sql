@@ -172,8 +172,11 @@ VALUES
 (6, 6, 1, 150000, 150000),    -- 1x Tempat Bumbu 6 in 1
 (7, 7, 1, 35000, 35000);      -- 1x Tatakan Piring
 
-INSERT IGNORE INTO products (store_id, product_name, description, price, stock, main_image_path)
+INSERT INTO products (store_id, product_name, description, price, stock, main_image_path)
 VALUES
 (1, 'Gelas Cantik', 'Gelas kaca bening ukuran 300ml', 25000, 30, '/assets/images/gelas.jpg'),
 (1, 'Piring Elegan', 'Piring putih porselen diameter 20cm', 40000, 50, '/assets/images/piring.jpg'),
-(1, 'Sendok Stainless', 'Sendok makan dari bahan stainless steel', 10000, 100, '/assets/images/sendok.jpg');
+(1, 'Sendok Stainless', 'Sendok makan dari bahan stainless steel', 10000, 100, '/assets/images/sendok.jpg'),
+(2, 'Laptop Bekas', 'Laptop Core i5, RAM 8GB, SSD 256GB', 5500000, 5, '/assets/images/laptop.jpg'), 
+(2, 'Mouse Gaming', 'Mouse dengan RGB dan 6 tombol macro', 250000, 15, '/assets/images/mouse.jpg'), 
+(2, 'Keyboard Mechanical', 'Keyboard blue switch, TKL layout', 750000, 10, '/assets/images/keyboard.jpg');
