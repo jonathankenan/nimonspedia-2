@@ -13,22 +13,17 @@ class CheckoutController {
         $this->conn = $db;
         $this->userId = $userId;
     }
-
-    public function processCheckout() {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-            header('Location: /buyer/cart.php');
-            exit;
-        }
-
+    
+    // Memproses checkout yang disubmit dari form
+    public function process() {
         $cartModel = new Cart($this->conn);
         $cartItemsResult = $cartModel->getCartItems($this->userId);
 
         if ($cartItemsResult->num_rows === 0) {
-            header('Location: /buyer/cart.php'); // Redirect jika keranjang kosong
+            header('Location: /buyer/cart.php');
             exit;
         }
         
-        // Kelompokkan item dan hitung total per toko
         $itemsByStore = [];
         $grandTotal = 0;
         while ($item = $cartItemsResult->fetch_assoc()) {
@@ -41,7 +36,6 @@ class CheckoutController {
             $grandTotal += $item['price'] * $item['quantity'];
         }
 
-        // Validasi Saldo
         $userModel = new User($this->conn);
         $user = $userModel->findById($this->userId);
         if ($user['balance'] < $grandTotal) {
@@ -50,20 +44,21 @@ class CheckoutController {
             exit;
         }
 
-        // Jalankan proses pembuatan order
         $orderModel = new Order($this->conn);
         $shippingAddress = $_POST['shipping_address'] ?? $user['address'];
         
         $success = $orderModel->createOrderFromCart($this->userId, $itemsByStore, $shippingAddress);
 
         if ($success) {
-            // Hapus error session jika ada, set pesan sukses
+            // Perbarui saldo di session setelah berhasil
+            $_SESSION['balance'] = $user['balance'] - $grandTotal;
+
             unset($_SESSION['checkout_error']);
             $_SESSION['order_success'] = "Pesanan Anda berhasil dibuat!";
-            header('Location: /buyer/orders.php'); // Redirect ke Riwayat Pesanan
+            header('Location: /buyer/orders.php');
             exit;
         } else {
-            header('Location: /buyer/checkout.php'); // Redirect kembali ke checkout dengan pesan error
+            header('Location: /buyer/checkout.php');
             exit;
         }
     }

@@ -3,14 +3,23 @@ include_once(__DIR__ . '/../../app/utils/session.php');
 include_once(__DIR__ . '/../../app/config/db.php');
 include_once(__DIR__ . '/../../app/models/cart.php');
 include_once(__DIR__ . '/../../app/models/user.php');
+include_once(__DIR__ . '/../../app/models/order.php');
+include_once(__DIR__ . '/../../app/controllers/checkoutController.php');
 
 requireLogin();
 requireRole('BUYER');
 
+use App\Controllers\CheckoutController;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $controller = new CheckoutController($conn, $_SESSION['user_id']);
+    $controller->process();
+    exit;
+}
+
 use App\Models\Cart;
 use App\Models\User;
 
-// Ambil data keranjang
 $cartModel = new Cart($conn);
 $cartItemsResult = $cartModel->getCartItems($_SESSION['user_id']);
 
@@ -19,17 +28,16 @@ if ($cartItemsResult->num_rows === 0) {
     exit;
 }
 
-// Ambil data user
 $userModel = new User($conn);
 $user = $userModel->findById($_SESSION['user_id']);
 
-// Kelompokkan item dan hitung total
 $stores = [];
 $grandTotal = 0;
 while ($item = $cartItemsResult->fetch_assoc()) {
     $storeId = $item['store_id'];
     $stores[$storeId]['store_name'] = $item['store_name'];
     $stores[$storeId]['items'][] = $item;
+    $stores[$storeId]['total_price'] = ($stores[$storeId]['total_price'] ?? 0) + ($item['price'] * $item['quantity']);
     $grandTotal += $item['price'] * $item['quantity'];
 }
 
@@ -56,7 +64,7 @@ $balanceSufficient = $user['balance'] >= $grandTotal;
             </div>
         <?php endif; ?>
 
-        <form id="checkout-form" action="process_checkout.php" method="POST">
+        <form id="checkout-form" action="checkout.php" method="POST">
             <div class="checkout-layout">
                 <div class="main-content">
                     <div class="checkout-section">
@@ -78,6 +86,10 @@ $balanceSufficient = $user['balance'] >= $grandTotal;
                                     </div>
                                 </div>
                                 <?php endforeach; ?>
+                                <div class="store-total">
+                                    <p>Total Toko:</p>
+                                    <p><strong>Rp <?= number_format($storeData['total_price']) ?></strong></p>
+                                </div>
                             </div>
                         <?php endforeach; ?>
                     </div>
@@ -107,12 +119,24 @@ $balanceSufficient = $user['balance'] >= $grandTotal;
                         </div>
                     <?php endif; ?>
 
-                    <button type="submit" class="btn" <?= !$balanceSufficient ? 'disabled' : '' ?>>
+                    <button type="submit" id="pay-button" class="btn" <?= !$balanceSufficient ? 'disabled' : '' ?>>
                         Bayar Sekarang
                     </button>
                 </div>
             </div>
         </form>
     </div>
+
+    <div id="confirm-checkout-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3>Konfirmasi Pembayaran</h3>
+            <p>Pastikan saldo dan alamat pengiriman Anda sudah benar. Lanjutkan pembayaran?</p>
+            <div class="modal-actions">
+                <button id="confirm-checkout-btn" class="btn">Ya</button>
+                <button id="cancel-checkout-btn" class="btn btn-danger">Batal</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
