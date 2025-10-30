@@ -3,11 +3,16 @@ require_once(__DIR__ . '/../../app/utils/session.php');
 require_once(__DIR__ . '/../../app/config/db.php');
 require_once(__DIR__ . '/../../app/utils/pagination.php');
 require_once(__DIR__ . '/../../app/models/product.php');
+require_once(__DIR__ . '/../../app/controllers/buyerController.php');
 
 $role = $_SESSION['role'] ?? 'GUEST';
+$buyerId = $_SESSION['user_id'] ?? null; 
+
 use App\Models\Product;
+use App\Controllers\BuyerController;  
 
 $productModel = new Product($conn);
+$controller = new BuyerController($conn);
 
 $filters = [
     'category' => $_GET['category'] ?? '',
@@ -19,9 +24,12 @@ $filters = [
 $page = isset($_GET['page']) ? max((int)$_GET['page'], 1) : 1;
 $perPage = 12;
 
-$data = $productModel->getFilteredProducts($filters, $page, $perPage);
+$data = $controller->getDashboardData($buyerId, $filters, $page, $perPage);
+
+$user = $data['user'];
 $products = $data['products'];
 $totalPages = $data['totalPages'];
+$categories = $data['categories'];
 
 $categories = $productModel->getAllCategories();
 ?>
@@ -60,37 +68,45 @@ $categories = $productModel->getAllCategories();
 
       <!-- Product Grid -->
       <div class="product-grid" id="product-grid">
-        <?php if($products->num_rows === 0): ?>
-          <p class="empty-state">Produk tidak ditemukan.</p>
-        <?php else: ?>
-          <?php while ($p = $products->fetch_assoc()): 
-            $outOfStock = $p['stock'] == 0;
-          ?>
-          <div class="product-card <?= $outOfStock ? 'out-of-stock' : '' ?>">
-              <a href="/buyer/product.php?id=<?= (int)$p['product_id'] ?>">
-                <img loading="lazy" src="<?= htmlspecialchars($p['main_image_path'] ?: '../assets/images/default.png') ?>" alt="Product Image">
+      <?php if (empty($products)): ?>
+        <p class="empty-state">Produk tidak ditemukan.</p>
+      <?php else: ?>
+        <?php foreach ($products as $p): 
+          $outOfStock = $p['stock'] == 0;
+        ?>
+        <div class="product-card <?= $outOfStock ? 'out-of-stock' : '' ?>">
+            <a href="/buyer/product.php?id=<?= (int)$p['product_id'] ?>">
+              <img loading="lazy" 
+                  src="<?= htmlspecialchars($p['main_image_path']) ?>" 
+                  alt="Product Image">
+            </a>
+            <h3><a href="/buyer/product.php?id=<?= (int)$p['product_id'] ?>" style="text-decoration:none;color:inherit;">
+              <?= htmlspecialchars($p['product_name']) ?>
+            </a></h3>
+            <p>Rp <?= number_format($p['price'], 0, ',', '.') ?></p>
+            <p class="seller-name">
+              <a href="/store/detail.php?id=<?= (int)$p['store_id'] ?>" style="text-decoration:none;">
+                <?= htmlspecialchars($p['store_name'] ?? 'Toko Tidak Diketahui') ?>
               </a>
-              <h3><a href="/buyer/product.php?id=<?= (int)$p['product_id'] ?>" style="text-decoration:none;color:inherit;"><?= htmlspecialchars($p['product_name']) ?></a></h3>
-              <p>Rp <?= number_format($p['price'], 0, ',', '.') ?></p>
-              <p class="seller-name"><a href="/store/detail.php?id=<?= (int)$p['store_id'] ?>" style="text-decoration:none;"><?= htmlspecialchars($p['store_name'] ?? 'Toko Tidak Diketahui') ?></a></p>
+            </p>
 
-              <p class="stock-info">
-                  <?= $outOfStock ? 'Stok Habis' : 'Stok: ' . htmlspecialchars($p['stock']) ?>
-              </p>
+            <p class="stock-info">
+                <?= $outOfStock ? 'Stok Habis' : 'Stok: ' . htmlspecialchars($p['stock']) ?>
+            </p>
 
-              <?php if (!$outOfStock && $role === 'BUYER'): ?>
-                      <form action="/buyer/cart.php?action=add" method="POST">
-                      <input type="hidden" name="product_id" value="<?= $p['product_id'] ?>">
-                      <button type="submit" class="btn">Add to Cart</button>
-                  </form>
-              <?php elseif ($outOfStock): ?>
-                  <span class="stock-label">Stok Habis</span>
-              <?php else: ?>
-                  <a href="/authentication/login.php" class="btn btn-secondary">Login untuk membeli</a>
-              <?php endif; ?>
-          </div>
-          <?php endwhile; ?>
-        <?php endif; ?>
+            <?php if (!$outOfStock && $role === 'BUYER'): ?>
+              <form action="/buyer/cart.php?action=add" method="POST">
+                <input type="hidden" name="product_id" value="<?= $p['product_id'] ?>">
+                <button type="submit" class="btn">Add to Cart</button>
+              </form>
+            <?php elseif ($outOfStock): ?>
+              <span class="stock-label">Stok Habis</span>
+            <?php else: ?>
+              <a href="/authentication/login.php" class="btn btn-secondary">Login untuk membeli</a>
+            <?php endif; ?>
+        </div>
+        <?php endforeach; ?>
+      <?php endif; ?>
       </div>
 
       <!-- Pagination -->

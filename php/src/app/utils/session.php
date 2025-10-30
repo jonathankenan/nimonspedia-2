@@ -14,10 +14,11 @@ function requireLogin() {
     }
 }
 
+# Validate user role, if not match, redirect to login
 function requireRole($role) {
+    requireLogin();
     if (!isset($_SESSION['role']) || $_SESSION['role'] !== $role) {
-        header("HTTP/1.1 403 Forbidden");
-        echo "Akses ditolak.";
+        header("Location: /authentication/login.php");
         exit;
     }
 }
