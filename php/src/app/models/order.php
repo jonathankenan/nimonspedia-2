@@ -100,4 +100,71 @@ class Order {
             return false;
         }
     }
+    
+    public function getOrderHistory(int $buyerId, string $filterStatus = 'all'): array {
+        $orders = [];
+        
+        // Query utama untuk mengambil semua pesanan dari seorang buyer
+        $sql = "
+            SELECT 
+                o.order_id,
+                o.created_at,
+                o.total_price,
+                o.status,
+                o.shipping_address,
+                o.reject_reason,
+                s.store_name
+            FROM orders o
+            JOIN stores s ON o.store_id = s.store_id
+            WHERE o.buyer_id = ?
+        ";
+
+        // Tambahkan filter status jika ada (selain 'all')
+        if ($filterStatus !== 'all' && $filterStatus !== '') {
+            $sql .= " AND o.status = ?";
+        }
+
+        $sql .= " ORDER BY o.created_at DESC"; // Urutkan dari yang terbaru
+
+        $stmt = $this->conn->prepare($sql);
+        if ($filterStatus !== 'all' && $filterStatus !== '') {
+            $stmt->bind_param("is", $buyerId, $filterStatus);
+        } else {
+            $stmt->bind_param("i", $buyerId);
+        }
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        $orderIds = [];
+        while($row = $result->fetch_assoc()) {
+            $orders[$row['order_id']] = $row;
+            $orders[$row['order_id']]['items'] = [];
+            $orderIds[] = $row['order_id'];
+        }
+
+        if (empty($orderIds)) {
+            return [];
+        }
+
+        // Query kedua untuk mengambil semua item dari pesanan-pesanan di atas
+        $ids = implode(',', $orderIds);
+        $itemSql = "
+            SELECT 
+                oi.order_id,
+                oi.quantity,
+                oi.price_at_order,
+                p.product_name,
+                p.main_image_path
+            FROM order_items oi
+            JOIN products p ON oi.product_id = p.product_id
+            WHERE oi.order_id IN ($ids)
+        ";
+
+        $itemResult = $this->conn->query($itemSql);
+        while($itemRow = $itemResult->fetch_assoc()) {
+            $orders[$itemRow['order_id']]['items'][] = $itemRow;
+        }
+
+        return $orders;
+    }
 }

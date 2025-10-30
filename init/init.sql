@@ -1,7 +1,9 @@
 --  CREATION --
-
 CREATE DATABASE IF NOT EXISTS nimonspedia;
 USE nimonspedia;
+
+-- Hapus tabel jika sudah ada untuk memastikan data bersih setiap kali container dibuat ulang
+DROP TABLE IF EXISTS order_items, orders, category_items, categories, cart_items, products, stores, users;
 
 CREATE TABLE IF NOT EXISTS users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
@@ -93,23 +95,57 @@ CREATE TABLE IF NOT EXISTS order_items (
     FOREIGN KEY (product_id) REFERENCES products(product_id)
 );
 
--- DUMMY DATA --
+
+-- DATA DUMMY 
+
 INSERT INTO users (email, password, role, name, address, balance)
 VALUES
-('a@gmail.com',  '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'BUYER',  'Budi Pembeli',  'Jl. Mawar No.1', 500000), -- hash dari "a"
-('b@gmail.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'SELLER', 'Susi Penjual', 'Jl. Melati No.2', 0),
-('c@gmail.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'SELLER', 'Caca Penjual', 'Jl. Anggrek No. 3',0);
+('a@gmail.com',  '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'BUYER',  'Budi Pembeli',  'Jl. Mawar No.1', 5000000), -- user_id: 1
+('b@gmail.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'SELLER', 'Susi Penjual', 'Jl. Melati No.2', 0),    -- user_id: 2
+('c@gmail.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'SELLER', 'Caca Penjual', 'Jl. Anggrek No. 3',0); -- user_id: 3
 
 INSERT INTO stores (user_id, store_name, store_description, store_logo_path, balance)
 VALUES
-(1, 'Toko Susi', 'Menjual berbagai perlengkapan rumah tangga', '/assets/images/logo.png', 1500000),
-(3, 'Toko Caca Elektronik', 'Menjual barang elektronik bekas berkualitas', '/assets/images/logo.png',3000000);
+(1, 'Toko Susi', 'Menjual berbagai perlengkapan rumah tangga', '/assets/images/logo.png', 1500000),      -- store_id: 1
+(3, 'Toko Caca Elektronik', 'Menjual barang elektronik bekas berkualitas', '/assets/images/logo.png',3000000); -- store_id: 2
 
 INSERT INTO products (store_id, product_name, description, price, stock, main_image_path)
 VALUES
-(1, 'Gelas Cantik', 'Gelas kaca bening ukuran 300ml', 25000, 30, '/assets/images/gelas.jpg'),
-(1, 'Piring Elegan', 'Piring putih porselen diameter 20cm', 40000, 50, '/assets/images/piring.jpg'),
-(1, 'Sendok Stainless', 'Sendok makan dari bahan stainless steel', 10000, 100, '/assets/images/sendok.jpg'),
-(2, 'Laptop Bekas', 'Laptop Core i5, RAM 8GB, SSD 256GB', 5500000, 5, '/assets/images/laptop.jpg'), 
-(2, 'Mouse Gaming', 'Mouse dengan RGB dan 6 tombol macro', 250000, 15, '/assets/images/mouse.jpg'), 
-(2, 'Keyboard Mechanical', 'Keyboard blue switch, TKL layout', 750000, 10, '/assets/images/keyboard.jpg');
+(1, 'Gelas Cantik', 'Gelas kaca bening ukuran 300ml', 25000, 30, '/assets/images/gelas.jpg'),        -- product_id: 1
+(1, 'Piring Elegan', 'Piring putih porselen diameter 20cm', 40000, 50, '/assets/images/piring.jpg'),      -- product_id: 2
+(1, 'Sendok Stainless', 'Sendok makan dari bahan stainless steel', 10000, 100, '/assets/images/sendok.jpg'), -- product_id: 3
+(2, 'Laptop Bekas', 'Laptop Core i5, RAM 8GB, SSD 256GB', 5500000, 5, '/assets/images/piring.jpg'),       -- product_id: 4 (path gambar disesuaikan)
+(2, 'Mouse Gaming', 'Mouse dengan RGB dan 6 tombol macro', 250000, 15, '/assets/images/sendok.jpg'),    -- product_id: 5 (path gambar disesuaikan)
+(2, 'Keyboard Mechanical', 'Keyboard blue switch, TKL layout', 750000, 10, '/assets/images/gelas.jpg');  -- product_id: 6 (path gambar disesuaikan)
+
+
+-- DATA DUMMY UNTUK ORDERS
+-- 1. Status: waiting_approval (order_id: 1)
+INSERT INTO orders (buyer_id, store_id, total_price, shipping_address, status)
+VALUES (1, 1, 50000, 'Alamat Budi Pembeli', 'waiting_approval');
+INSERT INTO order_items (order_id, product_id, quantity, price_at_order, subtotal)
+VALUES (1, 1, 2, 25000, 50000);
+
+-- 2. Status: approved (order_id: 2)
+INSERT INTO orders (buyer_id, store_id, total_price, shipping_address, status, confirmed_at)
+VALUES (1, 2, 750000, 'Alamat Budi Pembeli', 'approved', NOW() - INTERVAL 1 DAY);
+INSERT INTO order_items (order_id, product_id, quantity, price_at_order, subtotal)
+VALUES (2, 6, 1, 750000, 750000);
+
+-- 3. Status: on_delivery (order_id: 3)
+INSERT INTO orders (buyer_id, store_id, total_price, shipping_address, status, confirmed_at, delivery_time)
+VALUES (1, 1, 80000, 'Alamat Budi Pembeli', 'on_delivery', NOW() - INTERVAL 2 DAY, NOW() + INTERVAL 3 DAY);
+INSERT INTO order_items (order_id, product_id, quantity, price_at_order, subtotal)
+VALUES (3, 2, 2, 40000, 80000);
+
+-- 4. Status: received (order_id: 4)
+INSERT INTO orders (buyer_id, store_id, total_price, shipping_address, status, confirmed_at, delivery_time, received_at)
+VALUES (1, 2, 500000, 'Alamat Budi Pembeli', 'received', NOW() - INTERVAL 5 DAY, NOW() - INTERVAL 4 DAY, NOW() - INTERVAL 3 DAY);
+INSERT INTO order_items (order_id, product_id, quantity, price_at_order, subtotal)
+VALUES (4, 5, 2, 250000, 500000);
+
+-- 5. Status: rejected (order_id: 5)
+INSERT INTO orders (buyer_id, store_id, total_price, shipping_address, status, reject_reason, confirmed_at)
+VALUES (1, 1, 10000, 'Alamat Budi Pembeli', 'rejected', 'Stok produk habis.', NOW() - INTERVAL 1 DAY);
+INSERT INTO order_items (order_id, product_id, quantity, price_at_order, subtotal)
+VALUES (5, 3, 1, 10000, 10000);

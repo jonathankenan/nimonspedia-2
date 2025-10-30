@@ -1,0 +1,177 @@
+/* Container Utama */
+.container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 1rem;
+}
+
+/* Tab Filter Status */
+.filter-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.filter-tabs a {
+    padding: 0.6rem 1rem;
+    text-decoration: none;
+    background: #f0f0f0;
+    color: #333;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.filter-tabs a:hover {
+    background: #e0e0e0;
+}
+
+.filter-tabs a.active {
+    background: #1a73e8;
+    color: white;
+}
+
+/* Kartu Pesanan */
+.order-card {
+    background: #fff;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 1rem;
+}
+
+.order-header p {
+    margin: 0 0 0.25rem 0;
+    color: #555;
+}
+
+/* Badge Status */
+.status-badge {
+    padding: 0.3rem 0.7rem;
+    border-radius: 12px;
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.status-waiting_approval { background: #ffc107; color: #333; }
+.status-approved { background: #28a745; }
+.status-on_delivery { background: #17a2b8; }
+.status-received { background: #6c757d; }
+.status-rejected { background: #dc3545; }
+
+/* Ringkasan Item di Kartu */
+.order-body {
+    padding: 1rem 0;
+}
+
+.order-item-summary {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.order-item-summary img {
+    width: 40px;
+    height: 40px;
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+.more-items {
+    font-size: 0.8rem;
+    color: #666;
+    margin: 0.5rem 0 0 56px;
+}
+
+/* Bagian Bawah Kartu */
+.order-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid #f0f0f0;
+}
+
+.btn-detail {
+    background: none;
+    border: 1px solid #1a73e8;
+    color: #1a73e8;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.btn-detail:hover {
+    background-color: #1a73e8;
+    color: white;
+}
+
+/* Detail yang Bisa Diperluas */
+.order-details {
+    display: none;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed #ddd;
+}
+
+.order-item-detail {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.order-item-detail img {
+    width: 50px;
+    height: 50px;
+    border-radius: 4px;
+    object-fit: cover;
+}
+
+.reason-rejected {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 0.5rem;
+    border-radius: 4px;
+}
+
+/* Kondisi Keranjang Kosong */
+.empty-state {
+    text-align: center;
+    padding: 4rem;
+    background: #fff;
+    border-radius: 8px;
+}
+
+.btn {
+    background-color: #1a73e8;
+    color: white;
+    border: none;
+    padding: 0.7rem 1.5rem;
+    border-radius: 6px;
+    text-decoration: none;
+    display: inline-block;
+}
+
+/* Notifikasi Sukses */
+.alert {
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
+
+.alert-success {
+    background-color: #d4edda;
+    color: #155724;
+}
