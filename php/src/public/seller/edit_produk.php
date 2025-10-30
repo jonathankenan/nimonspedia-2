@@ -69,8 +69,9 @@ try {
                 </div>
 
                 <div class="form-group">
-                    <label for="productDescription">Deskripsi Produk*</label>
-                    <textarea id="productDescription" name="productDescription" rows="5" required><?= htmlspecialchars($product['description']) ?></textarea>
+                    <label for="editor">Deskripsi Produk*</label>
+                    <div id="editor" style="height:150px;"><?= $product['description'] ?? '' ?></div>
+                    <input type="hidden" name="productDescription" id="productDescription">
                 </div>
 
                 <div class="form-group">
@@ -103,6 +104,17 @@ try {
     <!-- Toast Notification -->
     <div id="toast" class="toast"></div>
 
-    <script src="/assets/js/editProduk.js"></script>
+        <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+        <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+        <script>
+            var quill = new Quill('#editor', {
+                theme: 'snow',
+                placeholder: 'Tulis deskripsi produk...'
+            });
+            document.getElementById('editProductForm').addEventListener('submit', function(e) {
+                document.getElementById('productDescription').value = quill.root.innerHTML;
+            });
+        </script>
+        <script src="/assets/js/editProduk.js"></script>
 </body>
 </html>

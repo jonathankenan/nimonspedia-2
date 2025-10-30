@@ -17,6 +17,7 @@ $categories = $categoryModel->getAll();
     <meta charset="UTF-8">
     <title>Tambah Produk</title>
     <link rel="stylesheet" href="/assets/css/tambahProduk.css">
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 </head>
 <body>
     <?php include_once(__DIR__ . '/../../app/components/navbar.php'); ?>
@@ -34,8 +35,9 @@ $categories = $categoryModel->getAll();
             </div>
 
             <div class="form-group">
-                <label for="productDescription">Deskripsi Produk*</label>
-                <textarea id="productDescription" name="description" maxlength="1000" required></textarea>
+                <label for="editor">Deskripsi Produk*</label>
+                <div id="editor" style="height:150px;"></div>
+                <input type="hidden" name="description" id="productDescription">
                 <small class="char-counter">0/1000</small>
             </div>
 
@@ -90,6 +92,16 @@ $categories = $categoryModel->getAll();
 
     <div id="toast" class="toast" style="display: none;"></div>
 
-    <script src="/assets/js/tambahProduk.js"></script>
+        <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+        <script>
+            var quill = new Quill('#editor', {
+                theme: 'snow',
+                placeholder: 'Tulis deskripsi produk...'
+            });
+            document.getElementById('addProductForm').addEventListener('submit', function(e) {
+                document.getElementById('productDescription').value = quill.root.innerHTML;
+            });
+        </script>
+        <script src="/assets/js/tambahProduk.js"></script>
 </body>
 </html>

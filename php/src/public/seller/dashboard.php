@@ -19,7 +19,8 @@ $store = $storeModel->getById($_SESSION['store_id']);
   <head>
     <meta charset="UTF-8">
     <title>Dashboard Seller</title>
-    <link rel="stylesheet" href="/assets/css/sellerDashboard.css">
+  <link rel="stylesheet" href="/assets/css/sellerDashboard.css">
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
   </head>
   <body>
     <?php include_once(__DIR__ . '/../../app/components/navbar.php'); ?>
@@ -45,8 +46,9 @@ $store = $storeModel->getById($_SESSION['store_id']);
               <input type="text" id="storeName" name="storeName" value="<?= htmlspecialchars($store['store_name'] ?? '') ?>" required>
             </div>
             <div class="form-group">
-              <label for="storeDescription">Deskripsi Toko</label>
-              <textarea id="storeDescription" name="storeDescription" rows="5"><?= htmlspecialchars($store['store_description'] ?? '') ?></textarea>
+              <label for="editor">Deskripsi Toko</label>
+              <div id="editor" style="height:150px;"><?= $store['store_description'] ?? '' ?></div>
+              <input type="hidden" name="storeDescription" id="storeDescription">
             </div>
             <button type="submit" class="save-button">Simpan Perubahan</button>
           </div>
@@ -84,6 +86,19 @@ $store = $storeModel->getById($_SESSION['store_id']);
 
   <!-- Toast Notification -->
   <div id="toast" class="toast"></div>
+  <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+  <script>
+    // Inisialisasi Quill editor
+    var quill = new Quill('#editor', {
+      theme: 'snow',
+      placeholder: 'Tulis deskripsi toko...'
+    });
+
+    // Set value ke input hidden sebelum submit
+    document.getElementById('editStoreForm').addEventListener('submit', function(e) {
+      document.getElementById('storeDescription').value = quill.root.innerHTML;
+    });
+  </script>
   <script src="/assets/js/sellerDashboard.js"></script>
   </body>
 </html>
