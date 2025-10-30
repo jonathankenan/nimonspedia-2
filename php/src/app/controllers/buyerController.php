@@ -26,7 +26,7 @@ class BuyerController {
 
         if ($rawProducts instanceof \mysqli_result) {
             while ($row = $rawProducts->fetch_assoc()) {
-                $row['main_image_path'] = \App\Utils\ImageHandler::ensureImagePath(
+                $row['main_image_path'] = ImageHandler::ensureImagePath(
                     $row['main_image_path'] ?? '',
                     '/assets/images/default.png'
                 );
@@ -34,7 +34,7 @@ class BuyerController {
             }
         } elseif (is_array($rawProducts)) {
             foreach ($rawProducts as $p) {
-                $p['main_image_path'] = \App\Utils\ImageHandler::ensureImagePath(
+                $p['main_image_path'] = ImageHandler::ensureImagePath(
                     $p['main_image_path'] ?? '',
                     '/assets/images/default.png'
                 );

@@ -78,7 +78,7 @@ $store = $storeModel->getById($_SESSION['store_id']);
       <div class="quick-actions">
         <a href="/seller/kelola_produk.php" class="action-button">Kelola Produk</a>
         <a href="/seller/tambah_produk.php" class="action-button">Tambah Produk Baru</a>
-        <a href="/seller/lihat_pesanan.php" class="action-button">Lihat Pesanan</a>
+        <a href="/seller/order_management.php" class="action-button">Lihat Pesanan</a>
       </div>
     </div>
 
