@@ -114,9 +114,9 @@ VALUES
 (1, 'Gelas Cantik', 'Gelas kaca bening ukuran 300ml', 25000, 30, '/assets/images/gelas.jpg'),        -- product_id: 1
 (1, 'Piring Elegan', 'Piring putih porselen diameter 20cm', 40000, 50, '/assets/images/piring.jpg'),      -- product_id: 2
 (1, 'Sendok Stainless', 'Sendok makan dari bahan stainless steel', 10000, 100, '/assets/images/sendok.jpg'), -- product_id: 3
-(2, 'Laptop Bekas', 'Laptop Core i5, RAM 8GB, SSD 256GB', 5500000, 5, '/assets/images/piring.jpg'),       -- product_id: 4 (path gambar disesuaikan)
-(2, 'Mouse Gaming', 'Mouse dengan RGB dan 6 tombol macro', 250000, 15, '/assets/images/sendok.jpg'),    -- product_id: 5 (path gambar disesuaikan)
-(2, 'Keyboard Mechanical', 'Keyboard blue switch, TKL layout', 750000, 10, '/assets/images/gelas.jpg');  -- product_id: 6 (path gambar disesuaikan)
+(2, 'Laptop Bekas', 'Laptop Core i5, RAM 8GB, SSD 256GB', 5500000, 5, '/assets/images/laptop.jpg'),       -- product_id: 4
+(2, 'Mouse Gaming', 'Mouse dengan RGB dan 6 tombol macro', 250000, 15, '/assets/images/mouse.jpg'),    -- product_id: 5 
+(2, 'Keyboard Mechanical', 'Keyboard blue switch, TKL layout', 750000, 10, '/assets/images/keyboard.jpg');  -- product_id: 6 
 
 
 -- DATA DUMMY UNTUK ORDERS

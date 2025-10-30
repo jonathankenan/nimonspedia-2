@@ -100,7 +100,7 @@ class Order {
             return false;
         }
     }
-    
+
     public function getOrderHistory(int $buyerId, string $filterStatus = 'all'): array {
         $orders = [];
         
@@ -113,18 +113,18 @@ class Order {
                 o.status,
                 o.shipping_address,
                 o.reject_reason,
+                o.delivery_time, 
                 s.store_name
             FROM orders o
             JOIN stores s ON o.store_id = s.store_id
             WHERE o.buyer_id = ?
         ";
 
-        // Tambahkan filter status jika ada (selain 'all')
         if ($filterStatus !== 'all' && $filterStatus !== '') {
             $sql .= " AND o.status = ?";
         }
 
-        $sql .= " ORDER BY o.created_at DESC"; // Urutkan dari yang terbaru
+        $sql .= " ORDER BY o.created_at DESC";
 
         $stmt = $this->conn->prepare($sql);
         if ($filterStatus !== 'all' && $filterStatus !== '') {
@@ -146,7 +146,7 @@ class Order {
             return [];
         }
 
-        // Query kedua untuk mengambil semua item dari pesanan-pesanan di atas
+        // Query kedua untuk mengambil semua item (tidak perlu diubah)
         $ids = implode(',', $orderIds);
         $itemSql = "
             SELECT 
@@ -167,4 +167,5 @@ class Order {
 
         return $orders;
     }
+    
 }

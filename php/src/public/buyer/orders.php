@@ -11,9 +11,12 @@ use App\Models\Order;
 $orderModel = new Order($conn);
 
 $filterStatus = $_GET['status'] ?? 'all';
-$validStatuses = ['all', 'waiting_approval', 'approved', 'rejected', 'on_delivery', 'received'];
+
+$validStatuses = ['all', 'waiting_approval', 'approved', 'on_delivery', 'received', 'rejected'];
+$displayOrder = ['all', 'waiting_approval', 'approved', 'on_delivery', 'received', 'rejected'];
+
 if (!in_array($filterStatus, $validStatuses)) {
-    $filterStatus = 'all';
+    $filterStatus = 'all'; 
 }
 
 $orders = $orderModel->getOrderHistory($_SESSION['user_id'], $filterStatus);
@@ -41,12 +44,11 @@ $orders = $orderModel->getOrderHistory($_SESSION['user_id'], $filterStatus);
         <?php endif; ?>
         
         <div class="filter-tabs">
-            <a href="?status=all" class="<?= $filterStatus === 'all' ? 'active' : '' ?>">Semua</a>
-            <a href="?status=waiting_approval" class="<?= $filterStatus === 'waiting_approval' ? 'active' : '' ?>">Menunggu Persetujuan</a>
-            <a href="?status=approved" class="<?= $filterStatus === 'approved' ? 'active' : '' ?>">Disetujui</a>
-            <a href="?status=on_delivery" class="<?= $filterStatus === 'on_delivery' ? 'active' : '' ?>">Dikirim</a>
-            <a href="?status=received" class="<?= $filterStatus === 'received' ? 'active' : '' ?>">Diterima</a>
-            <a href="?status=rejected" class="<?= $filterStatus === 'rejected' ? 'active' : '' ?>">Ditolak</a>
+            <?php foreach ($displayOrder as $status): ?>
+                <a href="?status=<?= $status ?>" class="<?= $filterStatus === $status ? 'active' : '' ?>">
+                    <?= $status === 'all' ? 'All' : ucfirst(str_replace('_', ' ', $status)) ?>
+                </a>
+            <?php endforeach; ?>
         </div>
 
         <div class="order-list">
@@ -93,8 +95,15 @@ $orders = $orderModel->getOrderHistory($_SESSION['user_id'], $filterStatus);
                                     </div>
                                 </div>
                             <?php endforeach; ?>
+
                             <h4>Alamat Pengiriman</h4>
                             <p><?= htmlspecialchars($order['shipping_address']) ?></p>
+
+                            <?php if ($order['status'] === 'on_delivery' && !empty($order['delivery_time'])): ?>
+                                <h4>Estimasi Tiba</h4>
+                                <p><?= date('d F Y', strtotime($order['delivery_time'])) ?></p>
+                            <?php endif; ?>
+
                             <?php if ($order['status'] === 'rejected' && !empty($order['reject_reason'])): ?>
                                 <h4>Alasan Ditolak</h4>
                                 <p class="reason-rejected"><?= htmlspecialchars($order['reject_reason']) ?></p>
