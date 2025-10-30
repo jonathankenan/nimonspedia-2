@@ -31,6 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <title>Profile | Nimonspedia</title>
 <link rel="stylesheet" href="../assets/css/profile.css">
 <link rel="stylesheet" href="../assets/css/popup.css">
+<link rel="stylesheet" href="../assets/css/password.css">
 <script src="../assets/js/profile.js" defer></script>
 </head>
     <body>

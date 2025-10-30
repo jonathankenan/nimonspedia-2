@@ -1,0 +1,109 @@
+/* Container Utama */
+.container {
+    max-width: 1000px;
+    margin: 2rem auto;
+    padding: 1rem;
+}
+
+/* Layout Utama (Konten & Panel Pembayaran) */
+.checkout-layout {
+    display: flex;
+    gap: 2rem;
+    align-items: flex-start;
+}
+
+/* Konten Utama (Alamat & Ringkasan) */
+.main-content {
+    flex: 2; /* Mengambil ruang 2 kali lebih besar dari panel pembayaran */
+}
+
+/* Panel Pembayaran di Sisi Kanan */
+.payment-panel {
+    flex: 1;
+    background: #f9f9f9;
+    padding: 1.5rem;
+    border-radius: 8px;
+    position: sticky;
+    top: 90px; /* Agar tetap terlihat saat scroll, di bawah navbar */
+}
+
+/* Setiap Bagian di dalam Konten Utama */
+.checkout-section {
+    background: #fff;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+/* Area Teks untuk Alamat */
+textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    font-family: inherit;
+}
+
+/* Ringkasan per Item di Checkout */
+.item-summary {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.5rem;
+}
+
+.item-summary img {
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+/* Info Saldo di Panel Pembayaran */
+.balance-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.balance-info.final {
+    font-weight: bold;
+}
+
+.insufficient {
+    color: #dc3545; /* Merah untuk saldo tidak cukup */
+}
+
+/* Tombol Utama */
+.btn {
+    width: 100%;
+    padding: 0.8rem;
+    font-size: 1.1rem;
+    cursor: pointer;
+    border: none;
+    border-radius: 6px;
+}
+
+.btn:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+/* Kotak Notifikasi (Alert) */
+.alert {
+    padding: 1rem;
+    border-radius: 6px;
+    margin-bottom: 1rem;
+}
+
+.alert-error {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.alert-warning {
+    background-color: #fff3cd;
+    color: #856404;
+}

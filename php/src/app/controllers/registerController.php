@@ -31,13 +31,11 @@ class registerController {
         $storeDescription = trim($_POST['store_description'] ?? '');
         $storeLogo        = $_FILES['store_logo'] ?? null;
 
-        // Validasi input dasar
         if (empty($name) || empty($email) || empty($password) || empty($address)) {
             header("Location: /authentication/register.php?error=empty_fields");
             exit;
         }
 
-        // Upload logo jika SELLER
         $storeLogoPath = null;
         if ($role === 'SELLER') {
             if (empty($storeName) || empty($storeDescription) || !$storeLogo || $storeLogo['error'] === UPLOAD_ERR_NO_FILE) {
@@ -45,7 +43,7 @@ class registerController {
                 exit;
             }
 
-            $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+            $allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
             if (!in_array($storeLogo['type'], $allowedTypes)) {
                 header("Location: /authentication/register.php?error=invalid_logo_type");
                 exit;
@@ -57,7 +55,7 @@ class registerController {
                 exit;
             }
 
-            $ext = pathinfo($storeLogo['name'], PATHINFO_EXTENSION);
+            $ext = strtolower(pathinfo($storeLogo['name'], PATHINFO_EXTENSION));
             $fileName = uniqid('logo_', true) . '.' . $ext;
             $targetPath = $uploadDir . DIRECTORY_SEPARATOR . $fileName;
 
@@ -69,43 +67,58 @@ class registerController {
             }
         }
 
-        // Cek user sudah ada
         if ($userModel->exists($email)) {
             header("Location: /authentication/register.php?error=exists");
             exit;
         }
 
-        // Insert user
-        $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
-        $success = $userModel->register(
-            $name,
-            $email,
-            $hashedPassword,
-            $role,
-            $address
-        );
+        try {
+            // Start transaction
+            $this->conn->begin_transaction();
 
-        if (!$success) {
-            error_log("Register failed: " . $userModel->getLastError());
-            header("Location: /authentication/register.php?error=register_failed");
+            // Insert user
+            $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+            $success = $userModel->register(
+                $name,
+                $email,
+                $hashedPassword,
+                $role,
+                $address
+            );
+
+            if (!$success) {
+                throw new \Exception("Register failed: " . $userModel->getLastError());
+            }
+
+            $userId = $userModel->getLastInsertId();
+
+            // For sellers, store creation is mandatory
+            if ($role === 'SELLER') {
+                if (!$storeName || !$storeDescription || !$storeLogoPath) {
+                    throw new \Exception("Store information is required for seller accounts");
+                }
+
+                $storeModel = new Store($this->conn);
+                $storeCreated = $storeModel->create($userId, $storeName, $storeDescription, $storeLogoPath);
+
+                if (!$storeCreated) {
+                    throw new \Exception("Failed to create store");
+                }
+            }
+
+            // Commit transaction
+            $this->conn->commit();
+
+            // Redirect ke login
+            header("Location: /authentication/login.php?success=1");
+            exit;
+
+        } catch (\Exception $e) {
+            // Rollback on any error
+            $this->conn->rollback();
+            error_log("Registration failed: " . $e->getMessage());
+            header("Location: /authentication/register.php?error=registration_failed");
             exit;
         }
-
-        $userId = $userModel->getLastInsertId();
-
-        // Buat store jika SELLER
-        if ($role === 'SELLER' && $storeName && $storeDescription && $storeLogoPath) {
-            $storeModel = new Store($this->conn);
-            $storeCreated = $storeModel->create($userId, $storeName, $storeDescription, $storeLogoPath);
-
-            if (!$storeCreated) {
-                header("Location: /authentication/register.php?error=store_create_failed");
-                exit;
-            }
-        }
-
-        // Redirect ke login
-        header("Location: /authentication/login.php?success=1");
-        exit;
     }
 }
