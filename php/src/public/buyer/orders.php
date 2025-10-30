@@ -11,12 +11,10 @@ use App\Models\Order;
 $orderModel = new Order($conn);
 
 $filterStatus = $_GET['status'] ?? 'all';
-
-$validStatuses = ['all', 'waiting_approval', 'approved', 'on_delivery', 'received', 'rejected'];
 $displayOrder = ['all', 'waiting_approval', 'approved', 'on_delivery', 'received', 'rejected'];
 
-if (!in_array($filterStatus, $validStatuses)) {
-    $filterStatus = 'all'; 
+if (!in_array($filterStatus, $displayOrder)) {
+    $filterStatus = 'all';
 }
 
 $orders = $orderModel->getOrderHistory($_SESSION['user_id'], $filterStatus);
@@ -61,6 +59,7 @@ $orders = $orderModel->getOrderHistory($_SESSION['user_id'], $filterStatus);
                     <div class="order-card">
                         <div class="order-header">
                             <div>
+                                <p><strong>Order Id:</strong> #<?= htmlspecialchars($order['order_id']) ?></p>
                                 <p><strong>Toko:</strong> <?= htmlspecialchars($order['store_name']) ?></p>
                                 <p><?= date('d F Y, H:i', strtotime($order['created_at'])) ?></p>
                             </div>
@@ -98,7 +97,7 @@ $orders = $orderModel->getOrderHistory($_SESSION['user_id'], $filterStatus);
 
                             <h4>Alamat Pengiriman</h4>
                             <p><?= htmlspecialchars($order['shipping_address']) ?></p>
-
+                            
                             <?php if ($order['status'] === 'on_delivery' && !empty($order['delivery_time'])): ?>
                                 <h4>Estimasi Tiba</h4>
                                 <p><?= date('d F Y', strtotime($order['delivery_time'])) ?></p>
