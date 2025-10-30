@@ -4,8 +4,10 @@ require_once(__DIR__ . '/../../app/config/db.php');
 require_once(__DIR__ . '/../../app/utils/pagination.php');
 require_once(__DIR__ . '/../../app/models/product.php');
 require_once(__DIR__ . '/../../app/controllers/storeController.php');
+require_once(__DIR__ . '/../../app/utils/imageHandler.php');
 
 use App\Controllers\StoreController;
+use App\Utils\ImageHandler;
 
 $storeId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if ($storeId <= 0) { http_response_code(400); echo 'Invalid store id'; exit; }
@@ -55,21 +57,23 @@ $totalPages = $data['totalPages'];
       </div>
 
       <div class="product-grid">
-        <?php if($products->num_rows === 0): ?>
-          <p class="empty-state">Produk tidak ditemukan.</p>
-        <?php else: ?>
-          <?php while ($p = $products->fetch_assoc()): $out = $p['stock'] == 0; ?>
-          <div class="product-card <?= $out ? 'out-of-stock' : '' ?>">
-              <a href="/buyer/product.php?id=<?= (int)$p['product_id'] ?>">
-                <img loading="lazy" src="<?= htmlspecialchars($p['main_image_path'] ?: '/assets/images/default-product.png') ?>" alt="<?= htmlspecialchars($p['product_name']) ?>">
-              </a>
-              <a class="product-name" href="/buyer/product.php?id=<?= (int)$p['product_id'] ?>"><?= htmlspecialchars($p['product_name']) ?></a>
-              <p>Rp <?= number_format((int)$p['price'], 0, ',', '.') ?></p>
-              <p class="seller-name"><a href="/store/detail.php?id=<?= (int)$store['store_id'] ?>"><?= htmlspecialchars($store['store_name']) ?></a></p>
-              <p class="stock-info"><?= $out ? 'Stok Habis' : 'Stok: ' . (int)$p['stock'] ?></p>
-          </div>
-          <?php endwhile; ?>
-        <?php endif; ?>
+          <?php if (empty($products)): ?>
+              <p class="empty-state">Belum ada produk di toko ini.</p>
+          <?php else: ?>
+              <?php foreach ($products as $p): 
+                  $p['main_image_path'] = ImageHandler::ensureImagePath($p['main_image_path'], '/assets/images/default-product.png');
+                  $outOfStock = $p['stock'] == 0;
+              ?>
+                  <div class="product-card <?= $outOfStock ? 'out-of-stock' : '' ?>">
+                      <a href="/buyer/product.php?id=<?= (int)$p['product_id'] ?>">
+                          <img src="<?= htmlspecialchars($p['main_image_path']) ?>" alt="Gambar Produk">
+                      </a>
+                      <h3><?= htmlspecialchars($p['product_name']) ?></h3>
+                      <p>Rp <?= number_format($p['price'], 0, ',', '.') ?></p>
+                      <p><?= $outOfStock ? 'Stok Habis' : 'Stok: ' . htmlspecialchars($p['stock']) ?></p>
+                  </div>
+              <?php endforeach; ?>
+          <?php endif; ?>
       </div>
 
       <div class="pagination">

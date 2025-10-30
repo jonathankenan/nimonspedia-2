@@ -3,9 +3,11 @@ namespace App\Controllers;
 
 require_once(__DIR__ . '/../models/product.php');
 require_once(__DIR__ . '/../models/user.php');
+require_once(__DIR__ . '/../utils/imageHandler.php');
 
 use App\Models\Product;
 use App\Models\User;
+use App\Utils\ImageHandler;
 
 class BuyerController {
     private $conn;
@@ -18,23 +20,32 @@ class BuyerController {
         $productModel = new Product($this->conn);
         $userModel = new User($this->conn);
 
-        // Ambil data produk dalam bentuk array
         $data = $productModel->getFilteredProducts($filters, $page, $perPage);
-        $products = $data['products'];
+        $rawProducts = $data['products'] ?? [];
+        $products = [];
 
-        foreach ($products as $p) {
-            $imgPath = $_SERVER['DOCUMENT_ROOT'] . $p['main_image_path'];
-            if (empty($p['main_image_path']) || !file_exists($imgPath)) {
-                $p['main_image_path'] = '/assets/images/default.png';
+        if ($rawProducts instanceof \mysqli_result) {
+            while ($row = $rawProducts->fetch_assoc()) {
+                $row['main_image_path'] = \App\Utils\ImageHandler::ensureImagePath(
+                    $row['main_image_path'] ?? '',
+                    '/assets/images/default.png'
+                );
+                $products[] = $row;
             }
-            $finalProducts[] = $p;
+        } elseif (is_array($rawProducts)) {
+            foreach ($rawProducts as $p) {
+                $p['main_image_path'] = \App\Utils\ImageHandler::ensureImagePath(
+                    $p['main_image_path'] ?? '',
+                    '/assets/images/default.png'
+                );
+                $products[] = $p;
+            }
         }
-        $products = $finalProducts ?? [];
 
         return [
             'user'       => $buyerId ? $userModel->findById($buyerId) : null,
             'products'   => $products,
-            'totalPages' => $data['totalPages'],
+            'totalPages' => $data['totalPages'] ?? 1,
             'categories' => $productModel->getAllCategories()
         ];
     }

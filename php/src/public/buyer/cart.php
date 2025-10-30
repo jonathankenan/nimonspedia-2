@@ -3,11 +3,13 @@ include_once(__DIR__ . '/../../app/utils/session.php');
 include_once(__DIR__ . '/../../app/config/db.php');
 include_once(__DIR__ . '/../../app/models/cart.php');
 include_once(__DIR__ . '/../../app/controllers/cartController.php');
+include_once(__DIR__ . '/../../app/utils/imageHandler.php');
 
 requireLogin();
 requireRole('BUYER');
 
 use App\Controllers\CartController;
+use App\Utils\ImageHandler;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $controller = new CartController($conn, $_SESSION['user_id']);
@@ -37,9 +39,14 @@ $cartItemsResult = $cartModel->getCartItems($_SESSION['user_id']);
 
 $stores = [];
 while ($item = $cartItemsResult->fetch_assoc()) {
+    $item['main_image_path'] = ImageHandler::ensureImagePath(
+        $item['main_image_path'],
+        '/assets/images/default.png'
+    );
     $stores[$item['store_id']]['store_name'] = $item['store_name'];
     $stores[$item['store_id']]['items'][] = $item;
 }
+
 $_SESSION['cart_count'] = $cartModel->getCartItemCount($_SESSION['user_id']);
 ?>
 

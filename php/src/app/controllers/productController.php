@@ -3,9 +3,11 @@ namespace App\Controllers;
 
 require_once(__DIR__ . '/../models/product.php');
 require_once(__DIR__ . '/../models/categoryItem.php');
+require_once(__DIR__ . '/../utils/imageHandler.php');
 
 use App\Models\Product;
 use App\Models\CategoryItem;
+use App\Utils\ImageHandler;
 
 class ProductController {
     private $productModel;
@@ -21,9 +23,10 @@ class ProductController {
     public function getDetailData(int $productId): array {
         $productModel = new Product($this->conn);
         $product = $productModel->findProductWithStoreById($productId);
-        if (!$product) {
-            return [];
-        }
+        if (!$product) return [];
+
+        $product['main_image_path'] = ImageHandler::ensureImagePath($product['main_image_path'], '/assets/images/default.png');
+
         $categories = $productModel->getCategoriesForProduct($productId);
         return [
             'product' => $product,
@@ -33,20 +36,17 @@ class ProductController {
 
     public function deleteProduct($productId) {
         try {
-            // Verify product belongs to seller's store
             $product = $this->productModel->getProductById($productId);
             if (!$product) {
                 throw new \Exception("Product not found");
             }
 
-            // Delete the product (soft delete)
             $success = $this->productModel->deleteProduct($productId);
             
             if (!$success) {
                 throw new \Exception("Failed to delete product");
             }
 
-            // Delete the image file if it exists
             if (!empty($product['main_image_path']) && 
                 file_exists($_SERVER['DOCUMENT_ROOT'] . $product['main_image_path'])) {
                 unlink($_SERVER['DOCUMENT_ROOT'] . $product['main_image_path']);
@@ -67,13 +67,11 @@ class ProductController {
 
             $productId = $data['productId'];
             
-            // Verify product belongs to seller's store
             $product = $this->productModel->getProductById($productId);
             if ($product['store_id'] != $_SESSION['store_id']) {
                 throw new \Exception("Unauthorized to edit this product");
             }
 
-            // Start transaction
             $this->conn->begin_transaction();
 
             try {
@@ -84,7 +82,6 @@ class ProductController {
                     'stock' => intval($data['stock'])
                 ];
 
-                // Handle image update if provided
                 if ($imageFile && !empty($imageFile['tmp_name'])) {
                     $this->validateImageFile($imageFile);
                     $uploadResult = $this->handleImageUpload($imageFile);
@@ -95,7 +92,6 @@ class ProductController {
 
                     $updateData['main_image_path'] = $uploadResult['path'];
 
-                    // Delete old image if exists and different
                     if (!empty($product['main_image_path']) && 
                         $product['main_image_path'] !== $uploadResult['path'] &&
                         file_exists($_SERVER['DOCUMENT_ROOT'] . $product['main_image_path'])) {
@@ -103,15 +99,11 @@ class ProductController {
                     }
                 }
 
-                // Update product
                 $updatedProduct = $this->productModel->update($productId, $updateData);
 
-                // Update categories if provided
                 if (isset($data['categories'])) {
-                    // Delete existing category links
                     $this->categoryItemModel->deleteByProductId($productId);
                     
-                    // Add new category links
                     $categories = is_array($data['categories']) ? $data['categories'] : [$data['categories']];
                     foreach ($categories as $categoryId) {
                         $this->categoryItemModel->linkProduct($categoryId, $productId);
@@ -235,7 +227,7 @@ class ProductController {
         }
 
         $allowedTypes = ['image/jpg', 'image/jpeg', 'image/png', 'image/webp'];
-        $maxSize = 2 * 1024 * 1024; // 2MB
+        $maxSize = 2 * 1024 * 1024; // limit ke 2MB
 
         if ($file['size'] > $maxSize) {
             throw new \Exception('Image size too large (max 2MB)');
@@ -253,7 +245,6 @@ class ProductController {
         $uploadPath = $_SERVER['DOCUMENT_ROOT'] . $uploadDir . $filename;
         $relativePath = $uploadDir . $filename;
 
-        // Create directory if it doesn't exist
         if (!is_dir(dirname($uploadPath))) {
             mkdir(dirname($uploadPath), 0777, true);
         }

@@ -4,10 +4,12 @@ namespace App\Controllers;
 require_once(__DIR__ . '/../models/store.php');
 require_once(__DIR__ . '/../models/product.php');
 require_once(__DIR__ . '/../models/order.php');
+require_once(__DIR__ . '/../utils/imageHandler.php');
 
 use App\Models\Store;
 use App\Models\Product;
 use App\Models\Order;
+use App\Utils\ImageHandler;
 
 class StoreController {
     private $conn;
@@ -28,24 +30,29 @@ class StoreController {
         return $res ? $res->fetch_assoc() : null;
     }
 
+
     public function getStoreProducts(int $storeId, array $filters = [], int $page = 1, int $perPage = 12): array {
         $filters['store_id'] = $storeId;
         $productModel = new Product($this->conn);
-        return $productModel->getFilteredProducts($filters, $page, $perPage);
+        $data = $productModel->getFilteredProducts($filters, $page, $perPage);
+
+        $final = [];
+        foreach ($data['products'] as $p) {
+            $p['main_image_path'] = ImageHandler::ensureImagePath($p['main_image_path'], '/assets/images/default.png');
+            $final[] = $p;
+        }
+
+        return [
+            'products' => $final,
+            'totalPages' => $data['totalPages']
+        ];
     }
 
     public function getStoreStatistics($storeId) {
         try {
-            // Get total products
             $totalProducts = $this->productModel->countByStoreId($storeId);
-            
-            // Get low stock products (less than or equal to 5)
             $lowStockProducts = $this->productModel->countLowStockByStoreId($storeId, 5);
-            
-            // Get pending orders
             $pendingOrders = $this->orderModel->countPendingByStoreId($storeId);
-            
-            // Get total revenue (from completed orders)
             $totalRevenue = $this->orderModel->calculateTotalRevenueByStoreId($storeId);
             
             return [

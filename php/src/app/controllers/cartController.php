@@ -62,7 +62,6 @@ class CartController {
         }
     }
 
-    // Helper functions
     private function redirectWithSuccess($param) {
         header('Location: ' . $_SERVER['HTTP_REFERER'] . '?' . $param);
         exit;

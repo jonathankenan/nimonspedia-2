@@ -34,7 +34,7 @@ $cart_count = $_SESSION['cart_count'] ?? 0;
         <?php elseif ($role === 'BUYER'): ?>
             <!-- Buyer -->
             <a href="/buyer/cart.php" class="cart">
-                🛍 Cart
+                Cart
                 <?php if ($cart_count > 0): ?>
                 <span class="badge"><?= htmlspecialchars($cart_count) ?></span>
                 <?php endif; ?>

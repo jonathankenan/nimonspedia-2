@@ -73,10 +73,8 @@ class registerController {
         }
 
         try {
-            // Start transaction
             $this->conn->begin_transaction();
 
-            // Insert user
             $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
             $success = $userModel->register(
                 $name,
@@ -92,7 +90,6 @@ class registerController {
 
             $userId = $userModel->getLastInsertId();
 
-            // For sellers, store creation is mandatory
             if ($role === 'SELLER') {
                 if (!$storeName || !$storeDescription || !$storeLogoPath) {
                     throw new \Exception("Store information is required for seller accounts");
@@ -106,15 +103,12 @@ class registerController {
                 }
             }
 
-            // Commit transaction
             $this->conn->commit();
 
-            // Redirect ke login
             header("Location: /authentication/login.php?success=1");
             exit;
 
         } catch (\Exception $e) {
-            // Rollback on any error
             $this->conn->rollback();
             error_log("Registration failed: " . $e->getMessage());
             header("Location: /authentication/register.php?error=registration_failed");

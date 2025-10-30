@@ -33,7 +33,7 @@ class OrderController {
                 $storeId,
                 $status,
                 $page,
-                10, // items per page
+                10, 
                 $search
             );
 

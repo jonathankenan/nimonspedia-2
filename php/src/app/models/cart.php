@@ -10,30 +10,25 @@ class Cart {
         $this->conn = $db;
     }
 
-    // Menambah atau mengupdate item di keranjang. Jika produk sudah ada, quantity akan ditambahkan.
     public function addItem(int $buyerId, int $productId, int $quantity): bool {
-        // Cek apakah item sudah ada di cart
         $stmt = $this->conn->prepare("SELECT cart_item_id FROM {$this->table} WHERE buyer_id = ? AND product_id = ?");
         $stmt->bind_param("ii", $buyerId, $productId);
         $stmt->execute();
         $result = $stmt->get_result();
         
         if ($result->num_rows > 0) {
-            // Jika ada, update quantity
             $row = $result->fetch_assoc();
             $cartItemId = $row['cart_item_id'];
             $updateStmt = $this->conn->prepare("UPDATE {$this->table} SET quantity = quantity + ? WHERE cart_item_id = ?");
             $updateStmt->bind_param("ii", $quantity, $cartItemId);
             return $updateStmt->execute();
         } else {
-            // Jika tidak ada, insert baru
             $insertStmt = $this->conn->prepare("INSERT INTO {$this->table} (buyer_id, product_id, quantity) VALUES (?, ?, ?)");
             $insertStmt->bind_param("iii", $buyerId, $productId, $quantity);
             return $insertStmt->execute();
         }
     }
 
-    // Mengambil semua item di keranjang seorang buyer, digabung dengan info produk dan toko
     public function getCartItems(int $buyerId) {
         $query = "
             SELECT 
@@ -59,21 +54,18 @@ class Cart {
         return $stmt->get_result();
     }
 
-    // Mengupdate quantity item tertentu di keranjang.
     public function updateItemQuantity(int $cartItemId, int $quantity): bool {
         $stmt = $this->conn->prepare("UPDATE {$this->table} SET quantity = ? WHERE cart_item_id = ?");
         $stmt->bind_param("ii", $quantity, $cartItemId);
         return $stmt->execute();
     }
 
-    // Menghapus item dari keranjang.
     public function removeItem(int $cartItemId): bool {
         $stmt = $this->conn->prepare("DELETE FROM {$this->table} WHERE cart_item_id = ?");
         $stmt->bind_param("i", $cartItemId);
         return $stmt->execute();
     }
     
-    // Menghitung jumlah item unik di keranjang untuk badge navbar.
     public function getCartItemCount(int $buyerId): int {
         $stmt = $this->conn->prepare("SELECT COUNT(cart_item_id) as count FROM {$this->table} WHERE buyer_id = ?");
         $stmt->bind_param("i", $buyerId);

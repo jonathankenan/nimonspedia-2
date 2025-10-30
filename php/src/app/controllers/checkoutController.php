@@ -14,7 +14,6 @@ class CheckoutController {
         $this->userId = $userId;
     }
     
-    // Memproses checkout yang disubmit dari form
     public function process() {
         $cartModel = new Cart($this->conn);
         $cartItemsResult = $cartModel->getCartItems($this->userId);
@@ -50,7 +49,6 @@ class CheckoutController {
         $success = $orderModel->createOrderFromCart($this->userId, $itemsByStore, $shippingAddress);
 
         if ($success) {
-            // Perbarui saldo di session setelah berhasil
             $_SESSION['balance'] = $user['balance'] - $grandTotal;
 
             unset($_SESSION['checkout_error']);
