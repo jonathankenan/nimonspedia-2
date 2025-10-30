@@ -17,7 +17,7 @@
     padding: 0.6rem 1rem;
     text-decoration: none;
     background: #f0f0f0;
-    color: #333;
+    color: #000;
     border-radius: 20px;
     font-size: 0.9rem;
     transition: background-color 0.2s, color 0.2s;
@@ -51,7 +51,7 @@
 
 .order-header p {
     margin: 0 0 0.25rem 0;
-    color: #555;
+    color: #000; 
 }
 
 /* Badge Status */
@@ -80,17 +80,15 @@
     gap: 1rem;
 }
 
+.order-item-summary p {
+    color: #000;
+}
+
 .order-item-summary img {
     width: 40px;
     height: 40px;
     border-radius: 4px;
     object-fit: cover;
-}
-
-.more-items {
-    font-size: 0.8rem;
-    color: #666;
-    margin: 0.5rem 0 0 56px;
 }
 
 /* Bagian Bawah Kartu */
@@ -100,6 +98,10 @@
     align-items: center;
     padding-top: 1rem;
     border-top: 1px solid #f0f0f0;
+}
+
+.order-footer p {
+    color: #000;
 }
 
 .btn-detail {
@@ -124,6 +126,12 @@
     padding-top: 1rem;
     border-top: 1px dashed #ddd;
 }
+
+/* PERBAIKAN WARNA DI SINI */
+.order-details p, .order-details h4 {
+    color: #000; /* Tambahkan ini agar semua teks detail menjadi hitam */
+}
+
 
 .order-item-detail {
     display: flex;
