@@ -19,7 +19,7 @@ class CartController {
 
         $productId = (int)$_POST['product_id'];
         $quantity = (int)($_POST['quantity'] ?? 1);
-
+        
         $success = $this->cartModel->addItem($this->buyerId, $productId, $quantity);
 
         if ($success) {
@@ -35,7 +35,7 @@ class CartController {
         $cartItemId = $input['cart_item_id'] ?? null;
         $quantity = $input['quantity'] ?? null;
 
-        if (!$cartItemId || $quantity === null || $quantity < 1) {
+        if (!$cartItemId || $quantity === null || intval($quantity) < 0) {
             $this->jsonResponse(false, 'Data tidak valid.');
             return;
         }
@@ -72,13 +72,9 @@ class CartController {
         header('Location: ' . $_SERVER['HTTP_REFERER'] . '?' . $param);
         exit;
     }
-    
+
     private function jsonResponse($success, $message = '') {
         header('Content-Type: application/json');
-        $response = ['success' => $success];
-        if (!empty($message)) {
-            $response['message'] = $message;
-        }
-        echo json_encode($response);
+        echo json_encode(['success' => $success, 'message' => $message]);
     }
 }

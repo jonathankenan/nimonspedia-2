@@ -2,23 +2,44 @@
 include_once(__DIR__ . '/../../app/utils/session.php');
 include_once(__DIR__ . '/../../app/config/db.php');
 include_once(__DIR__ . '/../../app/models/cart.php');
+include_once(__DIR__ . '/../../app/controllers/cartController.php');
 
 requireLogin();
 requireRole('BUYER');
+
+use App\Controllers\CartController;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $controller = new CartController($conn, $_SESSION['user_id']);
+    $action = $_GET['action'] ?? '';
+
+    switch ($action) {
+        case 'add':
+            $controller->add();
+            break;
+        case 'update':
+            $controller->update();
+            break;
+        case 'remove':
+            $controller->remove();
+            break;
+        default:
+            header('Location: /buyer/cart.php');
+            break;
+    }
+    exit;
+}
 
 use App\Models\Cart;
 
 $cartModel = new Cart($conn);
 $cartItemsResult = $cartModel->getCartItems($_SESSION['user_id']);
 
-// Kelompokkan item berdasarkan toko
 $stores = [];
 while ($item = $cartItemsResult->fetch_assoc()) {
     $stores[$item['store_id']]['store_name'] = $item['store_name'];
     $stores[$item['store_id']]['items'][] = $item;
 }
-
-// Update cart count di session
 $_SESSION['cart_count'] = $cartModel->getCartItemCount($_SESSION['user_id']);
 ?>
 
@@ -77,13 +98,12 @@ $_SESSION['cart_count'] = $cartModel->getCartItemCount($_SESSION['user_id']);
                         <p>Total Item</p>
                         <p id="summary-total-items">0</p>
                     </div>
-                    <div id="summary-details">
-                        </div>
+                    <div id="summary-details"></div>
                     <div class="grand-total">
                         <p>Grand Total</p>
                         <p id="grand-total-value">Rp 0</p>
                     </div>
-                    <button id="checkout-btn" class="btn">Checkout</button>
+                    <a href="/buyer/checkout.php" id="checkout-btn" class="btn">Checkout</a>
                 </div>
             </div>
         <?php endif; ?>
