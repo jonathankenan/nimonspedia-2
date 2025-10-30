@@ -210,6 +210,8 @@ class Product {
             'products' => $products,
             'totalPages' => $totalPages
         ];
+    }
+    
     public function findProductWithStoreById(int $productId) {
         $productId = (int)$productId;
         $sql = "SELECT p.*, s.store_name, s.store_description, s.store_id, s.store_logo_path

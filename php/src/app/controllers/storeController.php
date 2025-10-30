@@ -22,6 +22,18 @@ class StoreController {
         $this->orderModel = new Order($conn);
     }
 
+    public function getStoreById(int $storeId) {
+        $storeId = (int)$storeId;
+        $res = $this->conn->query("SELECT * FROM stores WHERE store_id = $storeId");
+        return $res ? $res->fetch_assoc() : null;
+    }
+
+    public function getStoreProducts(int $storeId, array $filters = [], int $page = 1, int $perPage = 12): array {
+        $filters['store_id'] = $storeId;
+        $productModel = new Product($this->conn);
+        return $productModel->getFilteredProducts($filters, $page, $perPage);
+    }
+
     public function getStoreStatistics($storeId) {
         try {
             // Get total products

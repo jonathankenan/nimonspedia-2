@@ -20,6 +20,8 @@ class Order {
         $result = $stmt->get_result();
         $row = $result->fetch_assoc();
         return $row['total'] ?? 0;
+    }
+
     public function create($buyerId, $storeId, $totalPrice, $shippingAddress, $status = 'waiting_approval') {
         $stmt = $this->conn->prepare("
             INSERT INTO {$this->table} (buyer_id, store_id, total_price, shipping_address, status)

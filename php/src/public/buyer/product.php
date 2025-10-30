@@ -43,7 +43,7 @@ function sanitize_description($html) {
 
     <div class="container product-detail" data-product-id="<?= (int)$product['product_id'] ?>" data-max-stock="<?= (int)$product['stock'] ?>">
       <div class="image">
-        <img loading="lazy" src="<?= htmlspecialchars($product['main_image_path'] ?: '/assets/images/default-product.png') ?>" alt="<?= htmlspecialchars($product['product_name']) ?>">
+        <img loading="lazy" src="<?= htmlspecialchars($product['main_image_path'] ?: '../assets/images/default.png') ?>" alt="<?= htmlspecialchars($product['product_name']) ?>">
       </div>
       <div class="info">
         <h1><?= htmlspecialchars($product['product_name']) ?></h1>

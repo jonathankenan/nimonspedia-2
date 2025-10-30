@@ -18,6 +18,19 @@ class ProductController {
         $this->categoryItemModel = new CategoryItem($db);
     }
 
+    public function getDetailData(int $productId): array {
+        $productModel = new Product($this->conn);
+        $product = $productModel->findProductWithStoreById($productId);
+        if (!$product) {
+            return [];
+        }
+        $categories = $productModel->getCategoriesForProduct($productId);
+        return [
+            'product' => $product,
+            'categories' => $categories,
+        ];
+    }
+
     public function deleteProduct($productId) {
         try {
             // Verify product belongs to seller's store
