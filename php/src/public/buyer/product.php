@@ -64,7 +64,8 @@ function sanitize_description($html) {
 
         <div class="store">
           <a class="store-name" href="/store/detail.php?id=<?= (int)$product['store_id'] ?>"><?= htmlspecialchars($product['store_name']) ?></a>
-          <p class="store-desc"><?= htmlspecialchars($product['store_description'] ?? '') ?></p>
+          <br>
+          <?= sanitize_description($product['store_description']) ?>
         </div>
 
         <?php if ((int)$product['stock'] > 0): ?>
