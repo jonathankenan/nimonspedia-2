@@ -45,7 +45,7 @@ $totalPages = $data['totalPages'];
         <img class="logo" src="<?= htmlspecialchars($store['store_logo_path'] ?: '/assets/images/logo.png') ?>" alt="logo">
         <div>
           <h1><?= htmlspecialchars($store['store_name']) ?></h1>
-          <p><?= htmlspecialchars($store['store_description'] ?? '') ?></p>
+          <p><?= $store['store_description'] ?? '' ?></p>
         </div>
       </div>
 
