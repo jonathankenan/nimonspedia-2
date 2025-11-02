@@ -135,12 +135,12 @@ INSERT INTO products (store_id, product_name, description, price, stock, main_im
 VALUES
 (1, 'Gelas Kristal Premium', 'Gelas kristal elegan untuk jamuan minum teh', 75000, 15, '/assets/images/products/gelas_kristal.jpg'),
 (1, 'Set Piring Makan', 'Set 6 piring makan premium dengan motif bunga', 250000, 20, '/assets/images/products/set_piring.jpg'),
-(1, 'Set Sendok Garpu Gold', 'Set sendok dan garpu lapisan emas 24 pieces', 800000, 10, '/assets/images/products/sendok_garpu.jpg'),
+(1, 'Set Sendok Garpu Gold', 'Set sendok dan garpu lapisan emas 24 pieces', 800000, 10, '/assets/images/products/sendok_garpu_gold.jpg'),
 (1, 'Mangkok Keramik', 'Mangkok keramik handmade dengan motif tradisional', 45000, 8, '/assets/images/products/mangkok.jpg'),
-(1, 'Teko Traditional', 'Teko keramik traditional dengan filter teh', 120000, 12, '/assets/images/products/teko.jpg'),
+(1, 'Teko Traditional', 'Teko keramik traditional dengan filter teh', 120000, 12, '/assets/images/products/teko_tradisional.jpg'),
 (1, 'Tempat Bumbu 6 in 1', 'Set tempat bumbu dengan 6 kompartemen', 150000, 25, '/assets/images/products/tempat_bumbu.jpg'),
-(1, 'Tatakan Piring', 'Tatakan piring dengan motif elegant', 35000, 30, '/assets/images/products/tatakan.jpg'),
-(1, 'Rak Piring Mini', 'Rak piring mini untuk dapur minimalis', 200000, 18, '/assets/images/products/rak_piring.jpg');
+(1, 'Tatakan Piring', 'Tatakan piring dengan motif elegant', 35000, 30, '/assets/images/products/tatakan_piring.jpg'),
+(1, 'Rak Piring Mini', 'Rak piring mini untuk dapur minimalis', 200000, 18, '/assets/images/products/rak_piring_mini.jpg');
 
 -- Link products to categories
 INSERT INTO category_items (category_id, product_id)
