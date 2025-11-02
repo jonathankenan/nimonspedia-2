@@ -56,6 +56,11 @@ $_SESSION['cart_count'] = $cartModel->getCartItemCount($_SESSION['user_id']);
     <meta charset="UTF-8">
     <title>Shopping Cart | Nimonspedia</title>
     <link rel="stylesheet" href="../assets/css/cart.css">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+    
     <script src="../assets/js/cart.js" defer></script>
 </head>
 <body>
@@ -67,7 +72,7 @@ $_SESSION['cart_count'] = $cartModel->getCartItemCount($_SESSION['user_id']);
         <?php if (empty($stores)): ?>
             <div class="empty-state">
                 <p>Keranjang Anda masih kosong.</p>
-                <a href="/buyer/dashboard.php" class="btn">Mulai Belanja</a>
+                <a href="/index.php" class="btn">Mulai Belanja</a>
             </div>
         <?php else: ?>
             <div class="cart-layout">
@@ -121,8 +126,8 @@ $_SESSION['cart_count'] = $cartModel->getCartItemCount($_SESSION['user_id']);
             <h3>Konfirmasi Penghapusan</h3>
             <p>Anda yakin ingin menghapus item ini dari keranjang?</p>
             <div class="modal-actions">
-                <button id="cancel-delete-btn" class="btn btn-secondary">Batal</button>
                 <button id="confirm-delete-btn" class="btn btn-danger">Ya, Hapus</button>
+                <button id="cancel-delete-btn" class="btn btn-secondary">Batal</button>
             </div>
         </div>
     </div>

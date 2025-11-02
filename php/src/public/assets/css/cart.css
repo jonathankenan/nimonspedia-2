@@ -1,53 +1,60 @@
-/* General container */
-.container {
-    max-width: 1200px;
-    margin: 2rem auto;
-    padding: 1rem;
+/* ====== PENGATURAN DASAR ====== */
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    margin: 0;
+    background-color: #FFFFFF;
+    color: #333;
+    padding-top: 90px;
 }
 
-h1, h2 {
-    color: #333;
+.container {
+    max-width: 1300px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #0A75BD;
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+h2 {
+    font-weight: 600;
 }
 
 .cart-layout {
-    display: flex;
+    display: grid;
+    grid-template-columns: 2fr 1fr; 
     gap: 2rem;
     align-items: flex-start;
 }
 
 .cart-items {
-    flex: 3; /* Takes more space */
+    flex-grow: 1;
 }
 
-.summary-panel {
-    flex: 1;
-    background-color: #f9f9f9;
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    position: sticky;
-    top: 90px; /* Adjust based on navbar height */
-}
-
-/* Store Grouping */
 .store-group {
     background: #fff;
     margin-bottom: 1.5rem;
-    padding: 1rem;
-    border-radius: 8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
 }
 
 .store-group h2 {
     margin-top: 0;
-    font-size: 1.2rem;
+    font-size: 1.3rem;
     border-bottom: 1px solid #eee;
-    padding-bottom: 0.5rem;
+    padding-bottom: 0.75rem;
+    margin-bottom: 10px;
 }
 
-/* Cart Item */
 .cart-item {
-    display: flex;
+    display: grid;
+    grid-template-columns: auto 1fr auto auto;
     align-items: center;
     gap: 1rem;
     padding: 1rem 0;
@@ -61,14 +68,20 @@ h1, h2 {
     width: 80px;
     height: 80px;
     object-fit: cover;
-    border-radius: 6px;
+    border-radius: 8px;
 }
 
 .item-details { flex: 1; }
-.product-name { font-weight: bold; margin: 0; }
-.product-price { color: #555; margin: 0.25rem 0 0; }
+.product-name { 
+    font-weight: 600; 
+    font-size: 1.05rem;
+    margin: 0; 
+}
+.product-price { 
+    font-weight: 400;
+    margin: 0.25rem 0 0; 
+}
 
-/* Actions */
 .item-actions {
     display: flex;
     align-items: center;
@@ -76,104 +89,132 @@ h1, h2 {
 }
 
 .quantity-selector {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     border: 1px solid #ccc;
-    border-radius: 6px;
+    border-radius: 20px;
+    overflow: hidden;
 }
 
 .quantity-btn {
-    background: #f5f5f5;
+    background: transparent;
     border: none;
-    padding: 0.5rem 0.8rem;
+    padding: 8px 12px;
     cursor: pointer;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
+    color: #555;
+}
+.quantity-btn:hover {
+    background: #f9f9f9;
 }
 .quantity-input {
     width: 40px;
     text-align: center;
     border: none;
     font-size: 1rem;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    border-left: 1px solid #ccc;
+    border-right: 1px solid #ccc;
 }
-/* Hide number input arrows */
 .quantity-input::-webkit-outer-spin-button,
 .quantity-input::-webkit-inner-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+.quantity-input[type=number] {
+  -moz-appearance: textfield;
+}
 
 .delete-btn {
-    background: #ff4d4d;
+    background: #0A75BD;
     color: white;
     border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
+    padding: 8px 18px;
+    border-radius: 999px;
     cursor: pointer;
+    font-weight: 300;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+.delete-btn:hover {
+    background-color: #085f9a;
 }
 
-/* Subtotal */
 .item-subtotal {
-    min-width: 150px;
+    min-width: 130px;
     text-align: right;
+    font-size: 0.95rem;
 }
-.subtotal-value { font-weight: bold; }
+.subtotal-value { 
+    font-weight: 600; 
+    font-size: 1rem;
+    color: #333;
+}
 
-/* Summary Panel */
+.summary-panel {
+    background-color: #fff;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+    position: sticky;
+    top: 90px;
+}
+
 .summary-panel h2 {
     margin-top: 0;
+    font-size: 1.3rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 0.75rem;
+    margin-bottom: 10px;
 }
+
 .summary-item, .summary-per-store, .grand-total {
     display: flex;
     justify-content: space-between;
-    padding: 0.5rem 0;
+    /* padding: 0.6rem 0; */
+    font-size: 0.95rem;
 }
+
 .grand-total {
     border-top: 2px solid #ddd;
     margin-top: 1rem;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
     font-weight: bold;
 }
-#checkout-btn {
-    width: 100%;
-    padding: 0.8rem;
-    font-size: 1.1rem;
-    margin-top: 1rem;
+#grand-total-value {
+    color: #0A75BD;
 }
 
-/* Empty State */
-.empty-state {
-    text-align: center;
-    padding: 4rem;
-    background: #fff;
-    border-radius: 8px;
-}
-.cart-layout .empty-state {
-    width: 100%;
-}
-
-/* General button */
 .btn {
-    background-color: #1a73e8;
+    background-color: #0A75BD;
     color: white;
     border: none;
-    padding: 0.7rem 1.5rem;
-    border-radius: 6px;
+    padding: 10px 25px;
+    border-radius: 999px;
     cursor: pointer;
     text-decoration: none;
     display: inline-block;
+    font-weight: 600;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    transition: background-color 0.2s;
 }
 .btn:hover {
-    background-color: #155fc0;
+    background-color: #085f9a;
 }
 
-/* Styling untuk Custom Modal Konfirmasi */
+#checkout-btn {
+    width: 94%;
+    padding: 14px;
+    font-size: 1rem;
+    margin-top: 1rem;
+    text-align: center;
+}
+
 .modal-overlay {
     display: none;
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     background-color: rgba(0, 0, 0, 0.6);
     justify-content: center;
     align-items: center;
@@ -181,11 +222,7 @@ h1, h2 {
     opacity: 0;
     transition: opacity 0.2s ease-in-out;
 }
-
-.modal-overlay.show {
-    display: flex;
-    opacity: 1;
-}
+.modal-overlay.show { display: flex; opacity: 1; }
 
 .modal-content {
     background: #fff;
@@ -194,73 +231,82 @@ h1, h2 {
     width: 90%;
     max-width: 400px;
     text-align: center;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    font-family: 'Plus Jakarta Sans', sans-serif;
     transform: scale(0.95);
     transition: transform 0.2s ease-in-out;
 }
 
-.modal-overlay.show .modal-content {
-    transform: scale(1);
-}
+.modal-overlay.show .modal-content { transform: scale(1); }
+.modal-content h3 { margin-top: 0; margin-bottom: 1.2rem; font-size: 1.5rem; color: #0A75BD; }
+.modal-content p { margin-bottom: 1.5rem; color: #333; }
 
-.modal-content h3 {
-    margin-top: 0;
-    font-size: 1.5rem;
-    color: #333;
-}
-
-.modal-content p {
-    margin-bottom: 1.5rem;
-    color: #666;
-}
-
-.modal-actions {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-}
+.modal-actions { display: flex; justify-content: center; gap: 1rem; }
 
 .btn-secondary {
-    background-color: #6c757d;
+    background-color: #0A75BD;
+    color: #fff;
 }
 .btn-secondary:hover {
-    background-color: #5a6268;
+    background-color: #085f9a;
 }
 
 .btn-danger {
-    background-color: #dc3545;
+    background-color: #BD0A0A;
 }
 .btn-danger:hover {
-    background-color: #c82333;
+    background-color: #9E0707;
 }
 
 .loading-overlay {
     display: none; 
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     background-color: rgba(255, 255, 255, 0.7);
     justify-content: center;
     align-items: center;
-    z-index: 3000; /* Pastikan di atas semua elemen lain */
+    z-index: 3000;
 }
-
-.loading-overlay.show {
-    display: flex; 
-}
+.loading-overlay.show { display: flex; }
 
 .spinner {
-    border: 5px solid #f3f3f3; /* Abu-abu muda */
-    border-top: 5px solid #1a73e8; /* Biru */
+    border: 5px solid #f3f3f3;
+    border-top: 5px solid #0A75BD;
     border-radius: 50%;
     width: 50px;
     height: 50px;
     animation: spin 1s linear infinite;
 }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+.empty-state {
+    text-align: center;
+    padding: 4rem;
+    background: #fff;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+.cart-layout .empty-state {
+    grid-column: 1 / -1;
+}
+
+@media (max-width: 900px) {
+    .cart-layout {
+        grid-template-columns: 1fr;
+    }
+    .summary-panel {
+        position: static;
+    }
+    .cart-item {
+        grid-template-columns: auto 1fr;
+        grid-template-areas: 
+            "img details"
+            "img actions"
+            "sub sub";
+        row-gap: 0.5rem;
+    }
+    .cart-item img { grid-area: img; }
+    .item-details { grid-area: details; }
+    .item-actions { grid-area: actions; }
+    .item-subtotal { grid-area: sub; text-align: right; }
 }

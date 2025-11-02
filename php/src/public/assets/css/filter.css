@@ -1,0 +1,70 @@
+
+.filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 30px;
+    align-items: center;
+}
+
+.filters input[type="text"] {
+    flex-grow: 1;
+}
+
+.filters input {
+    padding: 14px 18px;
+    border-radius: 30px;
+    border: 1px solid #e0e0e0;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.95rem;
+    box-sizing: border-box;
+}
+.filters input:focus {
+    outline: none;
+    border-color: #0A75BD;
+}
+
+.filters input[type="number"] {
+    width: 100px;
+}
+
+.filters select {
+    padding: 14px 18px;
+    border-radius: 30px;
+    background-color: #0A75BD;
+    color: white;
+    border: none;
+    cursor: pointer;
+    font-size: 0.95rem;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding-right: 40px;
+}
+
+.filters button {
+    background-color: #0A75BD;
+    color: white;
+    border: none;
+    cursor: pointer;
+    padding: 14px 25px;
+    border-radius: 30px;
+    font-size: 0.95rem;
+    transition: background-color 0.2s;
+}
+
+.filters button:hover {
+    background-color: #085f9a;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .filters {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+    }
+    .filters input[type="number"] {
+        width: 100%;
+    }
+}

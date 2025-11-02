@@ -12,96 +12,82 @@ $categories = $categoryModel->getAll();
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <title>Tambah Produk</title>
     <link rel="stylesheet" href="/assets/css/tambahProduk.css">
+    <link rel="stylesheet" href="/assets/css/toast.css">
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
 </head>
 <body>
     <?php include_once(__DIR__ . '/../../app/components/navbar.php'); ?>
-    <div class="container">
-        <div class="header">
-            <h1>Tambah Produk Baru</h1>
-            <a href="/seller/kelola_produk.php" class="back-button">Kembali</a>
-        </div>
+    
+    <div class="form-container">
+        
+        <h1>Tambah Produk Baru</h1>
 
-        <form id="addProductForm" class="product-form" enctype="multipart/form-data">
-            <div class="form-group">
-                <label for="productName">Nama Produk*</label>
-                <input type="text" id="productName" name="productName" maxlength="200" required>
-                <small class="char-counter">0/200</small>
-            </div>
-
-            <div class="form-group">
-                <label for="editor">Deskripsi Produk*</label>
-                <div id="editor" style="height:150px;"></div>
-                <input type="hidden" name="description" id="productDescription">
-                <small class="char-counter">0/1000</small>
-            </div>
-
-            <div class="form-group">
-                <label for="categories">Kategori*</label>
-                <select id="categories" name="categories[]" multiple required>
-                    <?php foreach ($categories as $category): ?>
-                        <option value="<?= htmlspecialchars($category['category_id']) ?>">
-                                <?= htmlspecialchars($category['name']) ?>
-                            </option>
-                    <?php endforeach; ?>
-                </select>
-            </div>
+        <form id="addProductForm" class="product-form" method="POST" enctype="multipart/form-data">
             
+            <label for="productName">Nama Produk:</label>
+            <input type="text" id="productName" name="productName" maxlength="200" required>
 
-            <div class="form-group">
-                <label for="price">Harga (Rp)*</label>
-                <input type="number" id="price" name="price" min="1000" required>
-            </div>
+            <label for="editor">Deskripsi Produk:</label>
+            <div id="editor" style="height:150px;"></div>
+            <input type="hidden" name="description" id="productDescription">
 
-            <div class="form-group">
-                <label for="stock">Stok*</label>
-                <input type="number" id="stock" name="stock" min="0" required>
-            </div>
+            <label for="category">Kategori:</label>
+            <select id="category" name="category_id" required>
+                <option value="" disabled selected>Pilih satu kategori</option>
+                <?php foreach ($categories as $category): ?>
+                    <option value="<?= htmlspecialchars($category['category_id']) ?>">
+                            <?= htmlspecialchars($category['name']) ?>
+                        </option>
+                <?php endforeach; ?>
+            </select>
 
-            <div class="form-group">
-                <label for="productImage">Foto Produk*</label>
-                <div class="image-upload-container">
-                    <div class="preview-container" style="display: none;">
-                        <img id="imagePreview">
-                    </div>
-                    <div class="upload-controls">
-                        <label for="productImage" class="btn btn-primary">Pilih Foto</label>
-                        <input type="file" id="productImage" name="productImage" accept="image/jpg,image/jpeg,image/png,image/webp" style="display: none;" required>
-                    </div>
-                    <small class="file-info">Max: 2MB. Format: JPG, JPEG, PNG, WEBP</small>
-                </div>
-            </div>
+            <label for="price">Harga (Rp):</label>
+            <input type="number" id="price" name="price" min="1000" required>
 
-            <div class="upload-progress" style="display: none;">
-                <div class="progress-bar">
-                    <div class="progress-fill"></div>
-                </div>
-                <span class="progress-text">Mengupload... 0%</span>
+            <label for="stock">Stok:</label>
+            <input type="number" id="stock" name="stock" min="0" required>
+
+            <label for="productImage">Foto Produk:</label>
+            <div class="file-input-wrapper">
+                <label for="productImage_input" class="file-upload-button">Pilih Foto</label>
+                <span class="file-help-text">Max. 2MB. Format: JPG, JPEG, PNG, WEBP</span>
+                <input type="file" id="productImage_input" name="productImage" accept="image/jpg,image/jpeg,image/png,image/webp" required>
             </div>
 
             <div class="form-actions">
-                <button type="submit" class="btn btn-primary" id="submitButton">Tambah Produk</button>
+                <button type="submit" id="submitButton">Tambah Produk</button>
             </div>
         </form>
     </div>
 
-    <div id="toast" class="toast" style="display: none;"></div>
+    <div id="toast" class="toast"></div>
 
-        <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
-        <script>
-            var quill = new Quill('#editor', {
-                theme: 'snow',
-                placeholder: 'Tulis deskripsi produk...'
+    <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+    <script>
+        var quill = new Quill('#editor', {
+            theme: 'snow',
+            placeholder: 'Tulis deskripsi produk...'
+        });
+        
+        var form = document.getElementById('addProductForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                var descriptionInput = document.getElementById('productDescription');
+                if (descriptionInput) {
+                    descriptionInput.value = quill.root.innerHTML;
+                }
             });
-            document.getElementById('addProductForm').addEventListener('submit', function(e) {
-                document.getElementById('productDescription').value = quill.root.innerHTML;
-            });
-        </script>
-        <script src="/assets/js/tambahProduk.js"></script>
+        }
+    </script>
+    
+    <script src="/assets/js/tambahProduk.js"></script>
 </body>
 </html>

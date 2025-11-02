@@ -25,14 +25,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-<meta charset="UTF-8">
-<title>Profile | Nimonspedia</title>
-<link rel="stylesheet" href="../assets/css/profile.css">
-<link rel="stylesheet" href="../assets/css/popup.css">
-<link rel="stylesheet" href="../assets/css/password.css">
-<script src="../assets/js/profile.js" defer></script>
+    <meta charset="UTF-8">
+    <title>Profile | Nimonspedia</title>
+    <link rel="stylesheet" href="../assets/css/profile.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+
+    <script src="../assets/js/profile.js" defer></script>
 </head>
     <body>
     <?php include_once(__DIR__ . '/../../app/components/navbar.php'); ?>
@@ -41,30 +44,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <input type="hidden" id="profile-msg" value="<?= htmlspecialchars($profileMsg) ?>">
     <input type="hidden" id="password-msg" value="<?= htmlspecialchars($passwordMsg) ?>">
 
-    <div class="container">
+    <div class="profile-container">
         <h1>Profile Buyer</h1>
 
         <!-- Form Edit Profile -->
-        <form method="POST" id="profile-form">
-            <h2>Edit Profile</h2>
-            <label>Nama</label>
-            <input type="text" name="name" value="<?= htmlspecialchars($user['name']) ?>" required>
-            <label>Email (readonly)</label>
-            <input type="email" value="<?= htmlspecialchars($user['email']) ?>" readonly>
-            <label>Alamat</label>
-            <textarea name="address" required><?= htmlspecialchars($user['address']) ?></textarea>
+        <form method="POST" id="profile-form" class="profile-section">
+            <h2>Edit Profil</h2>
+            <label for="name">Nama:</label>
+            <input type="text" id="name" name="name" value="<?= htmlspecialchars($user['name']) ?>" required>
+            
+            <label for="email">Email (readonly)</label>
+            <input type="email" id="email" value="<?= htmlspecialchars($user['email']) ?>" readonly>
+            
+            <label for="address">Alamat:</label>
+            <textarea id="address" name="address" required><?= htmlspecialchars($user['address']) ?></textarea>
+            
             <button type="submit" name="update_profile">Simpan</button>
         </form>
 
         <!-- Form Change Password -->
         <form method="POST" id="password-form">
             <h2>Ubah Password</h2>
-            <label>Password Lama</label>
-            <input type="password" name="old_password" required>
-            <label>Password Baru</label>
-            <input type="password" name="new_password" required>
-            <label>Konfirmasi Password Baru</label>
-            <input type="password" name="confirm_password" required>
+            
+            <label for="old_password">Password Lama:</label>
+            <div class="password-wrapper">
+                <input type="password" id="old_password" name="old_password" required>
+            </div>
+            
+            <label for="new_password">Password Baru:</label>
+            <div class="password-wrapper">
+                <input type="password" id="new_password" name="new_password" required>
+            </div>
+            
+            <label for="confirm_password">Konfirmasi Password Baru:</label>
+            <div class="password-wrapper">
+                <input type="password" id="confirm_password" name="confirm_password" required>
+            </div>
+            
             <button type="submit" name="change_password">Ubah Password</button>
         </form>
     </div>

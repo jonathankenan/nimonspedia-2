@@ -16,32 +16,32 @@ $productModel = new Product($conn);
 $data = $productModel->getProductsByStoreId($_SESSION['store_id'], $page, $perPage);
 $products = $data['products'];
 $totalPages = $data['totalPages'];
-
-// Debug information
-error_log("Page: " . $page);
-error_log("Total Pages: " . $totalPages);
-error_log("Number of products: " . count($products));
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <title>Kelola Produk</title>
     <link rel="stylesheet" href="/assets/css/kelolaProduk.css">
+    <link rel="stylesheet" href="/assets/css/pagination.css">
+    <link rel="stylesheet" href="/assets/css/toast.css">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
 </head>
 <body>
     <?php include_once(__DIR__ . '/../../app/components/navbar.php'); ?>
     
     <div class="container">
         <div class="header">
-            <h1>Kelola Produk</h1>
+            <h1>Kelola Produk Toko Anda</h1>
             <a href="/seller/tambah_produk.php" class="add-button">Tambah Produk</a>
         </div>
 
         <?php if (empty($products)): ?>
             <div class="empty-state">
-                <img src="/assets/images/empty-products.png" alt="No products">
                 <h2>Belum Ada Produk</h2>
                 <p>Anda belum memiliki produk. Mulai dengan menambahkan produk pertama Anda.</p>
                 <a href="/seller/tambah_produk.php" class="add-button">Tambah Produk Sekarang</a>
@@ -51,9 +51,11 @@ error_log("Number of products: " . count($products));
                 <?php if (is_array($products)): ?>
                     <?php foreach ($products as $product): ?>
                         <div class="product-card" data-product-id="<?= htmlspecialchars($product['product_id']) ?>">
-                            <img src="<?= htmlspecialchars($product['main_image_path']) ?>" alt="<?= htmlspecialchars($product['product_name']) ?>">
+                            <a href="/seller/edit_produk.php?id=<?= htmlspecialchars($product['product_id']) ?>" class="card-image-link">
+                                <img src="<?= htmlspecialchars($product['main_image_path']) ?>" alt="<?= htmlspecialchars($product['product_name']) ?>">
+                            </a>
                             <div class="product-info">
-                                <h3><?= htmlspecialchars($product['product_name']) ?></h3>
+                                <h3><a href="/seller/edit_produk.php?id=<?= htmlspecialchars($product['product_id']) ?>"><?= htmlspecialchars($product['product_name']) ?></a></h3>
                                 <p class="price">Rp <?= number_format($product['price'], 0, ',', '.') ?></p>
                                 <p class="stock">Stok: <?= htmlspecialchars($product['stock']) ?></p>
                             </div>
@@ -69,7 +71,7 @@ error_log("Number of products: " . count($products));
             <!-- Pagination -->
             <div class="pagination">
                 <?php if ($page > 1): ?>
-                    <a href="?page=<?= $page - 1 ?>">&laquo; Previous</a>
+                    <a href="?page=<?= $page - 1 ?>">&laquo;</a>
                 <?php endif; ?>
                 
                 <?php
@@ -95,7 +97,7 @@ error_log("Number of products: " . count($products));
                 <?php endif; ?>
                 
                 <?php if ($page < $totalPages): ?>
-                    <a href="?page=<?= $page + 1 ?>">Next &raquo;</a>
+                    <a href="?page=<?= $page + 1 ?>">&raquo;</a>
                 <?php endif; ?>
             </div>
         <?php endif; ?>
@@ -104,11 +106,11 @@ error_log("Number of products: " . count($products));
     <!-- Delete Confirmation Modal -->
     <div id="deleteModal" class="modal">
         <div class="modal-content">
-            <h2>Konfirmasi Hapus</h2>
+            <h3>Konfirmasi Penghapusan</h3>
             <p>Apakah Anda yakin ingin menghapus produk ini?</p>
             <div class="modal-actions">
-                <button id="confirmDelete" class="confirm-button">Ya, Hapus</button>
-                <button id="cancelDelete" class="cancel-button">Batal</button>
+                <button id="confirmDelete" class="btn btn-danger">Ya, Hapus</button>
+                <button id="cancelDelete" class="btn btn-secondary">Batal</button>
             </div>
         </div>
     </div>
@@ -118,3 +120,4 @@ error_log("Number of products: " . count($products));
 
     <script src="/assets/js/kelolaProduk.js"></script>
 </body>
+</html>

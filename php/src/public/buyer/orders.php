@@ -23,9 +23,14 @@ $orders = $orderModel->getOrderHistory($_SESSION['user_id'], $filterStatus);
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="UTF-R">
     <title>Riwayat Pesanan | Nimonspedia</title>
     <link rel="stylesheet" href="../assets/css/orders.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+    
     <script src="../assets/js/orders.js" defer></script>
 </head>
 <body>

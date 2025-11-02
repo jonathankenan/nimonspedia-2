@@ -22,7 +22,7 @@ class ProfileController {
         $address = trim($data['address']);
 
         if ($this->userModel->updateProfile($this->userId, $name, $address)) {
-            return "Profile berhasil diperbarui";
+            return "Profil berhasil diperbarui!";
         } else {
             return "Update gagal. Cek server logs.";
         }

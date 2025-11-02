@@ -9,7 +9,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Show delete confirmation modal
     window.confirmDelete = function(productId) {
         productToDelete = productId;
-        deleteModal.style.display = 'flex';
+        // PERBAIKAN: Gunakan classList.add()
+        deleteModal.classList.add('show');
     }
 
     // Handle delete confirmation
@@ -17,12 +18,14 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!productToDelete) return;
         
         deleteProduct(productToDelete);
-        deleteModal.style.display = 'none';
+        // PERBAIKAN: Gunakan classList.remove()
+        deleteModal.classList.remove('show');
     });
 
     // Handle delete cancellation
     cancelDeleteBtn.addEventListener('click', function() {
-        deleteModal.style.display = 'none';
+        // PERBAIKAN: Gunakan classList.remove()
+        deleteModal.classList.remove('show');
         productToDelete = null;
     });
 
@@ -74,11 +77,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Show toast message
     function showToast(message, type = 'success') {
         toast.textContent = message;
-        toast.style.display = 'block';
-        toast.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
+        // PERBAIKAN: Gunakan classList untuk toast juga
+        toast.className = 'toast show'; 
+        if (type === 'error') {
+            toast.classList.add('error');
+        }
 
         setTimeout(() => {
-            toast.style.display = 'none';
+            toast.classList.remove('show');
         }, 3000);
     }
 });

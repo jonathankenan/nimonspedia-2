@@ -9,6 +9,8 @@ require_once(__DIR__ . '/../../app/utils/imageHandler.php');
 use App\Controllers\StoreController;
 use App\Utils\ImageHandler;
 
+// $role = $_SESSION['role'] ?? null;
+
 $storeId = isset($_GET['id']) ? (int)$_GET['id'] : 0;
 if ($storeId <= 0) { http_response_code(400); echo 'Invalid store id'; exit; }
 
@@ -36,6 +38,14 @@ $totalPages = $data['totalPages'];
     <meta charset="UTF-8">
     <title><?= htmlspecialchars($store['store_name']) ?> - Toko</title>
     <link rel="stylesheet" href="/assets/css/storeDetail.css">
+    <link rel="stylesheet" href="/assets/css/productCard.css">
+    <link rel="stylesheet" href="/assets/css/pagination.css">
+    <link rel="stylesheet" href="/assets/css/filter.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+    
     <script src="/assets/js/storeDetail.js" defer></script>
   </head>
   <body>
@@ -65,12 +75,32 @@ $totalPages = $data['totalPages'];
                   $outOfStock = $p['stock'] == 0;
               ?>
                   <div class="product-card <?= $outOfStock ? 'out-of-stock' : '' ?>">
-                      <a href="/buyer/product.php?id=<?= (int)$p['product_id'] ?>">
-                          <img src="<?= htmlspecialchars($p['main_image_path']) ?>" alt="Gambar Produk">
+                      <a href="/buyer/product.php?id=<?= (int)$p['product_id'] ?>" class="card-image-link">
+                        <img loading="lazy" 
+                            src="<?= htmlspecialchars($p['main_image_path']) ?>" 
+                            alt="<?= htmlspecialchars($p['product_name']) ?>">
                       </a>
-                      <h3><?= htmlspecialchars($p['product_name']) ?></h3>
-                      <p>Rp <?= number_format($p['price'], 0, ',', '.') ?></p>
-                      <p><?= $outOfStock ? 'Stok Habis' : 'Stok: ' . htmlspecialchars($p['stock']) ?></p>
+                      <div class="card-content">
+                        <h3><a href="/buyer/product.php?id=<?= (int)$p['product_id'] ?>">
+                          <?= htmlspecialchars($p['product_name']) ?>
+                        </a></h3>
+                        <p class="price">Rp <?= number_format($p['price'], 0, ',', '.') ?></p>
+                        
+                        <p class="stock-info">
+                            <?= $outOfStock ? 'Stok Habis' : 'Stok: ' . htmlspecialchars($p['stock']) ?>
+                        </p>
+
+                        <?php if ($outOfStock): ?>
+                          <span class="stock-label">Stok Habis</span>
+                        <?php elseif ($role === 'BUYER'): ?>
+                          <form action="/buyer/cart.php?action=add" method="POST" style="margin-top: auto;">
+                            <input type="hidden" name="product_id" value="<?= $p['product_id'] ?>">
+                            <button type="submit" class="btn">Tambah ke Keranjang</button>
+                          </form>
+                        <?php else: ?>
+                          <a href="/authentication/login.php" class="btn btn-secondary">Masuk untuk Membeli</a>
+                        <?php endif; ?>
+                      </div>
                   </div>
               <?php endforeach; ?>
           <?php endif; ?>

@@ -9,33 +9,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['role'])) {
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <title>Pilih Role | Nimonspedia</title>
-    <link rel="stylesheet" href="/assets/css/style.css"> 
+    
+    <link rel="stylesheet" href="/assets/css/authentication.css"> 
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="container">
-        <h2>Daftar Akun Nimonspedia</h2>
+    <div class="login-container">
+        
+        <h1>Daftar ke Nimonspedia 🍌!</h1>
 
-        <form action="" method="POST" class="role-form">
-            <div class="role-options">
-                <label class="role-card">
-                    <input type="radio" name="role" value="BUYER" required> 
-                    <span>Buyer</span>
-                </label>
+        <form action="" method="POST">
+            <p class="role-prompt">Ingin Mendaftar Sebagai Apa?</p>
 
-                <label class="role-card">
-                    <input type="radio" name="role" value="SELLER" required> 
-                    <span>Seller</span>
-                </label>
+            <div class="role-selection">
+                <input type="radio" name="role" value="BUYER" id="role_buyer" required>
+                <label for="role_buyer" class="role-button">Buyer</label>
+
+                <input type="radio" name="role" value="SELLER" id="role_seller" required>
+                <label for="role_seller" class="role-button">Seller</label>
             </div>
-
-            <button type="submit" id="nextBtn">Lanjut ke Pendaftaran</button>
+            
+            <button type="submit" id="nextBtn">Lanjutkan</button>
         </form>
 
-        <p>Sudah punya akun? <a href="login.php">Masuk di sini</a></p>
+        <p class="register-link">Sudah mempunyai akun? <a href="login.php">Masuk</a></p>
     </div>
 </body>
 </html>

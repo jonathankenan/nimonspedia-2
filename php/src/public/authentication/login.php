@@ -1,7 +1,10 @@
 <?php
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-session_start();
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 $basePath = dirname(__DIR__, 2);
 
@@ -19,31 +22,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_GET['action'] ?? '') === 'auth')
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
   <meta charset="UTF-8">
-  <title>Login</title>
-  <link rel="stylesheet" href="/assets/css/style.css">
+  <title>Masuk ke Nimonspedia</title>
+  
+  <link rel="stylesheet" href="/assets/css/authentication.css">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="container">
-    <h1>Login</h1>
+  
+  <div class="login-container">
+    
+    <h1>Masuk ke <i>Nimonspedia</i> 🍌!</h1>
 
     <?php if (isset($_GET['error'])): ?>
-      <p style="color:red;">Email atau password salah!</p>
+      <p class="error-message">Email atau password salah!</p>
     <?php endif; ?>
     
     <form action="/authentication/login.php?action=auth" method="POST">
-      <label>Email:</label><br>
-      <input type="email" name="email" required><br><br>
+      <label for="email">Email:</label>
+      <input type="email" id="email" name="email" required>
 
-      <label>Password:</label><br>
-      <input type="password" name="password" required><br><br>
+      <label for="password">Password:</label>
+      <input type="password" id="password" name="password" required>
 
-      <button type="submit">Login</button>
+      <button type="submit">Masuk</button>
     </form>
 
-    <p>Belum punya akun? <a href="/authentication/register_role.php">Daftar</a></p>
+    <p class="register-link">
+      Belum mempunyai akun? <a href="/authentication/register_role.php">Daftar</a>
+    </p>
   </div>
+
 </body>
 </html>

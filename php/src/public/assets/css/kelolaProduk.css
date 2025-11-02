@@ -1,12 +1,13 @@
 body {
-    font-family: Arial, sans-serif;
-    background-color: #f5f5f5;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: #FFFFFF;
+    color: #333;
     margin: 0;
-    padding: 0;
+    padding-top: 90px;
 }
 
 .container {
-    max-width: 1200px;
+    max-width: 1300px;
     margin: 0 auto;
     padding: 20px;
 }
@@ -15,381 +16,233 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin: 20px 0 40px 0;
 }
 
 .header h1 {
-  margin: 40px 0;
-  color: #333;
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #0A75BD;
+    margin: 0;
 }
 
 .add-button {
-    background-color: #1a73e8;
+    background-color: #0A75BD;
     color: white;
-    padding: 10px 20px;
-    border-radius: 6px;
+    padding: 14px 25px;
+    border-radius: 999px;
     text-decoration: none;
     border: none;
     cursor: pointer;
     font-weight: 500;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    transition: background-color 0.2s;
 }
 
 .add-button:hover {
-    background-color: #155fc0;
+    background-color: #085f9a;
 }
 
 .product-list {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
     gap: 20px;
+    justify-content: center;
 }
 
 .product-card {
     background: white;
-    border-radius: 10px;
-    padding: 15px;
-    text-align: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    position: relative;
+    border-radius: 12px;
+    border: 0.5px solid #ccc;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: box-shadow 0.2s;
+}
+
+.product-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.product-card a {
+    text-decoration: none;
+    color: inherit;
+}
+
+.card-image-link {
+    display: block;
+    background-color: #f9f9f9;
 }
 
 .product-card img {
     width: 100%;
-    height: 160px;
-    object-fit: cover;
-    border-radius: 8px;
-    margin-bottom: 10px;
-}
-
-.product-info {
-    margin-bottom: 15px;
-}
-
-.product-info h3 {
-    font-size: 1.1em;
-    margin: 10px 0;
-    color: #333;
-}
-
-.product-info .price {
-    font-weight: bold;
-    color: #1a73e8;
-    margin: 5px 0;
-}
-
-.product-info .stock {
-    color: #666;
-    font-size: 0.9em;
-    margin: 5px 0;
-}
-
-.actions {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-}
-
-.edit-button, .delete-button {
-    padding: 8px 16px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    text-decoration: none;
-    text-align: center;
-    flex: 1;
-}
-
-.edit-button {
-    background-color: #1a73e8;
-    color: white;
-}
-
-.delete-button {
-    background-color: #dc3545;
-    color: white;
-}
-
-.edit-button:hover {
-    background-color: #155fc0;
-}
-
-.delete-button:hover {
-    background-color: #c82333;
-}
-
-/* Empty State */
-.empty-state {
-    text-align: center;
-    padding: 40px 20px;
-}
-
-.empty-state img {
-    width: 200px;
     height: 200px;
-    margin-bottom: 20px;
-}
-
-.empty-state h2 {
-    color: #333;
-    margin-bottom: 10px;
-}
-
-.empty-state p {
-    color: #666;
-    margin-bottom: 20px;
-}
-
-/* Modal */
-.modal {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.modal-content {
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    width: 90%;
-    max-width: 400px;
-}
-
-.modal-content h2 {
-    margin-top: 0;
-}
-
-.modal-actions {
-    display: flex;
-    gap: 10px;
-    justify-content: flex-end;
-    margin-top: 20px;
-}
-
-.confirm-button, .cancel-button {
-    padding: 8px 16px;
-    border-radius: 6px;
-    border: none;
-    cursor: pointer;
-}
-
-.confirm-button {
-    background-color: #dc3545;
-    color: white;
-}
-
-.cancel-button {
-    background-color: #6c757d;
-    color: white;
-}
-
-.confirm-button:hover {
-    background-color: #c82333;
-}
-
-.cancel-button:hover {
-    background-color: #5a6268;
-}
-
-/* Toast */
-.toast {
-    display: none;
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    padding: 12px 24px;
-    border-radius: 6px;
-    color: white;
-    z-index: 1000;
-}
-
-/* Pagination */
-.pagination {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin: 30px 0;
-}
-
-.pagination a {
-    display: inline-block;
-    padding: 8px 12px;
-    background-color: white;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    color: #333;
-    text-decoration: none;
-    transition: all 0.2s;
-}
-
-.pagination a:hover {
-    background-color: #f5f5f5;
-}
-
-.pagination a.active {
-    background-color: #1a73e8;
-    border-color: #1a73e8;
-    color: white;
+    object-fit: cover;
+    display: block;
 }
 
 .product-info {
     padding: 15px;
+    text-align: left;
+    flex-grow: 1;
 }
 
 .product-info h3 {
-    margin: 0 0 10px;
-    font-size: 18px;
-    color: #333;
+    font-size: 1.05rem;
+    font-weight: 600;
+    margin: 0 0 5px 0;
+    line-height: 1.3;
+}
+.product-info h3 a {
+    color: #0A75BD;
+}
+.product-info h3 a:hover {
+    color: #085f9a;
 }
 
-.price {
-    font-size: 16px;
-    font-weight: bold;
-    color: #007bff;
-    margin: 5px 0;
+.product-info .price {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #0A75BD;
+    margin: 0 0 8px 0;
 }
 
-.stock {
-    color: #666;
-    margin: 5px 0;
+.product-info .stock {
+    font-size: 0.85rem;
+    color: #777;
+    margin: 0 0 5px 0;
 }
 
 .actions {
     display: flex;
     gap: 10px;
-    margin-top: 15px;
+    justify-content: center;
+    padding: 0 15px 15px 15px;
+    margin-top: auto;
 }
 
-/* Empty State */
-.empty-state {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 40px;
-    background: #f8f9fa;
-    border-radius: 8px;
-}
-
-.empty-state p {
-    margin-bottom: 20px;
-    color: #666;
-}
-
-/* Buttons */
-.btn {
-    padding: 8px 16px;
+.actions .edit-button, .actions .delete-button {
+    padding: 10px 1px;
+    border-radius: 20px;
     border: none;
-    border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 0.95rem;
+    font-weight: 600;
     text-decoration: none;
-    display: inline-block;
-    transition: background-color 0.3s;
+    text-align: center;
+    flex: 1;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    transition: background-color 0.2s;
+    color: #fff;
 }
 
-.btn-primary {
-    background-color: #007bff;
-    color: white;
+.actions .edit-button {
+    background-color: #0A75BD;
+}
+.actions .edit-button:hover {
+    background-color: #085f9a;
 }
 
-.btn-primary:hover {
-    background-color: #0056b3;
-}
-
-.btn-secondary {
-    background-color: #6c757d;
-    color: white;
-}
-
-.btn-secondary:hover {
-    background-color: #545b62;
-}
-
-.btn-danger {
+.actions .delete-button {
     background-color: #dc3545;
     color: white;
 }
-
-.btn-danger:hover {
+.actions .delete-button:hover {
     background-color: #c82333;
 }
 
-/* Modal */
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 4rem;
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+}
+.empty-state img {
+    width: 200px;
+    height: auto;
+    margin-bottom: 1.5rem;
+}
+.empty-state h2 {
+    color: #333;
+    margin-bottom: 10px;
+}
+.empty-state p {
+    color: #666;
+    margin-bottom: 20px;
+}
+
 .modal {
+    display: none;
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 2000;
+    opacity: 0;
+    transition: opacity 0.2s ease-in-out;
+}
+.modal.show {
+    display: flex;
+    opacity: 1;
 }
 
 .modal-content {
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    max-width: 400px;
+    background: #fff;
+    padding: 2rem;
+    border-radius: 12px;
     width: 90%;
+    max-width: 400px;
+    text-align: center;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    transform: scale(0.95);
+    transition: transform 0.2s ease-in-out;
 }
+.modal.show .modal-content {
+    transform: scale(1);
+}
+
+.modal-content h3 { margin-top: 0; margin-bottom: 1.2rem; font-size: 1.5rem; color: #0A75BD; }
+.modal-content p { margin-bottom: 1.5rem; color: #333; }
 
 .modal-actions {
     display: flex;
-    justify-content: flex-end;
-    gap: 10px;
-    margin-top: 20px;
-}
-
-/* Toast */
-.toast {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    padding: 15px 20px;
-    background-color: #4CAF50;
-    color: white;
-    border-radius: 4px;
-    z-index: 1000;
-    display: none;
-}
-
-.pagination {
-    display: flex;
     justify-content: center;
-    gap: 10px;
-    margin-top: 30px;
+    gap: 1rem;
 }
 
-.pagination a {
-    padding: 8px 16px;
-    background-color: #fff;
-    border: 1px solid #ddd;
-    color: #333;
-    text-decoration: none;
-    border-radius: 4px;
-    transition: all 0.3s ease;
+.btn, .confirm-button, .cancel-button {
+    padding: 12px 20px;
+    border-radius: 999px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.95rem;
+}
+.btn-secondary {
+    background-color: #0A75BD;
+    color: #fff;
+}
+.btn-secondary:hover {
+    background-color: #085f9a;
 }
 
-.pagination a:hover {
-    background-color: #f5f5f5;
+.btn-danger {
+    background-color: #BD0A0A;
+    color: #fff;
+}
+.btn-danger:hover {
+    background-color: #9E0707;
 }
 
-.pagination a.active {
-    background-color: #1a73e8;
-    color: white;
-    border-color: #1a73e8;
-}
-
-.pagination span {
-    padding: 8px;
-    color: #666;
+@media (max-width: 768px) {
+    .header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 1rem;
+    }
 }

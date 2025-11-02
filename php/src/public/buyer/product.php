@@ -33,9 +33,14 @@ function sanitize_description($html) {
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <meta charset="UTF-8">
     <title><?= htmlspecialchars($product['product_name']) ?> - Detail Produk</title>
     <link rel="stylesheet" href="/assets/css/productDetail.css">
+    <link rel="stylesheet" href="/assets/css/toast.css">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+    
     <script src="/assets/js/productDetail.js" defer></script>
   </head>
   <body>
@@ -67,20 +72,22 @@ function sanitize_description($html) {
           <br>
           <?= sanitize_description($product['store_description']) ?>
         </div>
-
+        
         <?php if ((int)$product['stock'] > 0): ?>
-        <div class="add-to-cart">
+        <h3 class="cart-label">Masukkan Keranjang</h3>
+        <form class="add-to-cart" action="/buyer/cart.php?action=add" method="POST" style="display: flex; gap: 1rem; align-items: center;">
           <div class="qty">
             <button type="button" id="qty-minus">-</button>
-            <input type="number" id="qty-input" min="1" value="1">
+            <input type="number" id="qty-input" name="quantity" min="1" value="1">
             <button type="button" id="qty-plus">+</button>
           </div>
+          <input type="hidden" name="product_id" value="<?= (int)$product['product_id'] ?>">
           <?php if ($role === 'BUYER'): ?>
-            <button type="button" id="btn-add">Tambah ke Keranjang</button>
+            <button type="submit" class="btn">Tambah ke Keranjang</button>
           <?php else: ?>
-            <a class="btn-secondary" href="/authentication/login.php">Login untuk menambahkan ke keranjang</a>
+            <a class="btn-secondary" href="/authentication/login.php">Masuk untuk Menambahkan ke Keranjang</a>
           <?php endif; ?>
-        </div>
+        </form>
         <?php endif; ?>
       </div>
     </div>

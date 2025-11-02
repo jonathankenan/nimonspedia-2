@@ -97,8 +97,24 @@ class Order {
 
         $result = $stmt->get_result();
         $orders = [];
+        $orderIds = [];
         while ($row = $result->fetch_assoc()) {
-            $orders[] = $row;
+            $orders[$row['order_id']] = $row;
+            $orders[$row['order_id']]['items'] = [];
+            $orderIds[] = $row['order_id'];
+        }
+
+        // Ambil semua item produk untuk order yang ditemukan
+        if (!empty($orderIds)) {
+            $ids = implode(',', $orderIds);
+            $itemSql = "SELECT oi.order_id, oi.quantity, oi.price_at_order as price, oi.subtotal, p.product_name, p.main_image_path
+                        FROM order_items oi
+                        JOIN products p ON oi.product_id = p.product_id
+                        WHERE oi.order_id IN ($ids)";
+            $itemResult = $this->conn->query($itemSql);
+            while ($itemRow = $itemResult->fetch_assoc()) {
+                $orders[$itemRow['order_id']]['items'][] = $itemRow;
+            }
         }
 
         // Get total count for pagination
@@ -119,7 +135,7 @@ class Order {
         $total = $totalResult['total'];
 
         return [
-            'orders' => $orders,
+            'orders' => array_values($orders),
             'total' => $total,
             'total_pages' => ceil($total / $perPage)
         ];
