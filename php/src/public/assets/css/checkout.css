@@ -1,60 +1,100 @@
-/* Container Utama */
+body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background-color: #FFFFFF;
+    color: #333;
+    margin: 0;
+    padding-top: 90px;
+}
+
 .container {
     max-width: 1000px;
     margin: 2rem auto;
     padding: 1rem;
 }
 
-/* Layout Utama */
-.checkout-layout {
+.header {
     display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2rem;
+    position: relative;
+}
+.header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: #0A75BD;
+    margin: 0;
+}
+.back-button {
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #0A75BD;
+    text-decoration: none;
+    font-weight: 600;
+}
+.back-button:hover {
+    text-decoration: underline;
+}
+
+.checkout-layout {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
     gap: 2rem;
     align-items: flex-start;
 }
 
-/* Konten Utama */
 .main-content {
-    flex: 2;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 }
 
-/* Panel Pembayaran */
-.payment-panel {
-    flex: 1;
-    background: #f9f9f9;
-    padding: 1.5rem;
-    border-radius: 8px;
-    position: sticky;
-    top: 90px;
-}
-
-/* Setiap Bagian */
-.checkout-section {
+.checkout-card {
     background: #fff;
-    padding: 1.5rem;
-    border-radius: 8px;
-    margin-bottom: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+    padding: 1.5rem 2rem;
+}
+.checkout-card h2 {
+    margin-top: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #0A75BD;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 0.75rem;
 }
 
-/* Area Teks */
 textarea {
     width: 100%;
     min-height: 80px;
-    padding: 0.5rem;
-    border-radius: 6px;
+    padding: 14px 20px;
     border: 1px solid #ccc;
+    border-radius: 20px;
     font-size: 1rem;
-    font-family: inherit;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    box-sizing: border-box;
+    resize: vertical;
+    transition: border-color 0.2s;
+}
+textarea:focus {
+    outline: none;
+    border-color: #0A75BD;
 }
 
-/* Ringkasan per Toko */
 .store-summary {
     margin-bottom: 1.5rem;
 }
 .store-summary:last-child {
     margin-bottom: 0;
 }
+.store-summary h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 1rem 0;
+}
 
-/* Ringkasan per Item */
 .item-summary {
     display: flex;
     align-items: center;
@@ -65,46 +105,93 @@ textarea {
     width: 50px;
     height: 50px;
     object-fit: cover;
-    border-radius: 4px;
+    border-radius: 8px;
+}
+.item-info {
+    line-height: 1.4;
+}
+.item-info p {
+    margin: 0;
+}
+.item-name {
+    font-weight: 600;
+}
+.item-qty-price {
+    font-size: 0.9rem;
+    color: #555;
 }
 
-/* Total per Toko */
 .store-total {
     display: flex;
     justify-content: space-between;
-    font-weight: bold;
+    font-weight: 600;
     margin-top: 1rem;
     padding-top: 0.5rem;
     border-top: 1px solid #eee;
 }
 
-/* Info Saldo */
+.payment-panel {
+    background: #fff;
+    border-radius: 12px;
+    border: 1px solid #e0e0e0;
+    padding: 1.5rem 2rem;
+    position: sticky;
+    top: 90px;
+}
+.payment-panel h2 {
+    margin-top: 0;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #0A75BD;
+    border-bottom: 1px solid #f0f0f0;
+    padding-bottom: 0.75rem;
+}
+
 .balance-info {
     display: flex;
     justify-content: space-between;
     margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+.balance-info .balance-value {
+    font-weight: 600;
 }
 .balance-info.final {
     font-weight: bold;
+    font-size: 1.1rem;
+    margin-top: 1rem;
 }
 .insufficient {
     color: #dc3545;
 }
+.sufficient {
+    color: #28a745;
+}
 
-/* Tombol */
+hr {
+    border: none;
+    border-top: 1px solid #eee;
+}
+
 .btn {
     width: 100%;
-    padding: 0.8rem;
-    font-size: 1.1rem;
+    padding: 14px;
+    font-size: 1rem;
     cursor: pointer;
     border: none;
-    border-radius: 6px;
-    background-color: #1a73e8;
+    border-radius: 999px;
+    background-color: #0A75BD;
     color: white;
+    font-weight: 600;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     transition: background-color 0.2s;
+    margin-top: 1rem;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
 }
 .btn:hover {
-    background-color: #155fc0;
+    background-color: #085f9a;
 }
 .btn:disabled {
     background-color: #ccc;
@@ -114,29 +201,36 @@ textarea {
     background-color: #ccc;
 }
 
-/* Notifikasi */
 .alert {
     padding: 1rem;
-    border-radius: 6px;
+    border-radius: 8px;
     margin-bottom: 1rem;
+    border: 1px solid;
 }
 .alert-error {
-    background-color: #f8d7da;
-    color: #721c24;
+    background-color: #fdf2f2;
+    color: #d9534f;
+    border-color: #d9534f;
 }
 .alert-warning {
-    background-color: #fff3cd;
-    color: #856404;
+    background-color: #fef9c3;
+    color: #f59e0b;
+    border-color: #f59e0b;
+}
+.alert-warning a {
+    color: #0A75BD;
+    font-weight: 600;
+    text-decoration: none;
+}
+.alert-warning a:hover {
+    text-decoration: underline;
 }
 
-/* Styling Modal */
 .modal-overlay {
     display: none; 
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
     background-color: rgba(0, 0, 0, 0.6);
     justify-content: center;
     align-items: center;
@@ -150,12 +244,12 @@ textarea {
 }
 .modal-content {
     background: #fff;
-    padding: 2rem;
+    padding: 2.5rem;
     border-radius: 12px;
     width: 90%;
     max-width: 400px;
     text-align: center;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    font-family: 'Plus Jakarta Sans', sans-serif;
     transform: scale(0.95);
     transition: transform 0.2s ease-in-out;
 }
@@ -165,22 +259,64 @@ textarea {
 .modal-content h3 {
     margin-top: 0;
     font-size: 1.5rem;
-    color: #333;
+    color: #0A75BD;
 }
 .modal-content p {
     margin-bottom: 1.5rem;
-    color: #666;
+    color: #333;
+    line-height: 1.5;
 }
 .modal-actions {
     display: flex;
     justify-content: center;
     gap: 1rem;
 }
-
-/* Warna tombol didalam modal */
+.modal-actions .btn {
+    width: auto;
+    padding: 12px 25px;
+    margin-top: 0;
+}
+.btn-secondary {
+    background-color: #f0f0f0;
+    color: #555;
+}
+.btn-secondary:hover {
+    background-color: #e0e0e0;
+}
 .btn-danger {
     background-color: #dc3545; 
 }
 .btn-danger:hover {
     background-color: #c82333;
+}
+.btn-primary {
+    background-color: #0A75BD;
+}
+.btn-primary:hover {
+    background-color: #085f9a;
+}
+
+/* ====== RESPONSIVE ====== */
+@media (max-width: 900px) {
+    .checkout-layout {
+        grid-template-columns: 1fr;
+    }
+    .payment-panel {
+        position: static;
+    }
+    .header {
+        align-items: flex-start;
+        text-align: left;
+    }
+    .header h1 {
+        text-align: left;
+        font-size: 2rem;
+        margin-top: 2.5rem;
+    }
+    .back-button {
+        position: relative;
+        top: 0;
+        left: 0;
+        transform: none;
+    }
 }

@@ -45,17 +45,26 @@ $balanceSufficient = $user['balance'] >= $grandTotal;
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <title>Checkout | Nimonspedia</title>
     <link rel="stylesheet" href="../assets/css/checkout.css">
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+    
     <script src="../assets/js/checkout.js" defer></script>
 </head>
 <body>
     <?php include_once(__DIR__ . '/../../app/components/navbar.php'); ?>
     <div class="container">
-        <h1>Checkout</h1>
+        
+        <div class="header">
+            <a href="/buyer/cart.php" class="back-button"><u>&laquo; Kembali</u></a>
+            <h1>Checkout</h1>
+        </div>
 
         <?php if (isset($_SESSION['checkout_error'])): ?>
             <div class="alert alert-error">
@@ -67,12 +76,13 @@ $balanceSufficient = $user['balance'] >= $grandTotal;
         <form id="checkout-form" action="checkout.php" method="POST">
             <div class="checkout-layout">
                 <div class="main-content">
-                    <div class="checkout-section">
+                    
+                    <div class="checkout-card">
                         <h2>Alamat Pengiriman</h2>
                         <textarea name="shipping_address" required><?= htmlspecialchars($user['address']) ?></textarea>
                     </div>
 
-                    <div class="checkout-section">
+                    <div class="checkout-card">
                         <h2>Ringkasan Pesanan</h2>
                         <?php foreach ($stores as $storeData): ?>
                             <div class="store-summary">
@@ -81,8 +91,8 @@ $balanceSufficient = $user['balance'] >= $grandTotal;
                                 <div class="item-summary">
                                     <img src="<?= htmlspecialchars($item['main_image_path']) ?>" alt="product">
                                     <div class="item-info">
-                                        <p><?= htmlspecialchars($item['product_name']) ?></p>
-                                        <p><?= $item['quantity'] ?> x Rp <?= number_format($item['price']) ?></p>
+                                        <p class="item-name"><?= htmlspecialchars($item['product_name']) ?></p>
+                                        <p class="item-qty-price"><?= $item['quantity'] ?> x Rp <?= number_format($item['price']) ?></p>
                                     </div>
                                 </div>
                                 <?php endforeach; ?>
@@ -99,11 +109,11 @@ $balanceSufficient = $user['balance'] >= $grandTotal;
                     <h2>Pembayaran</h2>
                     <div class="balance-info">
                         <p>Saldo Anda:</p>
-                        <p><strong>Rp <?= number_format($user['balance']) ?></strong></p>
+                        <p class="balance-value"><strong>Rp <?= number_format($user['balance']) ?></strong></p>
                     </div>
                     <div class="balance-info">
                         <p>Total Belanja:</p>
-                        <p><strong>Rp <?= number_format($grandTotal) ?></strong></p>
+                        <p class="balance-value"><strong>Rp <?= number_format($grandTotal) ?></strong></p>
                     </div>
                     <hr>
                     <div class="balance-info final">
@@ -132,8 +142,8 @@ $balanceSufficient = $user['balance'] >= $grandTotal;
             <h3>Konfirmasi Pembayaran</h3>
             <p>Pastikan saldo dan alamat pengiriman Anda sudah benar. Lanjutkan pembayaran?</p>
             <div class="modal-actions">
-                <button id="confirm-checkout-btn" class="btn">Ya</button>
-                <button id="cancel-checkout-btn" class="btn btn-danger">Batal</button>
+                <button id="cancel-checkout-btn" class="btn btn-secondary">Batal</button>
+                <button id="confirm-checkout-btn" class="btn btn-primary">Ya, Bayar</button>
             </div>
         </div>
     </div>
