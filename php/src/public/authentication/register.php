@@ -15,7 +15,6 @@ use App\Controllers\RegisterController;
 $role = $_SESSION['role'];
 $role_display = htmlspecialchars(ucfirst(strtolower($role)));
 
-// Jika form disubmit (POST)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $controller = new RegisterController($conn);
     $controller->register();
@@ -34,8 +33,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+    <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 
-    </head>
+    <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+    <script src="/assets/js/quillEditor.js" defer></script>
+    <script src="/assets/js/imagePreview.js" defer></script>
+</head>
 <body>
     <div class="login-container">
         
@@ -73,14 +76,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <label for="store_name">Nama Toko:</label>
                 <input type="text" id="store_name" name="store_name" maxlength="100" required>
                         
-                <label for="store_description">Deskripsi Toko:</label>
-                <textarea id="store_description" name="store_description"></textarea>
-                
+                <label for="editor">Deskripsi:</label>
+                <div id="editor"></div>
+                <input type="hidden" name="description" id="productDescription">
+
                 <label for="store_logo_input">Logo Toko:</label>
                 <div class="file-input-wrapper">
                     <label for="store_logo_input" class="file-upload-button">Pilih Foto</label>
                     <span class="file-help-text">Max. 2MB. Format: JPG, JPEG, PNG, WEBP</span>
                     <input type="file" name="store_logo" id="store_logo_input" accept="image/*" required>
+                    <img id="store_logo_preview"/>
                 </div>
             </div>
             <?php endif; ?>

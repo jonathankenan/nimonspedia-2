@@ -219,3 +219,54 @@ textarea:focus {
     color: #777;
     margin-top: 20px;
 }
+
+.hidden-textarea {
+    display: none;
+}
+
+.ql-toolbar.ql-snow {
+    border: 1px solid #ccc;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    background-color: #fff;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+.ql-toolbar.ql-snow {
+    border: 1px solid #ccc;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    background-color: #fff;
+    padding: 8px;
+    box-sizing: border-box;
+}
+
+#editor {
+    height: 150px;
+    border-bottom-left-radius: 20px;
+    border-bottom-right-radius: 20px;
+    border: 1px solid #ccc;
+    border-top: none;
+    background-color: #fff;
+    font-size: 1rem;
+    overflow: hidden;
+}
+
+.ql-container.ql-snow {
+    border: none;
+}
+
+.ql-editor.ql-blank::before {
+    content: '' !important;
+}
+
+#store_logo_preview {
+    display: none;
+    margin-top: 10px;
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+}

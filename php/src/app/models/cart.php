@@ -11,7 +11,18 @@ class Cart {
     }
 
     public function addItem(int $buyerId, int $productId, int $quantity): bool {
-        $stmt = $this->conn->prepare("SELECT cart_item_id FROM {$this->table} WHERE buyer_id = ? AND product_id = ?");
+
+        $s = $this->conn->prepare("SELECT stock FROM products WHERE product_id = ?");
+        $s->bind_param("i", $productId);
+        $s->execute();
+        $product = $s->get_result()->fetch_assoc();
+        $stock = $product['stock'] ?? 0;
+
+        if ($stock <= 0) {
+            return false; 
+        }
+
+        $stmt = $this->conn->prepare("SELECT cart_item_id, quantity FROM {$this->table} WHERE buyer_id = ? AND product_id = ?");
         $stmt->bind_param("ii", $buyerId, $productId);
         $stmt->execute();
         $result = $stmt->get_result();
@@ -19,10 +30,23 @@ class Cart {
         if ($result->num_rows > 0) {
             $row = $result->fetch_assoc();
             $cartItemId = $row['cart_item_id'];
-            $updateStmt = $this->conn->prepare("UPDATE {$this->table} SET quantity = quantity + ? WHERE cart_item_id = ?");
-            $updateStmt->bind_param("ii", $quantity, $cartItemId);
+            $currentQty = (int)$row['quantity'];
+
+            $newQty = $currentQty + $quantity;
+
+            if ($newQty > $stock) {
+                $newQty = $stock; 
+            }
+
+            $updateStmt = $this->conn->prepare("UPDATE {$this->table} SET quantity = ? WHERE cart_item_id = ?");
+            $updateStmt->bind_param("ii", $newQty, $cartItemId);
             return $updateStmt->execute();
+
         } else {
+            if ($quantity > $stock) {
+                $quantity = $stock;
+            }
+
             $insertStmt = $this->conn->prepare("INSERT INTO {$this->table} (buyer_id, product_id, quantity) VALUES (?, ?, ?)");
             $insertStmt->bind_param("iii", $buyerId, $productId, $quantity);
             return $insertStmt->execute();

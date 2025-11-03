@@ -49,8 +49,8 @@ class registerController {
                 exit;
             }
 
-            $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/assets/images/storeLogo';
-            if (!is_dir($uploadDir) || !is_writable($uploadDir)) {
+            $uploadDir = $_SERVER['DOCUMENT_ROOT'] . '/assets/images/storeLogo/';
+            if (!is_dir($uploadDir)) {
                 header("Location: /authentication/register.php?error=upload_folder_missing");
                 exit;
             }

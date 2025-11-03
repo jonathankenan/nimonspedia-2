@@ -61,7 +61,7 @@ if (isset($_FILES['storeLogo']) && $_FILES['storeLogo']['error'] === UPLOAD_ERR_
     // Generate unique filename
     $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
     $filename = uniqid('store_') . '.' . $extension;
-    $uploadDir = __DIR__ . '/../../assets/images/store-logos/';
+    $uploadDir = __DIR__ . '/../../assets/images/storeLogo/';
     
     // Create directory if it doesn't exist
     if (!file_exists($uploadDir)) {
@@ -76,7 +76,7 @@ if (isset($_FILES['storeLogo']) && $_FILES['storeLogo']['error'] === UPLOAD_ERR_
     
     // Move uploaded file
     if (move_uploaded_file($file['tmp_name'], $uploadDir . $filename)) {
-        $updateData['store_logo_path'] = '/assets/images/store-logos/' . $filename;
+        $updateData['store_logo_path'] = '/assets/images/storeLogo/' . $filename;
         
     // Get current store info to delete old logo
         $storeModel = new Store($conn);

@@ -1,10 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
   const editorContainer = document.getElementById("editor");
-  if (!editorContainer) return; // pastikan hanya jalan di halaman yang ada editor-nya
+  if (!editorContainer) return; 
 
   const quill = new Quill('#editor', {
     theme: 'snow',
-    placeholder: 'Deskripsikan toko kamu...',
     modules: {
       toolbar: [
         ['bold', 'italic', 'underline', 'strike'],
