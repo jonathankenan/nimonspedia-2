@@ -93,7 +93,7 @@ $totalPages = $data['totalPages'];
                         <?php if ($outOfStock): ?>
                           <span class="stock-label">Stok Habis</span>
                         <?php elseif ($role === 'BUYER'): ?>
-                          <form action="/buyer/cart.php?action=add" method="POST" style="margin-top: auto;">
+                          <form action="/buyer/cart.php?action=add" method="POST">
                             <input type="hidden" name="product_id" value="<?= $p['product_id'] ?>">
                             <button type="submit" class="btn">Tambah ke Keranjang</button>
                           </form>
