@@ -44,7 +44,7 @@ $totalPages = $data['totalPages'];
             <div class="empty-state">
                 <h2>Belum Ada Produk</h2>
                 <p>Anda belum memiliki produk. Mulai dengan menambahkan produk pertama Anda.</p>
-                <a href="/seller/tambah_produk.php" class="add-button">Tambah Produk Sekarang</a>
+                <!-- <a href="/seller/tambah_produk.php" class="add-button">Tambah Produk Sekarang</a> -->
             </div>
         <?php else: ?>
             <div class="product-list">

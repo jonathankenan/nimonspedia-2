@@ -159,14 +159,8 @@ body {
     border-radius: 12px;
     border: 1px solid #e0e0e0;
 }
-.empty-state img {
-    width: 200px;
-    height: auto;
-    margin-bottom: 1.5rem;
-}
 .empty-state h2 {
     color: #333;
-    margin-bottom: 10px;
 }
 .empty-state p {
     color: #666;

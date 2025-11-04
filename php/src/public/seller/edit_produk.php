@@ -66,7 +66,7 @@ if (!$product || $product['store_id'] !== $_SESSION['store_id']) {
                     <img id="productImagePreview" src="<?= htmlspecialchars($product['main_image_path']) ?>" alt="Gambar Produk">
                 </div>
                 <div class="image-controls">
-                    <label for="productImage" class="upload-image-btn">Ubah Logo</label>
+                    <label for="productImage" class="upload-image-btn">Ubah Foto</label>
                     <input type="file" id="productImage" name="productImage" accept="image/*">
                 </div>
                 <!-- Progress Bar -->
@@ -74,7 +74,7 @@ if (!$product || $product['store_id'] !== $_SESSION['store_id']) {
                     <div class="progress-bar">
                         <div class="progress-fill"></div>
                     </div>
-                    <span class="progress-text">Mengupload... 0%</span>
+                    <span class="progress-text">Mengubah... 0%</span>
                 </div>
             </div>
 
@@ -127,9 +127,16 @@ if (!$product || $product['store_id'] !== $_SESSION['store_id']) {
             theme: 'snow',
             placeholder: 'Tulis deskripsi produk...'
         });
-        document.getElementById('editProductForm').addEventListener('submit', function(e) {
-            document.getElementById('productDescription').value = quill.root.innerHTML;
-        });
+        
+        var form = document.getElementById('editProductForm');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                var descriptionInput = document.getElementById('productDescription');
+                if (descriptionInput) {
+                    descriptionInput.value = quill.root.innerHTML;
+                }
+            });
+        }
     </script>
     
     <script src="/assets/js/editProduk.js"></script>

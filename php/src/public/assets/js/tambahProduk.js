@@ -60,7 +60,10 @@ document.addEventListener('DOMContentLoaded', function() {
         const reader = new FileReader();
         reader.onload = function(e) {
             imagePreview.src = e.target.result;
-            imagePreview.parentElement.style.display = 'block'; // Show preview container
+            imagePreview.style.display = 'block'; // Show preview image
+            if (imagePreview.parentElement) {
+                imagePreview.parentElement.style.display = '';
+            }
             if (changeImageBtn) {
                 changeImageBtn.style.display = 'inline-block';
             }
@@ -187,11 +190,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function showToast(message, type = 'success') {
         toast.textContent = message;
-        toast.style.display = 'block';
-        toast.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
+        toast.className = 'toast show';
+        if (type === 'error') {
+            toast.classList.add('error');
+        }
 
         setTimeout(() => {
-            toast.style.display = 'none';
+            toast.classList.remove('show');
         }, 3000);
     }
 });

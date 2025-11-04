@@ -2,14 +2,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const form = document.getElementById('editProductForm');
     const submitButton = document.getElementById('submitButton');
     const productImage = document.getElementById('productImage');
-    const imagePreview = document.getElementById('imagePreview');
+    const imagePreview = document.getElementById('productImagePreview');
     const toast = document.getElementById('toast');
-    const modal = document.getElementById('confirmationModal');
-    const confirmSaveBtn = document.getElementById('confirmSave');
-    const cancelSaveBtn = document.getElementById('cancelSave');
-    const progressBar = document.querySelector('.upload-progress');
-    const progressFill = document.querySelector('.progress-fill');
-    const progressText = document.querySelector('.progress-text');
 
     let formData = null;
 
@@ -79,6 +73,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         if (submitButton) {
             submitButton.disabled = true;
+            submitButton.textContent = 'Menyimpan...';
         }
         if (progressBar) {
             progressBar.style.display = 'block';
@@ -86,37 +81,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
         const xhr = new XMLHttpRequest();
         xhr.open('POST', '/seller/api/update-product.php', true);
-        
-        // Add request headers
         xhr.setRequestHeader('Accept', 'application/json');
-        
-        console.log('Sending request to:', xhr.responseURL);
 
         xhr.upload.onprogress = function(e) {
-            if (e.lengthComputable && progressFill) {
+            if (e.lengthComputable && progressFill && progressText) {
                 const percentComplete = Math.round((e.loaded * 100) / e.total);
                 progressFill.style.width = percentComplete + '%';
+                progressText.textContent = `Mengupload... ${percentComplete}%`;
             }
         };
 
         xhr.onload = function() {
-            console.log('Response Status:', xhr.status);
-            console.log('Response Headers:', xhr.getAllResponseHeaders());
-            console.log('Response Type:', xhr.responseType);
-            console.log('Content-Type:', xhr.getResponseHeader('Content-Type'));
-            console.log('Raw Response:', xhr.responseText);
+            if (progressBar) progressBar.style.display = 'none';
             
             try {
-                // Check if the response is HTML (indicates a PHP error)
-                if (xhr.responseText.trim().startsWith('<!DOCTYPE html>') || 
-                    xhr.responseText.trim().startsWith('<br') ||
-                    xhr.responseText.trim().startsWith('<html')) {
-                    console.error('Received HTML response instead of JSON');
-                    showToast('Terjadi kesalahan server', 'error');
-                    if (submitButton) submitButton.disabled = false;
-                    return;
-                }
-                
                 const response = JSON.parse(xhr.responseText);
                 if (xhr.status === 200) {
                     showToast('Produk berhasil diperbarui', 'success');
@@ -124,19 +102,27 @@ document.addEventListener('DOMContentLoaded', function() {
                         window.location.href = '/seller/kelola_produk.php';
                     }, 2000);
                 } else {
-                    throw new Error(response.message || 'Terjadi kesalahan');
+                    showToast(response.message || 'Terjadi kesalahan', 'error');
+                    if (submitButton) {
+                        submitButton.disabled = false;
+                        submitButton.textContent = 'Simpan';
+                    }
                 }
             } catch (error) {
-                console.error('Error:', error);
-                showToast(error.message || 'Terjadi kesalahan server', 'error');
-                if (submitButton) submitButton.disabled = false;
+                showToast('Terjadi kesalahan server', 'error');
+                if (submitButton) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = 'Simpan';
+                }
             }
-            if (progressBar) progressBar.style.display = 'none';
         };
 
         xhr.onerror = function() {
             showToast('Terjadi kesalahan jaringan', 'error');
-            if (submitButton) submitButton.disabled = false;
+            if (submitButton) {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Simpan';
+            }
             if (progressBar) progressBar.style.display = 'none';
         };
 
@@ -180,11 +166,13 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function showToast(message, type = 'success') {
         toast.textContent = message;
-        toast.style.display = 'block';
-        toast.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
+        toast.className = 'toast show';
+        if (type === 'error') {
+            toast.classList.add('error');
+        }
 
         setTimeout(() => {
-            toast.style.display = 'none';
+            toast.classList.remove('show');
         }, 3000);
     }
 });
