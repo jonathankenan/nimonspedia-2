@@ -31,7 +31,7 @@ class StoreController {
     }
 
 
-    public function getStoreProducts(int $storeId, array $filters = [], int $page = 1, int $perPage = 12): array {
+    public function getStoreProducts(int $storeId, array $filters = [], int $page = 1, int $perPage = 10): array {
         $filters['store_id'] = $storeId;
         $productModel = new Product($this->conn);
         $data = $productModel->getFilteredProducts($filters, $page, $perPage);
