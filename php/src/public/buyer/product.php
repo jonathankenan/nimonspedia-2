@@ -75,7 +75,7 @@ function sanitize_description($html) {
         
         <?php if ((int)$product['stock'] > 0): ?>
         <h3 class="cart-label">Masukkan Keranjang</h3>
-        <form class="add-to-cart" action="/buyer/cart.php?action=add" method="POST" style="display: flex; gap: 1rem; align-items: center;">
+        <form class="add-to-cart" action="/buyer/cart.php?action=add" method="POST">
           <div class="qty">
             <button type="button" id="qty-minus">-</button>
             <input type="number" id="qty-input" name="quantity" min="1" value="1">
