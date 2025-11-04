@@ -8,6 +8,9 @@ requireRole('BUYER');
 
 use App\Models\Order;
 
+date_default_timezone_set('Asia/Jakarta'); 
+$currentTime = time();
+
 $orderModel = new Order($conn);
 
 $filterStatus = $_GET['status'] ?? 'all';
@@ -23,7 +26,7 @@ $orders = $orderModel->getOrderHistory($_SESSION['user_id'], $filterStatus);
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-R">
+    <meta charset="UTF-8">
     <title>Riwayat Pesanan | Nimonspedia</title>
     <link rel="stylesheet" href="../assets/css/orders.css">
 
@@ -87,6 +90,30 @@ $orders = $orderModel->getOrderHistory($_SESSION['user_id'], $filterStatus);
                             <button class="btn-detail">Lihat Detail</button>
                         </div>
                         
+                        <?php if ($order['status'] === 'on_delivery'): ?>
+                            <?php
+                                $deliveryTime = !empty($order['delivery_time']) ? strtotime($order['delivery_time']) : 0;
+                                $canConfirm = !empty($deliveryTime) && ($currentTime >= $deliveryTime);
+                                
+                                $title = 'Konfirmasi barang telah diterima'; 
+                                if (empty($deliveryTime)) {
+                                    $title = 'Penjual belum mengatur estimasi pengiriman.';
+                                } else if (!$canConfirm) {
+                                    $title = 'Tombol akan aktif pada ' . date('d F Y', $deliveryTime);
+                                }
+                            ?>
+                            <div class="order-confirmation-action">
+                                <button 
+                                    class="btn-confirm-received" 
+                                    data-order-id="<?= $order['order_id'] ?>"
+                                    <?= ($canConfirm) ? '' : 'disabled' ?>
+                                    title="<?= htmlspecialchars($title) ?>"
+                                >
+                                    Konfirmasi Terima Barang
+                                </button>
+                            </div>
+                        <?php endif; ?>
+                        
                         <div class="order-details">
                             <hr>
                             <h4>Detail Produk</h4>
@@ -103,9 +130,13 @@ $orders = $orderModel->getOrderHistory($_SESSION['user_id'], $filterStatus);
                             <h4>Alamat Pengiriman</h4>
                             <p><?= htmlspecialchars($order['shipping_address']) ?></p>
                             
-                            <?php if ($order['status'] === 'on_delivery' && !empty($order['delivery_time'])): ?>
+                            <?php if ($order['status'] === 'on_delivery'): ?>
                                 <h4>Estimasi Tiba</h4>
-                                <p><?= date('d F Y', strtotime($order['delivery_time'])) ?></p>
+                                <?php if (!empty($order['delivery_time'])): ?>
+                                    <p><?= date('d F Y', strtotime($order['delivery_time'])) ?></p>
+                                <?php else: ?>
+                                    <p>Penjual belum mengatur estimasi pengiriman.</p>
+                                <?php endif; ?>
                             <?php endif; ?>
 
                             <?php if ($order['status'] === 'rejected' && !empty($order['reject_reason'])): ?>
@@ -119,5 +150,18 @@ $orders = $orderModel->getOrderHistory($_SESSION['user_id'], $filterStatus);
             <?php endif; ?>
         </div>
     </div>
+    
+    <div id="confirm-reception-modal" class="modal">
+        <div class="modal-content">
+            <span id="close-reception-modal" class="close-btn">&times;</span>
+            <h2>Konfirmasi Penerimaan</h2>
+            <p>Apakah Anda yakin barang sudah diterima? Tindakan ini akan menyelesaikan pesanan dan tidak dapat dibatalkan.</p>
+            <div class="modal-buttons">
+                <button id="cancel-reception-btn" class="btn btn-secondary">Batal</button>
+                <button id="confirm-reception-btn" class="btn btn-primary">Ya, Sudah Diterima</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>

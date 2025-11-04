@@ -296,7 +296,6 @@ hr {
     background-color: #085f9a;
 }
 
-/* ====== RESPONSIVE ====== */
 @media (max-width: 900px) {
     .checkout-layout {
         grid-template-columns: 1fr;
