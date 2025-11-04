@@ -365,6 +365,9 @@ class Product {
         try {
             $this->conn->begin_transaction();
 
+            // Check if image path should be updated
+            $shouldUpdateImage = isset($data['main_image_path']) || isset($data['image_url']);
+
             // Update product details
             $stmt = $this->conn->prepare("
                 UPDATE {$this->table} 
@@ -372,7 +375,7 @@ class Product {
                     description = ?, 
                     price = ?, 
                     stock = ?
-                    " . (isset($data['main_image_path']) ? ", main_image_path = ?" : "") . "
+                    " . ($shouldUpdateImage ? ", main_image_path = ?" : "") . "
                 WHERE product_id = ? AND deleted_at IS NULL
             ");
 
@@ -382,12 +385,17 @@ class Product {
                 $data['price'], 
                 $data['stock']
             ];
-            if (isset($data['image_url']) || isset($data['main_image_path'])) {
-                $params[] = $data['image_url'] ?? $data['main_image_path'];
+            
+            // Build types string: name(s), description(s), price(d), stock(i)
+            $types = "ssdi";
+            
+            if ($shouldUpdateImage) {
+                $params[] = $data['main_image_path'] ?? $data['image_url'];
+                $types .= "s"; // image path is string
             }
             $params[] = $productId;
-
-            $types = str_repeat("s", count($params) - 2) . "ii";
+            $types .= "i"; // product_id is integer
+            
             $stmt->bind_param($types, ...$params);
 
             if (!$stmt->execute()) {

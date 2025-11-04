@@ -11,22 +11,45 @@ function formatCurrency(amount) {
 // Load dashboard statistics
 async function loadStoreStats() {
     try {
-        const response = await fetch('/seller/api/store-stats.php');
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
+        const xhr = new XMLHttpRequest();
+        xhr.open('GET', '/seller/api/store-stats.php', true);
+        xhr.setRequestHeader('Accept', 'application/json');
 
-        if (!data.success) {
-            throw new Error(data.message || 'Failed to load store statistics');
-        }
+        xhr.onload = function() {
+            try {
+                if (xhr.status !== 200) {
+                    throw new Error(`HTTP error! status: ${xhr.status}`);
+                }
+                
+                const data = JSON.parse(xhr.responseText);
 
-        // Update stats
-        document.getElementById('total-products').textContent = data.data.totalProducts ?? 0;
-        document.getElementById('low-stock').textContent = data.data.lowStockProducts ?? 0;
-        document.getElementById('pending-orders').textContent = data.data.pendingOrders ?? 0;
-        document.getElementById('total-revenue').textContent = formatCurrency(data.data.totalRevenue ?? 0);
+                if (!data.success) {
+                    throw new Error(data.message || 'Failed to load store statistics');
+                }
 
+                // Update stats
+                document.getElementById('total-products').textContent = data.data.totalProducts ?? 0;
+                document.getElementById('low-stock').textContent = data.data.lowStockProducts ?? 0;
+                document.getElementById('pending-orders').textContent = data.data.pendingOrders ?? 0;
+                document.getElementById('total-revenue').textContent = formatCurrency(data.data.totalRevenue ?? 0);
+            } catch (error) {
+                console.error('Error loading store stats:', error);
+                const errorMessage = 'Error loading data';
+                document.querySelectorAll('.stat-value').forEach(elem => {
+                    elem.textContent = errorMessage;
+                });
+            }
+        };
+
+        xhr.onerror = function() {
+            console.error('Error loading store stats: Network error');
+            const errorMessage = 'Error loading data';
+            document.querySelectorAll('.stat-value').forEach(elem => {
+                elem.textContent = errorMessage;
+            });
+        };
+
+        xhr.send();
     } catch (error) {
         console.error('Error loading store stats:', error);
         const errorMessage = 'Error loading data';
@@ -86,43 +109,62 @@ document.addEventListener('DOMContentLoaded', function() {
             // Create FormData object to handle file upload
             const formData = new FormData(this);
             
-            const response = await fetch('/seller/api/update-store.php', {
-                method: 'POST',
-                body: formData
-            });
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', '/seller/api/update-store.php', true);
+            xhr.setRequestHeader('Accept', 'application/json');
 
-            const result = await response.json();
-            
-            if (result.success) {
-                // Update display with fade effect if elements exist
-                const displayName = document.getElementById('displayStoreName');
-                const displayDesc = document.getElementById('displayStoreDescription');
-                
-                if (displayName && displayDesc) {
-                    displayName.style.opacity = '0';
-                    displayDesc.style.opacity = '0';
+            xhr.onload = function() {
+                try {
+                    const result = JSON.parse(xhr.responseText);
                     
-                    setTimeout(() => {
-                        displayName.textContent = storeNameInput.value.trim();
-                        displayDesc.textContent = storeDescription || 'Belum ada deskripsi';
-                        displayName.style.opacity = '1';
-                        displayDesc.style.opacity = '1';
-                    }, 300);
+                    if (result.success) {
+                        // Update display with fade effect if elements exist
+                        const displayName = document.getElementById('displayStoreName');
+                        const displayDesc = document.getElementById('displayStoreDescription');
+                        
+                        if (displayName && displayDesc) {
+                            displayName.style.opacity = '0';
+                            displayDesc.style.opacity = '0';
+                            
+                            setTimeout(() => {
+                                displayName.textContent = storeNameInput.value.trim();
+                                displayDesc.textContent = storeDescription || 'Belum ada deskripsi';
+                                displayName.style.opacity = '1';
+                                displayDesc.style.opacity = '1';
+                            }, 300);
+                        }
+                        
+                        // Update preview if image was part of the update
+                        if (result.data && result.data.store_logo_path) {
+                            document.getElementById('storeLogoPreview').src = result.data.store_logo_path;
+                        }
+                        
+                        showToast('Informasi toko berhasil diperbarui!');
+                    } else {
+                        throw new Error(result.message || 'Gagal memperbarui informasi toko');
+                    }
+                } catch (error) {
+                    console.error('Error updating store:', error);
+                    alert('Terjadi kesalahan: ' + error.message);
+                } finally {
+                    // Re-enable submit button and restore text
+                    saveButton.disabled = false;
+                    saveButton.textContent = 'Simpan Perubahan';
                 }
-                
-                // Update preview if image was part of the update
-                if (result.data && result.data.store_logo_path) {
-                    document.getElementById('storeLogoPreview').src = result.data.store_logo_path;
-                }
-                
-                showToast('Informasi toko berhasil diperbarui!');
-            } else {
-                throw new Error(result.message || 'Gagal memperbarui informasi toko');
-            }
+            };
+
+            xhr.onerror = function() {
+                console.error('Error updating store: Network error');
+                alert('Terjadi kesalahan jaringan');
+                // Re-enable submit button and restore text
+                saveButton.disabled = false;
+                saveButton.textContent = 'Simpan Perubahan';
+            };
+
+            xhr.send(formData);
         } catch (error) {
             console.error('Error updating store:', error);
             alert('Terjadi kesalahan: ' + error.message);
-        } finally {
             // Re-enable submit button and restore text
             saveButton.disabled = false;
             saveButton.textContent = 'Simpan Perubahan';

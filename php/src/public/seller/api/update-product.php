@@ -40,7 +40,7 @@ foreach ($requiredFields as $field) {
 // Handle image upload if provided
 $imagePath = null;
 if (isset($_FILES['productImage']) && $_FILES['productImage']['error'] === UPLOAD_ERR_OK) {
-    $uploadDir = __DIR__ . '/../../public/assets/images/products/';
+    $uploadDir = __DIR__ . '/../../assets/images/products/';
     if (!file_exists($uploadDir)) {
         mkdir($uploadDir, 0777, true);
     }
@@ -73,7 +73,11 @@ if (isset($_FILES['productImage']) && $_FILES['productImage']['error'] === UPLOA
     ];
 
     if ($imagePath !== null) {
-        $updateData['image_url'] = $imagePath;
+        $updateData['main_image_path'] = $imagePath;
+    }
+
+    if (isset($_POST['categories']) && is_array($_POST['categories'])) {
+        $updateData['categories'] = array_map('intval', $_POST['categories']);
     }
 
     if ($product->update($productId, $updateData)) {

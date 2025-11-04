@@ -68,20 +68,32 @@ function loadOrders() {
     if (currentStatus) url.searchParams.set('status', currentStatus);
     if (currentSearch) url.searchParams.set('search', currentSearch);
 
-    fetch(url)
-        .then(response => response.json())
-        .then(data => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', url.toString(), true);
+    xhr.setRequestHeader('Accept', 'application/json');
+
+    xhr.onload = function() {
+        try {
+            const data = JSON.parse(xhr.responseText);
             if (data.error) {
-                let errorMsg = typeof data.error === 'string' ? data.error : JSON.stringify(data.error);
-                throw new Error(errorMsg);
+                console.error('Error from server:', data.error);
+                document.getElementById('orders-list').innerHTML = `<p class="empty-state">${data.error}</p>`;
+                return;
             }
             displayOrders(data.orders);
             displayPagination(data.total_pages);
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error loading orders:', error.message || error);
             document.getElementById('orders-list').innerHTML = `<p class="empty-state">Gagal memuat pesanan.</p>`;
-        });
+        }
+    };
+
+    xhr.onerror = function() {
+        console.error('Error loading orders: Network error');
+        document.getElementById('orders-list').innerHTML = `<p class="empty-state">Gagal memuat pesanan.</p>`;
+    };
+
+    xhr.send();
 }
 
 function displayOrders(orders) {
@@ -211,9 +223,14 @@ function viewOrderDetails(orderId) {
     url.searchParams.set('store_id', storeId);
     url.searchParams.set('order_id', orderId);
 
-    fetch(url)
-        .then(response => response.json())
-        .then(order => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', url.toString(), true);
+    xhr.setRequestHeader('Accept', 'application/json');
+
+    xhr.onload = function() {
+        try {
+            const order = JSON.parse(xhr.responseText);
+            
             if (order.error) {
                 throw new Error(order.error);
             }
@@ -260,11 +277,18 @@ function viewOrderDetails(orderId) {
             `;
 
             document.getElementById('orderModal').classList.add('show');
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error loading order details:', error);
             alert('Gagal memuat detail pesanan. Silakan coba lagi.');
-        });
+        }
+    };
+
+    xhr.onerror = function() {
+        console.error('Error loading order details: Network error');
+        alert('Gagal memuat detail pesanan. Silakan coba lagi.');
+    };
+
+    xhr.send();
 }
 
 function showRejectModal(orderId) {
@@ -289,12 +313,14 @@ function updateOrderStatus(orderId, status, data = {}) {
         formData.append(key, value);
     }
 
-    fetch('/seller/api/orders.php', {
-        method: 'POST',
-        body: formData
-    })
-        .then(response => response.json())
-        .then(data => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', '/seller/api/orders.php', true);
+    xhr.setRequestHeader('Accept', 'application/json');
+
+    xhr.onload = function() {
+        try {
+            const data = JSON.parse(xhr.responseText);
+            
             if (data.error) {
                 throw new Error(data.error);
             }
@@ -304,9 +330,16 @@ function updateOrderStatus(orderId, status, data = {}) {
             });
             // Reload orders
             loadOrders();
-        })
-        .catch(error => {
+        } catch (error) {
             console.error('Error updating order status:', error);
             alert('Gagal memperbarui status pesanan. Silakan coba lagi.');
-        });
+        }
+    };
+
+    xhr.onerror = function() {
+        console.error('Error updating order status: Network error');
+        alert('Gagal memperbarui status pesanan. Silakan coba lagi.');
+    };
+
+    xhr.send(formData);
 }

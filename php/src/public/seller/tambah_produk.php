@@ -31,21 +31,21 @@ $categories = $categoryModel->getAll();
         <h1>Tambah Produk Baru</h1>
 
         <form id="addProductForm" class="product-form" method="POST" enctype="multipart/form-data">
-            
             <label for="productName">Nama Produk:</label>
             <input type="text" id="productName" name="productName" maxlength="200" required>
+            <span class="char-counter"></span>
 
             <label for="editor">Deskripsi Produk:</label>
-            <div id="editor" style="height:150px;"></div>
+            <div id="editor"></div>
+            <span class="char-counter"></span>
             <input type="hidden" name="description" id="productDescription">
 
             <label for="category">Kategori:</label>
-            <select id="category" name="category_id" required>
-                <option value="" disabled selected>Pilih satu kategori</option>
+            <select id="categories" name="categories[]" multiple required>
                 <?php foreach ($categories as $category): ?>
                     <option value="<?= htmlspecialchars($category['category_id']) ?>">
-                            <?= htmlspecialchars($category['name']) ?>
-                        </option>
+                        <?= htmlspecialchars($category['name']) ?>
+                    </option>
                 <?php endforeach; ?>
             </select>
 
@@ -57,13 +57,20 @@ $categories = $categoryModel->getAll();
 
             <label for="productImage">Foto Produk:</label>
             <div class="file-input-wrapper">
-                <label for="productImage_input" class="file-upload-button">Pilih Foto</label>
+                <img id="imagePreview" alt="" />
+                <label for="productImage" class="file-upload-button">Pilih Foto</label>
                 <span class="file-help-text">Max. 2MB. Format: JPG, JPEG, PNG, WEBP</span>
-                <input type="file" id="productImage_input" name="productImage" accept="image/jpg,image/jpeg,image/png,image/webp" required>
+                <input type="file" id="productImage" name="productImage" accept="image/jpg,image/jpeg,image/png,image/webp" required>
             </div>
 
             <div class="form-actions">
                 <button type="submit" id="submitButton">Tambah Produk</button>
+            </div>
+            <div class="upload-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <span class="progress-text">Mengupload... 0%</span>
             </div>
         </form>
     </div>

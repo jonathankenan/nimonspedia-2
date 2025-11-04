@@ -116,6 +116,10 @@ body {
     border-color: #0A75BD;
 }
 
+input[type="file"] {
+    display: none;
+}
+
 .save-button {
     background-color: #0A75BD;
     color: white;
@@ -171,6 +175,22 @@ body {
     margin-bottom: 1rem;
 }
 
+.widget-icon.produk {
+    background-color: #E6F2FC;
+}
+
+.widget-icon.stok {
+    background-color: #FEF9C3;
+}
+
+.widget-icon.pending {
+    background-color: #FFF8E1;
+}
+
+.widget-icon.pendapatan {
+    background-color: #E8F5E9;
+}
+
 .widget h2 {
     font-size: 1rem;
     font-weight: 600;
@@ -219,6 +239,42 @@ body {
     justify-content: center;
     flex-shrink: 0;
     background-color: #E6F2FC;
+}
+.action-card-icon.tambah {
+    background-color: #E8F5E9;
+}
+.action-card-icon.order {
+    background-color: #FFF8E1;
+}
+.icon-produk, .icon-edit {
+    width: 24px;
+    height: 24px;
+    stroke: #0A75BD;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+    display: block;
+}
+.icon-stok, .icon-order, .icon-pending {
+    width: 24px;
+    height: 24px;
+    stroke: #F59E0B;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+    display: block;
+}
+.icon-pendapatan, .icon-tambah {
+    width: 24px;
+    height: 24px;
+    stroke: #4CAF50;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    fill: none;
+    display: block;
 }
 
 .action-card-text h3 {
