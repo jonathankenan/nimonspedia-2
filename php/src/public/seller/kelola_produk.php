@@ -60,7 +60,7 @@ $totalPages = $data['totalPages'];
                         ?>
                         <div class="product-card" data-product-id="<?= htmlspecialchars($product['product_id']) ?>">
                             <a href="/seller/edit_produk.php?id=<?= htmlspecialchars($product['product_id']) ?>" class="card-image-link">
-                                <img src="<?= htmlspecialchars($product['main_image_path']) ?>" alt="<?= htmlspecialchars($product['product_name']) ?>">
+                                <img src="<?= htmlspecialchars($imagePath) ?>" alt="<?= htmlspecialchars($product['product_name']) ?>">
                             </a>
                             <div class="product-info">
                                 <h3><a href="/seller/edit_produk.php?id=<?= htmlspecialchars($product['product_id']) ?>"><?= htmlspecialchars($product['product_name']) ?></a></h3>
