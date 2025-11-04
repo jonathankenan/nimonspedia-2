@@ -15,6 +15,35 @@ use App\Controllers\RegisterController;
 $role = $_SESSION['role'];
 $role_display = htmlspecialchars(ucfirst(strtolower($role)));
 
+$error_message = '';
+if (isset($_GET['error'])) {
+    switch ($_GET['error']) {
+        case 'empty_fields':
+            $error_message = 'Harap isi semua kolom yang diperlukan.';
+            break;
+        case 'seller_fields_required':
+            $error_message = 'Semua data toko wajib diisi untuk akun penjual.';
+            break;
+        case 'invalid_logo_type':
+            $error_message = 'Format logo tidak valid. Gunakan JPG, PNG, atau WEBP.';
+            break;
+        case 'upload_folder_missing':
+            $error_message = 'Folder upload tidak ditemukan di server.';
+            break;
+        case 'upload_failed':
+            $error_message = 'Gagal mengunggah logo toko.';
+            break;
+        case 'exists':
+            $error_message = 'Email sudah terdaftar.';
+            break;
+        case 'registration_failed':
+            $error_message = 'Terjadi kesalahan saat registrasi. Silakan coba lagi.';
+            break;
+        default:
+            $error_message = 'Terjadi kesalahan tak dikenal.';
+    }
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $controller = new RegisterController($conn);
     $controller->register();
@@ -47,6 +76,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php if (isset($_SESSION['error_message'])): ?>
             <p class="error-message"><?= $_SESSION['error_message']; ?></p>
             <?php unset($_SESSION['error_message']); ?>
+        <?php endif; ?>
+
+        <?php if (!empty($error_message)): ?>
+            <p class="error-message"><?= htmlspecialchars($error_message) ?></p>
         <?php endif; ?>
 
         <form action="" method="POST" enctype="multipart/form-data">
