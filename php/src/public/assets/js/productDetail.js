@@ -39,37 +39,50 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   if (btnAdd) {
-    btnAdd.addEventListener('click', async () => {
+    btnAdd.addEventListener('click', () => {
       const qty = clampQty(input ? input.value : 1);
       if (!productId || !qty) return;
+
       btnAdd.disabled = true;
-      try {
-        const res = await fetch('/buyer/add_to_cart.php', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json'
-          },
-          body: new URLSearchParams({ product_id: String(productId), quantity: String(qty) }).toString()
-        });
-        const isJson = (res.headers.get('content-type') || '').includes('application/json');
-        if (isJson) {
-          const data = await res.json();
-          if (data && data.ok) {
-            const badge = document.querySelector('.cart .badge');
-            if (badge) { badge.textContent = String(data.cartCount || ''); }
-            showToast('Berhasil ditambahkan ke keranjang');
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/buyer/add_to_cart.php', true);
+      xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+      xhr.setRequestHeader('Accept', 'application/json');
+
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState === 4) { 
+          btnAdd.disabled = false;
+          if (xhr.status === 200) {
+            let data;
+            const contentType = xhr.getResponseHeader('Content-Type') || '';
+            if (contentType.includes('application/json')) {
+              try {
+                data = JSON.parse(xhr.responseText);
+              } catch (e) {
+                showToast('Gagal memproses response server');
+                return;
+              }
+            }
+
+            if (data && data.ok) {
+              const badge = document.querySelector('.cart .badge');
+              if (badge) badge.textContent = String(data.cartCount || '');
+              showToast('Berhasil ditambahkan ke keranjang');
+            } else if (data && data.message) {
+              showToast(data.message);
+            } else {
+              showToast('Berhasil ditambahkan ke keranjang');
+            }
+
           } else {
-            showToast(data && data.message ? data.message : 'Gagal menambahkan');
+            showToast('Terjadi kesalahan');
           }
-        } else {
-          showToast('Berhasil ditambahkan ke keranjang');
         }
-      } catch (e) {
-        showToast('Terjadi kesalahan');
-      } finally {
-        btnAdd.disabled = false;
-      }
+      };
+
+      const params = `product_id=${encodeURIComponent(productId)}&quantity=${encodeURIComponent(qty)}`;
+      xhr.send(params);
     });
   }
 });
