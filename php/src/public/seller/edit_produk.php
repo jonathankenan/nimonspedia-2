@@ -67,10 +67,10 @@ if (!$product || $product['store_id'] !== $_SESSION['store_id']) {
                 </div>
                 <div class="image-controls">
                     <label for="productImage" class="upload-image-btn">Ubah Logo</label>
-                    <input type="file" id="productImage" name="productImage" accept="image/*" style="display: none;">
+                    <input type="file" id="productImage" name="productImage" accept="image/*">
                 </div>
                 <!-- Progress Bar -->
-                <div class="upload-progress" style="display: none;">
+                <div class="upload-progress">
                     <div class="progress-bar">
                         <div class="progress-fill"></div>
                     </div>
@@ -87,7 +87,7 @@ if (!$product || $product['store_id'] !== $_SESSION['store_id']) {
 
                 <div class="form-group">
                     <label for="editor">Deskripsi Produk*</label>
-                    <div id="editor" style="height:150px;"><?= $product['description'] ?? '' ?></div>
+                    <div id="editor"><?= $product['description'] ?? '' ?></div>
                     <input type="hidden" name="productDescription" id="productDescription">
                 </div>
 

@@ -36,7 +36,7 @@ $categories = $categoryModel->getAll();
             <input type="text" id="productName" name="productName" maxlength="200" required>
 
             <label for="editor">Deskripsi Produk:</label>
-            <div id="editor" style="height:150px;"></div>
+            <div id="editor"></div>
             <input type="hidden" name="description" id="productDescription">
 
             <label for="category">Kategori:</label>

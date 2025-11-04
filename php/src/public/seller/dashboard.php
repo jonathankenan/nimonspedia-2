@@ -59,7 +59,7 @@ $totalRevenue = $orderModel->calculateTotalRevenueByStoreId($storeId);
             </div>
             <div class="logo-controls">
               <label for="storeLogo" class="upload-logo-btn">Ubah Logo</label>
-              <input type="file" id="storeLogo" name="storeLogo" accept="image/*" style="display: none;">
+              <input type="file" id="storeLogo" name="storeLogo" accept="image/*">
             </div>
           </div>
           
@@ -71,7 +71,7 @@ $totalRevenue = $orderModel->calculateTotalRevenueByStoreId($storeId);
             </div>
             <div class="form-group">
               <label for="editor">Deskripsi Toko</label>
-              <div id="editor" style="height:150px;"><?= $store['store_description'] ?? '' ?></div>
+              <div id="editor"><?= $store['store_description'] ?? '' ?></div>
               <input type="hidden" name="storeDescription" id="storeDescription">
             </div>
             <button type="submit" class="save-button">Simpan Perubahan</button>
@@ -83,33 +83,33 @@ $totalRevenue = $orderModel->calculateTotalRevenueByStoreId($storeId);
       <!-- Stats Cards / Widget Grid -->
       <div class="widget-grid">
           <div class="widget">
-              <div class="widget-icon" style="background-color: #E6F2FC;">
+              <div class="widget-icon produk">
                   <!-- Ikon Box (Produk) -->
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A75BD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+                  <svg class="icon-produk" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
               </div>
               <h2>Total Produk</h2>
               <p class="stat-value" id="total-products"><?= $totalProducts ?></p>
           </div>
           <div class="widget">
-              <div class="widget-icon" style="background-color: #FEF9C3;">
+              <div class="widget-icon stok">
                   <!-- Ikon Warning (Stok) -->
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                  <svg class="icon-stok" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
               </div>
               <h2>Stok Menipis</h2>
               <p class="stat-value" id="low-stock"><?= $lowStockProducts ?></p>
           </div>
           <div class="widget">
-              <div class="widget-icon" style="background-color: #FFF8E1;">
+              <div class="widget-icon pending">
                   <!-- Ikon Jam (Pending) -->
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                  <svg class="icon-pending" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
               </div>
               <h2>Pesanan Pending</h2>
               <p class="stat-value" id="pending-orders"><?= $pendingOrders ?></p>
           </div>
           <div class="widget">
-              <div class="widget-icon" style="background-color: #E8F5E9;">
+              <div class="widget-icon pendapatan">
                   <!-- Ikon Rupiah (Pendapatan) -->
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+                  <svg class="icon-pendapatan" viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
               </div>
               <h2>Total Pendapatan</h2>
               <p class="stat-value" id="total-revenue">Rp <?= number_format($totalRevenue, 0, ',', '.') ?></p>
@@ -121,7 +121,7 @@ $totalRevenue = $orderModel->calculateTotalRevenueByStoreId($storeId);
         <a href="/seller/kelola_produk.php" class="action-card">
           <div class="action-card-icon">
             <!-- Ikon Edit -->
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#0A75BD" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+            <svg class="icon-edit" viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
           </div>
           <div class="action-card-text">
             <h3>Kelola Produk</h3>
@@ -129,9 +129,9 @@ $totalRevenue = $orderModel->calculateTotalRevenueByStoreId($storeId);
           </div>
         </a>
         <a href="/seller/tambah_produk.php" class="action-card">
-          <div class="action-card-icon" style="background-color: #E8F5E9;">
+          <div class="action-card-icon tambah">
             <!-- Ikon Tambah (+) -->
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#4CAF50" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            <svg class="icon-tambah" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           </div>
           <div class="action-card-text">
             <h3>Tambah Produk Baru</h3>
@@ -139,9 +139,9 @@ $totalRevenue = $orderModel->calculateTotalRevenueByStoreId($storeId);
           </div>
         </a>
         <a href="/seller/order_management.php" class="action-card">
-          <div class="action-card-icon" style="background-color: #FFF8E1;">
+          <div class="action-card-icon order">
             <!-- Ikon Order -->
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
+            <svg class="icon-order" viewBox="0 0 24 24"><path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path><polyline points="13 2 13 9 20 9"></polyline></svg>
           </div>
           <div class="action-card-text">
             <h3>Lihat Pesanan</h3>

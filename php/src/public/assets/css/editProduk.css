@@ -125,6 +125,10 @@ select {
     transition: border-color 0.2s;
 }
 
+input[type="file"] {
+    display: none;
+}
+
 textarea {
     width: 100%;
     padding: 14px 20px;
@@ -227,6 +231,7 @@ select[multiple]:focus,
 .upload-progress {
     width: 100%;
     margin-top: 0.5rem;
+    display: none;
 }
 .progress-bar {
     height: 8px;
