@@ -16,7 +16,7 @@ class BuyerController {
         $this->conn = $db;
     }
 
-    public function getDashboardData($buyerId, $filters = [], $page = 1, $perPage = 12) {
+    public function getDashboardData($buyerId, $filters = [], $page = 1, $perPage = 10) {
         $productModel = new Product($this->conn);
         $userModel = new User($this->conn);
 

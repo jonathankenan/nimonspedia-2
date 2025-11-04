@@ -21,7 +21,7 @@ $filters = [
     'max_price' => $_GET['max_price'] ?? ''
 ];
 $page = isset($_GET['page']) ? max((int)$_GET['page'], 1) : 1;
-$perPage = 12;
+$perPage = 10;
 
 $controller = new StoreController($conn);
 $store = $controller->getStoreById($storeId);

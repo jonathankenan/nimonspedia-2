@@ -116,7 +116,7 @@ class Product {
         }
     }
 
-    public function getFilteredProducts(array $filters = [], int $page = 1, int $perPage = 12): array {
+    public function getFilteredProducts(array $filters = [], int $page = 1, int $perPage = 10): array {
         $where = ["p.deleted_at IS NULL"];
         $join = "INNER JOIN stores s ON p.store_id = s.store_id";
 
@@ -163,7 +163,7 @@ class Product {
         ];
     }
 
-    public function getProductsByStoreId($storeId, $page = 1, $perPage = 12): array {
+    public function getProductsByStoreId($storeId, $page = 1, $perPage = 10): array {
         // Get total products for pagination
         $countSql = "SELECT COUNT(DISTINCT p.product_id) as total
                     FROM {$this->table} p

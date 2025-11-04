@@ -10,7 +10,7 @@ use App\Controllers\ProductController;
 requireRole('SELLER');
 
 $page = isset($_GET['page']) ? max((int)$_GET['page'], 1) : 1;
-$perPage = 12;
+$perPage = 10;
 
 $productModel = new Product($conn);
 $data = $productModel->getProductsByStoreId($_SESSION['store_id'], $page, $perPage);
@@ -50,6 +50,14 @@ $totalPages = $data['totalPages'];
             <div class="product-list">
                 <?php if (is_array($products)): ?>
                     <?php foreach ($products as $product): ?>
+                        <?php
+                            $imagePath = $product['main_image_path'];
+                            $fullPath = $_SERVER['DOCUMENT_ROOT'] . $imagePath;
+
+                            if (!file_exists($fullPath) || !is_file($fullPath)) {
+                                $imagePath = '/assets/images/default.png';
+                            }
+                        ?>
                         <div class="product-card" data-product-id="<?= htmlspecialchars($product['product_id']) ?>">
                             <a href="/seller/edit_produk.php?id=<?= htmlspecialchars($product['product_id']) ?>" class="card-image-link">
                                 <img src="<?= htmlspecialchars($product['main_image_path']) ?>" alt="<?= htmlspecialchars($product['product_name']) ?>">
