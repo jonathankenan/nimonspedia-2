@@ -9,7 +9,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Show delete confirmation modal
     window.confirmDelete = function(productId) {
         productToDelete = productId;
-        // PERBAIKAN: Gunakan classList.add()
         deleteModal.classList.add('show');
     }
 
@@ -18,13 +17,11 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!productToDelete) return;
         
         deleteProduct(productToDelete);
-        // PERBAIKAN: Gunakan classList.remove()
         deleteModal.classList.remove('show');
     });
 
     // Handle delete cancellation
     cancelDeleteBtn.addEventListener('click', function() {
-        // PERBAIKAN: Gunakan classList.remove()
         deleteModal.classList.remove('show');
         productToDelete = null;
     });
@@ -81,7 +78,6 @@ document.addEventListener('DOMContentLoaded', function() {
     // Show toast message
     function showToast(message, type = 'success') {
         toast.textContent = message;
-        // PERBAIKAN: Gunakan classList untuk toast juga
         toast.className = 'toast show'; 
         if (type === 'error') {
             toast.classList.add('error');
