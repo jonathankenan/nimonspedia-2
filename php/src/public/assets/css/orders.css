@@ -232,3 +232,127 @@ h1 {
     color: #0A75BD;
     border: 1px solid #0A75BD;
 }
+
+/* Tombol Konfirmasi Terima Barang */
+.order-confirmation-action {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-confirm-received {
+    background: #28a745;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 600;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    transition: background-color 0.2s;
+}
+
+.btn-confirm-received:hover {
+    background-color: #218838;
+}
+
+.btn-confirm-received:disabled {
+    background-color: #aaa;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+.btn-confirm-received:disabled:hover {
+    background-color: #aaa;
+}
+
+/* Modal Konfirmasi Terima Barang */
+.modal {
+    display: none; 
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.6);
+}
+
+.modal-content {
+    background-color: #fff;
+    margin: 15% auto;
+    padding: 2.5rem;
+    border: 1px solid #888;
+    width: 90%;
+    max-width: 500px;
+    border-radius: 12px;
+    position: relative;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.close-btn {
+    color: #aaa;
+    position: absolute;
+    top: 1rem;
+    right: 1.5rem;
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-btn:hover,
+.close-btn:focus {
+    color: #000;
+}
+
+.modal-content h2 {
+    margin-top: 0;
+    font-weight: 700;
+    color: #333;
+}
+
+.modal-content p {
+    font-size: 1rem;
+    color: #555;
+    line-height: 1.6;
+}
+
+.modal-buttons {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 999px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary {
+    background-color: #28a745; 
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #218838; 
+    box-shadow: 0 2px 8px rgba(40, 167, 69, 0.3);
+}
+
+.btn-secondary {
+    background-color: #d62828;
+    color: white; 
+}
+
+.btn-secondary:hover {
+    background-color: #a31f1f;
+}

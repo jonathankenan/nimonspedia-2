@@ -77,6 +77,7 @@ class Order {
 
         $stmt = $this->conn->prepare($sql);
         if (!$stmt) {
+            // INI ADALAH BARIS YANG DIPERBAIKI (contoh pertama)
             throw new \Exception("Query preparation failed: " . $this->conn->error);
         }
 
@@ -92,6 +93,7 @@ class Order {
         $stmt->bind_param($types, ...$params);
         
         if (!$stmt->execute()) {
+            // INI ADALAH BARIS YANG DIPERBAIKI
             throw new \Exception("Query execution failed: " . $stmt->error);
         }
 
@@ -125,10 +127,12 @@ class Order {
 
         $stmt = $this->conn->prepare($countSql);
         if (!$stmt) {
+            // INI ADALAH BARIS YANG DIPERBAIKI
             throw new \Exception("Count query preparation failed: " . $this->conn->error);
         }
         $stmt->bind_param($countTypes, ...$countParams);
         if (!$stmt->execute()) {
+            // INI ADALAH BARIS YANG DIPERBAIKI
             throw new \Exception("Count query execution failed: " . $stmt->error);
         }
         $totalResult = $stmt->get_result()->fetch_assoc();
@@ -153,12 +157,14 @@ class Order {
 
         $stmt = $this->conn->prepare($sql);
         if (!$stmt) {
+            // INI ADALAH BARIS YANG DIPERBAIKI
             throw new \Exception("Query preparation failed: " . $this->conn->error);
         }
 
         $stmt->bind_param("ii", $orderId, $storeId);
         
         if (!$stmt->execute()) {
+            // INI ADALAH BARIS YANG DIPERBAIKI
             throw new \Exception("Query execution failed: " . $stmt->error);
         }
 
@@ -196,18 +202,15 @@ class Order {
             if (!$order) {
                 throw new \Exception("Order not found or unauthorized");
             }
-
-            $updates = ["status = ?"];
-            $params = [$status];
-            $types = "s";
-
+            
+            // --- INI ADALAH PERBAIKAN STOK KEMBALI SAAT REJECTED ---
             if ($status === 'rejected') {
                 if (empty($data['reject_reason'])) {
                     throw new \Exception("Reject reason is required");
                 }
                 $updates[] = "reject_reason = ?";
                 $params[] = $data['reject_reason'];
-                $types .= "s";
+                $types = "s"; // Inisialisasi $types di sini
 
                 // Process refund
                 $stmt = $this->conn->prepare("UPDATE users SET balance = balance + ? WHERE user_id = ?");
@@ -215,22 +218,55 @@ class Order {
                 if (!$stmt->execute()) {
                     throw new \Exception("Failed to process refund");
                 }
+                
+                // Kembalikan stok produk
+                $itemStmt = $this->conn->prepare("SELECT product_id, quantity FROM {$this->itemsTable} WHERE order_id = ?");
+                $itemStmt->bind_param("i", $orderId);
+                if (!$itemStmt->execute()) {
+                    throw new \Exception("Gagal mengambil item pesanan untuk pengembalian stok.");
+                }
+                $items = $itemStmt->get_result();
+
+                $updateStockStmt = $this->conn->prepare("UPDATE products SET stock = stock + ? WHERE product_id = ?");
+                
+                while ($item = $items->fetch_assoc()) {
+                    $updateStockStmt->bind_param("ii", $item['quantity'], $item['product_id']);
+                    if (!$updateStockStmt->execute()) {
+                        throw new \Exception("Gagal mengembalikan stok untuk produk ID: " . $item['product_id']);
+                    }
+                }
+                $itemStmt->close();
+                $updateStockStmt->close();
+                // --- SELESAI PERBAIKAN STOK ---
+
             } else if ($status === 'on_delivery') {
                 if (empty($data['delivery_time'])) {
                     throw new \Exception("Delivery time is required");
                 }
                 $updates[] = "delivery_time = ?";
                 $params[] = $data['delivery_time'];
-                $types .= "s";
+                $types = "s"; // Inisialisasi $types di sini
             } else if ($status === 'approved') {
                 $updates[] = "confirmed_at = CURRENT_TIMESTAMP";
+                $params = []; // Inisialisasi $params
+                $types = ""; // Inisialisasi $types
+            } else {
+                $params = []; // Inisialisasi $params
+                $types = ""; // Inisialisasi $types
             }
+            
+            // Selalu update status
+            array_unshift($updates, "status = ?");
+            array_unshift($params, $status);
+            $types = "s" . $types;
+
 
             $updateFields = implode(", ", $updates);
             $sql = "UPDATE {$this->table} SET {$updateFields} WHERE order_id = ? AND store_id = ?";
             
             $stmt = $this->conn->prepare($sql);
             if (!$stmt) {
+                // INI ADALAH BARIS YANG DIPERBAIKI
                 throw new \Exception("Query preparation failed: " . $this->conn->error);
             }
 
@@ -241,7 +277,8 @@ class Order {
             $stmt->bind_param($types, ...$params);
             
             if (!$stmt->execute()) {
-                throw new \Exception("Failed to update order status");
+                // INI ADALAH BARIS YANG DIPERBAIKI
+                throw new \Exception("Failed to update order status: " . $stmt->error);
             }
 
             $this->conn->commit();
@@ -252,9 +289,6 @@ class Order {
             throw $e;
         }
     }
-
-    // Membuat order baru dan item-itemnya dari keranjang dalam satu transaksi. 
-    // Ini memastikan semua proses (kurangi saldo, stok, dll) berhasil atau semuanya dibatalkan.
 
     public function createOrderFromCart(int $buyerId, array $itemsByStore, string $shippingAddress): bool {
         // 1. Mulai Transaksi Database
@@ -386,4 +420,76 @@ class Order {
         return $orders;
     }
     
+    public function confirmReception(int $orderId, int $buyerId): bool {
+        $this->conn->begin_transaction();
+        try {
+            // 1. Ambil data pesanan dan pastikan valid
+            $stmt = $this->conn->prepare("
+                SELECT store_id, total_price, status, delivery_time 
+                FROM {$this->table} 
+                WHERE order_id = ? AND buyer_id = ? 
+                FOR UPDATE
+            ");
+            $stmt->bind_param("ii", $orderId, $buyerId);
+            $stmt->execute();
+            $order = $stmt->get_result()->fetch_assoc();
+            $stmt->close();
+
+            if (!$order) {
+                throw new \Exception("Pesanan tidak ditemukan atau Anda tidak berhak.");
+            }
+            if ($order['status'] !== 'on_delivery') {
+                throw new \Exception("Pesanan ini tidak sedang dalam pengiriman.");
+            }
+
+            // 2. Validasi waktu (Sesuai spesifikasi)
+            date_default_timezone_set('Asia/Jakarta'); // Pastikan timezone server benar
+            
+            // PERBAIKAN ERROR: Cek jika delivery_time tidak NULL
+            if (empty($order['delivery_time'])) {
+                throw new \Exception("Penjual belum mengatur estimasi pengiriman.");
+            }
+            
+            $deliveryTime = strtotime($order['delivery_time']);
+            $currentTime = time();
+
+            if ($currentTime < $deliveryTime) {
+                throw new \Exception("Anda belum bisa mengkonfirmasi. Perkiraan barang tiba pada " . date('d F Y', $deliveryTime));
+            }
+
+            // 3. Ubah status pesanan menjadi 'received'
+            $stmt = $this->conn->prepare("
+                UPDATE {$this->table} 
+                SET status = 'received', received_at = CURRENT_TIMESTAMP 
+                WHERE order_id = ?
+            ");
+            $stmt->bind_param("i", $orderId);
+            if (!$stmt->execute()) {
+                throw new \Exception("Gagal memperbarui status pesanan.");
+            }
+            $stmt->close();
+
+            // 4. Pindahkan saldo (balance) ke penjual
+            $stmt = $this->conn->prepare("
+                UPDATE stores 
+                SET balance = balance + ? 
+                WHERE store_id = ?
+            ");
+            $stmt->bind_param("ii", $order['total_price'], $order['store_id']);
+            if (!$stmt->execute()) {
+                throw new \Exception("Gagal memperbarui saldo penjual.");
+            }
+            $stmt->close();
+
+            // 5. Simpan semua perubahan
+            $this->conn->commit();
+            return true;
+
+        } catch (\Exception $e) {
+            $this->conn->rollback();
+            // Simpan pesan error untuk ditampilkan ke user
+            error_log("Confirm reception failed: " . $e->getMessage());
+            throw $e; // Lempar kembali error agar bisa ditangkap API
+        }
+    }
 }

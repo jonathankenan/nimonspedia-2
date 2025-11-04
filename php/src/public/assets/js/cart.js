@@ -60,61 +60,92 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    async function handleQuantityChange(cartItemId, newQuantity) {
+    function handleQuantityChange(cartItemId, newQuantity) {
         const quantity = parseInt(newQuantity);
         if (quantity < 1) {
             const itemEl = document.querySelector(`.cart-item[data-item-id='${cartItemId}']`);
             if (itemEl) openModal(itemEl);
+            const inputEl = itemEl.querySelector('.quantity-input');
+            if(inputEl) inputEl.value = 1; 
             return;
         }
         showLoading();
-        try {
-            // PERBARUI URL FETCH
-            const response = await fetch('/buyer/cart.php?action=update', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ cart_item_id: cartItemId, quantity: quantity })
-            });
-            const result = await response.json();
-            if (result.success) {
-                updateSummary();
+        
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/buyer/cart.php?action=update', true);
+        xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+        
+        xhr.onload = function() {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    const result = JSON.parse(xhr.responseText);
+                    if (result.success) {
+                        updateSummary();
+                    } else {
+                        alert(result.message || 'Gagal memperbarui jumlah barang.');
+                    }
+                } catch (e) {
+                    alert('Gagal memproses respons server.');
+                    console.error('JSON Parse error:', e);
+                }
             } else {
-                alert(result.message || 'Gagal memperbarui jumlah barang.');
+                alert('Terjadi kesalahan server: ' + xhr.status);
             }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Terjadi kesalahan koneksi.');
-        } finally {
             hideLoading();
-        }
+        };
+        
+        xhr.onerror = function() {
+            alert('Terjadi kesalahan koneksi.');
+            hideLoading();
+        };
+        
+        xhr.send(JSON.stringify({ cart_item_id: cartItemId, quantity: quantity }));
     }
 
-    async function executeDelete() {
+    function executeDelete() {
         if (!itemToDelete) return;
         showLoading();
-        try {
-            // PERBARUI URL FETCH
-            const response = await fetch('/buyer/cart.php?action=remove', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ cart_item_id: itemToDelete.dataset.itemId })
-            });
-            const result = await response.json();
-            if (result.success) {
-                itemToDelete.remove();
-                const badge = document.querySelector('.cart .badge');
-                if(badge) badge.textContent = result.new_cart_count;
-                updateSummary();
+        
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/buyer/cart.php?action=remove', true);
+        xhr.setRequestHeader('Content-Type', 'application/json;charset=UTF-8');
+
+        xhr.onload = function() {
+            if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                    const result = JSON.parse(xhr.responseText);
+                    if (result.success) {
+                        itemToDelete.remove();
+                        const badge = document.querySelector('.cart .badge');
+                        if(badge) {
+                            if (result.new_cart_count > 0) {
+                                badge.textContent = result.new_cart_count;
+                            } else {
+                                badge.remove();
+                            }
+                        }
+                        updateSummary();
+                    } else {
+                        alert(result.message || 'Gagal menghapus barang.');
+                    }
+                } catch (e) {
+                    alert('Gagal memproses respons server.');
+                    console.error('JSON Parse error:', e);
+                }
             } else {
-                alert(result.message || 'Gagal menghapus barang.');
+                alert('Terjadi kesalahan server: ' + xhr.status);
             }
-        } catch (error) {
-            console.error('Error:', error);
-            alert('Terjadi kesalahan koneksi.');
-        } finally {
             closeModal(true);
             hideLoading();
-        }
+        };
+
+        xhr.onerror = function() {
+            alert('Terjadi kesalahan koneksi.');
+            closeModal(true);
+            hideLoading();
+        };
+
+        xhr.send(JSON.stringify({ cart_item_id: itemToDelete.dataset.itemId }));
     }
     
     function openModal(itemElement) {
@@ -133,8 +164,12 @@ document.addEventListener('DOMContentLoaded', () => {
         confirmModal.classList.remove('show');
     }
 
-    cancelBtn.addEventListener('click', () => closeModal(false));
-    confirmBtn.addEventListener('click', executeDelete);
+    if(cancelBtn) {
+        cancelBtn.addEventListener('click', () => closeModal(false));
+    }
+    if(confirmBtn) {
+        confirmBtn.addEventListener('click', executeDelete);
+    }
     
     let debounceTimeout;
     function debounce(func, delay) {
