@@ -3,13 +3,13 @@ CREATE DATABASE IF NOT EXISTS nimonspedia;
 USE nimonspedia;
 
 -- Hapus tabel jika sudah ada untuk memastikan data bersih setiap kali container dibuat ulang
-DROP TABLE IF EXISTS order_items, orders, category_items, categories, cart_items, products, stores, users;
+DROP TABLE IF EXISTS order_items, orders, category_items, categories, cart_items, auction_bids, auctions, chat_messages, chat_rooms, push_subscriptions, push_preferences, user_feature_access, products, stores, users;
 
 CREATE TABLE IF NOT EXISTS users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    role ENUM('BUYER', 'SELLER') NOT NULL,
+    role ENUM('BUYER', 'SELLER', 'ADMIN') NOT NULL,
     name VARCHAR(100) NOT NULL,
     address TEXT,
     balance INT DEFAULT 0,
@@ -95,10 +95,98 @@ CREATE TABLE IF NOT EXISTS order_items (
     FOREIGN KEY (product_id) REFERENCES products(product_id)
 );
 
+CREATE TABLE IF NOT EXISTS auctions (
+    auction_id INT AUTO_INCREMENT PRIMARY KEY,
+    product_id INT NOT NULL,
+    starting_price INT NOT NULL,
+    current_price INT NOT NULL DEFAULT 0,
+    min_increment INT NOT NULL,
+    quantity INT NOT NULL,
+    start_time DATETIME NOT NULL,
+    end_time DATETIME DEFAULT NULL,
+    status ENUM('scheduled', 'active', 'ended', 'cancelled') DEFAULT 'scheduled',
+    winner_id INT DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (product_id) REFERENCES products(product_id),
+    FOREIGN KEY (winner_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE IF NOT EXISTS auction_bids (
+    bid_id INT AUTO_INCREMENT PRIMARY KEY,
+    auction_id INT NOT NULL,
+    bidder_id INT NOT NULL,
+    bid_amount INT NOT NULL,
+    bid_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (auction_id) REFERENCES auctions(auction_id),
+    FOREIGN KEY (bidder_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE IF NOT EXISTS chat_rooms (
+    store_id INT NOT NULL,
+    buyer_id INT NOT NULL,
+    last_message_at DATETIME DEFAULT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (store_id, buyer_id),
+    FOREIGN KEY (store_id) REFERENCES stores(store_id),
+    FOREIGN KEY (buyer_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE IF NOT EXISTS chat_messages (
+    message_id INT AUTO_INCREMENT PRIMARY KEY,
+    store_id INT NOT NULL,
+    buyer_id INT NOT NULL,
+    sender_id INT NOT NULL,
+    message_type ENUM('text', 'image', 'item_preview') NOT NULL,
+    content TEXT NOT NULL,
+    product_id INT DEFAULT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (store_id, buyer_id) REFERENCES chat_rooms(store_id, buyer_id),
+    FOREIGN KEY (sender_id) REFERENCES users(user_id),
+    FOREIGN KEY (product_id) REFERENCES products(product_id)
+);
+
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+    subscription_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    endpoint TEXT NOT NULL,
+    p256dh_key VARCHAR(255) NOT NULL,
+    auth_key VARCHAR(255) NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE IF NOT EXISTS push_preferences (
+    user_id INT PRIMARY KEY,
+    chat_enabled BOOLEAN DEFAULT TRUE,
+    auction_enabled BOOLEAN DEFAULT TRUE,
+    order_enabled BOOLEAN DEFAULT TRUE,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
+CREATE TABLE IF NOT EXISTS user_feature_access (
+    access_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT DEFAULT NULL,
+    feature_name ENUM('checkout_enabled', 'chat_enabled', 'auction_enabled') NOT NULL,
+    is_enabled BOOLEAN DEFAULT TRUE,
+    reason TEXT DEFAULT NULL,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
+);
+
 -- DUMMY DATA --
 
 -- Clear all existing data first to avoid conflicts
 SET FOREIGN_KEY_CHECKS=0;
+TRUNCATE TABLE auction_bids;
+TRUNCATE TABLE auctions;
+TRUNCATE TABLE chat_messages;
+TRUNCATE TABLE chat_rooms;
+TRUNCATE TABLE push_subscriptions;
+TRUNCATE TABLE push_preferences;
+TRUNCATE TABLE user_feature_access;
 TRUNCATE TABLE order_items;
 TRUNCATE TABLE orders;
 TRUNCATE TABLE category_items;
