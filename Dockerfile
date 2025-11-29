@@ -2,6 +2,9 @@ FROM php:8.3-apache
 
 RUN docker-php-ext-install mysqli && docker-php-ext-enable mysqli
 
+# Install Redis extension for PHP
+RUN pecl install redis && docker-php-ext-enable redis
+
 # Set DocumentRoot ke folder public
 RUN sed -i 's|/var/www/html|/var/www/html/public|g' /etc/apache2/sites-available/000-default.conf
 

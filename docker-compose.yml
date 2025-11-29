@@ -1,18 +1,57 @@
-version: '3.8'
-
 services:
+  nginx:
+    image: nginx:alpine
+    container_name: nimonspedia_nginx
+    ports:
+      - "8080:80" # 8080 di browser, 80 di container
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro # mount config nginx
+      - ./php/src:/var/www/html:ro # mount kode PHP sebagai file statis
+    depends_on:
+      - web # tunggu service web PHP jalan dulu
+      - node # tunggu service node jalan dulu
+    restart: always
+    networks:
+      - nimonspedia_network
+
   web:
     build: .
     container_name: nimonspedia_web
-    ports:
-      - "8080:80"
+    expose:
+      - "80" 
     volumes:
       - ./php/src:/var/www/html
+      - ./php/php.ini:/usr/local/etc/php/conf.d/custom.ini
     working_dir: /var/www/html
     user: "www-data"
     depends_on:
-      - db
+      - db # tunggu service database jalan dulu
+      - redis # tunggu service redis jalan dulu
     restart: always
+    networks:
+      - nimonspedia_network
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+
+  node:
+    build: ./node
+    container_name: nimonspedia_node
+    expose:
+      - "3000"
+      - "3001"
+    volumes:
+      - ./node/src:/app/src
+      - ./node/.env:/app/.env
+    working_dir: /app
+    depends_on:
+      - db
+      - redis
+    restart: always
+    networks:
+      - nimonspedia_network
+    environment:
+      - NODE_ENV=development
 
   db:
     image: mysql:8.0
@@ -23,11 +62,34 @@ services:
       MYSQL_DATABASE: nimonspedia
       MYSQL_USER: user
       MYSQL_PASSWORD: password
+    expose:
+      - "3306"
     ports:
       - "3306:3306"
     volumes:
       - db_data:/var/lib/mysql
       - ./init:/docker-entrypoint-initdb.d
+    networks:
+      - nimonspedia_network
+
+  redis:
+    image: redis:7-alpine
+    container_name: nimonspedia_redis
+    restart: always
+    expose:
+      - "6379"
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - nimonspedia_network
+    command: redis-server --appendonly yes
 
 volumes:
   db_data:
+  redis_data:
+
+networks:
+  nimonspedia_network:
+    driver: bridge # Bridge network = Semua container dalam 1 network bisa saling akses pakai nama container
