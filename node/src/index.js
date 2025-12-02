@@ -5,6 +5,7 @@ const mysql = require('mysql2/promise');
 const redis = require('redis');
 const jwt = require('jsonwebtoken');
 const cors = require('cors');
+const bcrypt = require('bcryptjs'); 
 
 // Express App for Admin REST API
 const app = express();
@@ -37,6 +38,46 @@ redisClient.connect();
 // =====================
 // REST API ENDPOINTS
 // =====================
+
+// --- ENDPOINT LOGIN ---
+app.post('/api/admin/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const [users] = await dbPool.query(
+      "SELECT * FROM users WHERE email = ? AND role = 'ADMIN'", 
+      [email]
+    );
+
+    if (users.length === 0) {
+      return res.status(401).json({ error: 'Email tidak ditemukan atau bukan Admin' });
+    }
+
+    const user = users[0];
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ error: 'Password salah' });
+    }
+
+    const JWT_SECRET = process.env.JWT_SECRET || 'rahasia_negara_nimons';
+    const token = jwt.sign(
+      { userId: user.user_id, role: user.role, name: user.name },
+      JWT_SECRET,
+      { expiresIn: '12h' }
+    );
+
+    res.json({ 
+      success: true, 
+      token, 
+      user: { name: user.name, email: user.email } 
+    });
+
+  } catch (error) {
+    console.error('Login Error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
 
 // Health check
 app.get('/api/admin/health', (req, res) => {
