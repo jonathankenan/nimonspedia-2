@@ -189,6 +189,87 @@ app.post('/api/admin/features/:featureName', async (req, res) => {
   }
 });
 
+// ==========================================
+// USER FEATURE FLAGS (MySQL)
+// ==========================================
+
+// 1. Get User Flags
+app.get('/api/admin/users/:userId/flags', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const [rows] = await dbPool.query(
+      "SELECT feature_name, is_enabled, reason FROM user_feature_access WHERE user_id = ?",
+      [userId]
+    );
+    
+    // Convert array to object for easier frontend consumption
+    const flags = {
+      checkout_enabled: { is_enabled: true, reason: null },
+      chat_enabled: { is_enabled: true, reason: null },
+      auction_enabled: { is_enabled: true, reason: null }
+    };
+
+    rows.forEach(row => {
+      if (flags[row.feature_name]) {
+        flags[row.feature_name] = {
+          is_enabled: !!row.is_enabled,
+          reason: row.reason
+        };
+      }
+    });
+
+    res.json(flags);
+  } catch (error) {
+    console.error('Error fetching user flags:', error);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+// 2. Update User Flag
+app.post('/api/admin/users/:userId/flags', async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { feature_name, is_enabled, reason } = req.body;
+
+    // Validasi input
+    const validFeatures = ['checkout_enabled', 'chat_enabled', 'auction_enabled'];
+    if (!validFeatures.includes(feature_name)) {
+      return res.status(400).json({ error: 'Invalid feature name' });
+    }
+
+    if (!is_enabled && (!reason || reason.length < 5)) {
+      return res.status(400).json({ error: 'Alasan wajib diisi minimal 5 karakter saat mematikan fitur.' });
+    }
+
+    // Cek apakah data sudah ada
+    const [existing] = await dbPool.query(
+      "SELECT access_id FROM user_feature_access WHERE user_id = ? AND feature_name = ?",
+      [userId, feature_name]
+    );
+
+    if (existing.length > 0) {
+      // Update
+      await dbPool.query(
+        "UPDATE user_feature_access SET is_enabled = ?, reason = ? WHERE user_id = ? AND feature_name = ?",
+        [is_enabled, reason || null, userId, feature_name]
+      );
+    } else {
+      // Insert baru
+      await dbPool.query(
+        "INSERT INTO user_feature_access (user_id, feature_name, is_enabled, reason) VALUES (?, ?, ?, ?)",
+        [userId, feature_name, is_enabled, reason || null]
+      );
+    }
+
+    // TODO: Kirim notifikasi realtime ke User via WebSocket agar UI mereka langsung berubah (Opsional)
+    
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating user flag:', error);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
 // =====================
 // WEBSOCKET SERVER
 // =====================

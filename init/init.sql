@@ -202,8 +202,8 @@ VALUES
 ('b@gmail.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'SELLER', 'Susi Penjual', 'Jl. Melati No.2', 0),    -- user_id: 2
 ('c@gmail.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'SELLER', 'Caca Penjual', 'Jl. Anggrek No. 3',0), -- user_id: 3
 ('buyer@test.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'BUYER', 'Budi Pembeli', 'Jl. Mawar No. 1, Jakarta', 500000),
-('seller@test.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'SELLER', 'Susi Penjual', 'Jl. Melati No. 2, Jakarta', 0);
-('admin@nimonspedia.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'ADMIN', 'Super Admin', 'Admin HQ', 0);
+('seller@test.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'SELLER', 'Susi Penjual', 'Jl. Melati No. 2, Jakarta', 0),
+('admin@nimonspedia.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'ADMIN', 'Admin', 'Admin HQ', 0);
 
 -- Create store for seller user with initial balance 0
 INSERT INTO stores (user_id, store_name, store_description, store_logo_path, balance)

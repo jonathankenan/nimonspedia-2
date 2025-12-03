@@ -56,6 +56,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_GET['action'] ?? '') === 'auth')
     <p class="register-link">
       Belum mempunyai akun? <a href="/authentication/register_role.php">Daftar</a>
     </p>
+
+    <p class="register-link" style="margin-top: 10px;">
+      Apakah anda admin? <a href="/admin/login">Ya</a>
+    </p>
   </div>
 
 </body>

@@ -1,47 +1,32 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
-import Login from './pages/Login'
+import { Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
 
-// Komponen sederhana untuk memproteksi halaman Dashboard
-// Jika tidak ada token, tendang ke login
+// Komponen Proteksi (Hanya yang punya token boleh masuk)
 const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem('adminToken')
+  const token = localStorage.getItem('adminToken');
   if (!token) {
-    return <Navigate to="/login" replace />
+    return <Navigate to="/login" replace />;
   }
-  return children
-}
-
-// Komponen Dashboard sementara
-const Dashboard = () => {
-  const adminName = localStorage.getItem('adminName')
-  const logout = () => {
-    localStorage.clear()
-    window.location.href = '/admin/login'
-  }
-
-  return (
-    <div style={{ padding: '2rem' }}>
-      <h1>Dashboard Admin</h1>
-      <p>Selamat datang, <b>{adminName}</b>!</p>
-      <button onClick={logout} style={{ padding: '5px 10px', marginTop: '10px' }}>
-        Logout
-      </button>
-    </div>
-  )
-}
+  return children;
+};
 
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       
+      {/* Route Dashboard (Halaman Utama) */}
       <Route path="/" element={
         <ProtectedRoute>
           <Dashboard />
         </ProtectedRoute>
       } />
+      
+      {/* Redirect sembarang URL yang salah ke Home */}
+      <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
-  )
+  );
 }
 
-export default App
+export default App;
