@@ -29,6 +29,7 @@ export default function Login() {
 
       localStorage.setItem('adminToken', data.token);
       localStorage.setItem('adminName', data.user.name);
+      localStorage.setItem('userRole', data.user.role || 'ADMIN');
 
       navigate('/');
     } catch (err) {
