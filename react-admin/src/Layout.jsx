@@ -8,7 +8,12 @@ const Layout = ({ children }) => {
     const handleLogout = () => {
         if (window.confirm('Yakin ingin logout?')) {
             localStorage.clear();
-            navigate('/login');
+
+            if (userRole === 'BUYER' || userRole === 'SELLER') {
+                window.location.href = '/authentication/login.php';
+            } else {
+                navigate('/authentication/login');
+            }
         }
     };
 
@@ -23,7 +28,7 @@ const Layout = ({ children }) => {
                     </div>
                 </Link>
 
-                {/* Tengah */}
+                {/* Tengah - Nav Links */}
                 <div className="nav-center" style={{ display: 'flex', gap: '20px', marginLeft: '40px' }}>
                     {userRole === 'ADMIN' && (
                         <Link to="/" style={{ color: 'white', textDecoration: 'none', fontSize: '0.95rem' }}>
@@ -38,13 +43,18 @@ const Layout = ({ children }) => {
                             </Link>
                             {userRole === 'BUYER' && (
                                 <Link to="/my-bids" style={{ color: 'white', textDecoration: 'none', fontSize: '0.95rem' }}>
-                                    My Bids
+                                    💰 My Bids
                                 </Link>
                             )}
                             {userRole === 'SELLER' && (
-                                <Link to="/seller/auctions" style={{ color: 'white', textDecoration: 'none', fontSize: '0.95rem' }}>
-                                    My Auctions
-                                </Link>
+                                <>
+                                    <Link to="/seller/auctions" style={{ color: 'white', textDecoration: 'none', fontSize: '0.95rem' }}>
+                                        📋 My Auctions
+                                    </Link>
+                                    <Link to="/seller/auction/create" style={{ color: '#90EE90', textDecoration: 'none', fontSize: '0.95rem', fontWeight: '600' }}>
+                                        + Create
+                                    </Link>
+                                </>
                             )}
                         </>
                     )}

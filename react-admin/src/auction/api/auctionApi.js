@@ -88,6 +88,46 @@ export const fetchUserActiveBids = async (token) => {
 };
 
 /**
+ * Get seller's auctions (PHP Seller API)
+ */
+export const fetchSellerAuctions = async (token) => {
+  try {
+    const response = await axios.get(
+      '/seller/api/my-auctions.php',
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+    return response.data.data || response.data;
+  } catch (error) {
+    console.error('Error fetching seller auctions:', error);
+    throw error.response?.data || error;
+  }
+};
+
+/**
+ * Get seller's products (PHP Seller API)
+ */
+export const fetchSellerProducts = async (token) => {
+  try {
+    const response = await axios.get(
+      '/seller/api/seller-products.php',
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+    return response.data.data || response.data;
+  } catch (error) {
+    console.error('Error fetching seller products:', error);
+    throw error.response?.data || error;
+  }
+};
+
+/**
  * Create auction (PHP Seller API)
  */
 export const createAuction = async (auctionData, token) => {
