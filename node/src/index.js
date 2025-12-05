@@ -1,371 +1,39 @@
 require('dotenv').config();
 const express = require('express');
-const WebSocket = require('ws');
-const mysql = require('mysql2/promise');
-const redis = require('redis');
-const jwt = require('jsonwebtoken');
 const cors = require('cors');
-const bcrypt = require('bcryptjs'); 
 
-// Express App for Admin REST API
+// Import configurations
+const dbPool = require('./config/db');
+const redisClient = require('./config/redis');
+
+// Import routes
+const adminRoutes = require('./routes/admin');
+const auctionRoutes = require('./routes/auction');
+
+// Import WebSocket utilities
+const { initializeWebSocket, broadcastMessage } = require('./utils/websocket');
+
+// Express App for REST API
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Database connection pool
-const dbPool = mysql.createPool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME,
-  port: process.env.DB_PORT,
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-});
-
-// Redis client
-const redisClient = redis.createClient({
-  socket: {
-    host: process.env.REDIS_HOST,
-    port: process.env.REDIS_PORT
-  }
-});
-
-redisClient.on('error', (err) => console.error('Redis Client Error', err));
-redisClient.connect();
-
 // =====================
-// REST API ENDPOINTS
+// REST API ROUTES
 // =====================
 
-// --- ENDPOINT LOGIN ---
-app.post('/api/admin/login', async (req, res) => {
-  try {
-    const { email, password } = req.body;
+// Mount routes
+app.use('/api/admin', adminRoutes);
+app.use('/api/auction', auctionRoutes);
 
-    const [users] = await dbPool.query(
-      "SELECT * FROM users WHERE email = ? AND role = 'ADMIN'", 
-      [email]
-    );
-
-    if (users.length === 0) {
-      return res.status(401).json({ error: 'Email tidak ditemukan atau bukan Admin' });
-    }
-
-    const user = users[0];
-
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ error: 'Password salah' });
-    }
-
-    const JWT_SECRET = process.env.JWT_SECRET || 'rahasia_negara_nimons';
-    const token = jwt.sign(
-      { userId: user.user_id, role: user.role, name: user.name },
-      JWT_SECRET,
-      { expiresIn: '12h' }
-    );
-
-    res.json({ 
-      success: true, 
-      token, 
-      user: { name: user.name, email: user.email } 
-    });
-
-  } catch (error) {
-    console.error('Login Error:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
-});
-
-// Health check
-app.get('/api/admin/health', (req, res) => {
+// Health check for root
+app.get('/', (req, res) => {
   res.json({ 
-    status: 'ok', 
-    service: 'Node.js Admin API',
-    timestamp: new Date().toISOString() 
-  });
-});
-
-// Get dashboard stats
-app.get('/api/admin/stats', async (req, res) => {
-  try {
-    const [users] = await dbPool.query('SELECT COUNT(*) as count FROM users');
-    const [orders] = await dbPool.query('SELECT COUNT(*) as count FROM orders');
-    const [products] = await dbPool.query('SELECT COUNT(*) as count FROM products WHERE deleted_at IS NULL');
-    const [revenue] = await dbPool.query(
-      "SELECT SUM(total_price) as total FROM orders WHERE status = 'received'"
-    );
-
-    res.json({
-      users: users[0].count,
-      orders: orders[0].count,
-      products: products[0].count,
-      revenue: revenue[0].total || 0
-    });
-  } catch (error) {
-    console.error('Error fetching stats:', error);
-    res.status(500).json({ error: 'Failed to fetch statistics' });
-  }
-});
-
-// Get recent orders
-app.get('/api/admin/orders/recent', async (req, res) => {
-  try {
-    const [orders] = await dbPool.query(`
-      SELECT 
-        o.order_id,
-        o.total_price,
-        o.status,
-        o.created_at,
-        u.name as buyer_name,
-        s.store_name
-      FROM orders o
-      JOIN users u ON o.buyer_id = u.user_id
-      JOIN stores s ON o.store_id = s.store_id
-      ORDER BY o.created_at DESC
-      LIMIT 10
-    `);
-
-    res.json(orders);
-  } catch (error) {
-    console.error('Error fetching recent orders:', error);
-    res.status(500).json({ error: 'Failed to fetch recent orders' });
-  }
-});
-
-// Get all users
-app.get('/api/admin/users', async (req, res) => {
-  try {
-    const [users] = await dbPool.query(`
-      SELECT 
-        user_id,
-        email,
-        name,
-        role,
-        balance,
-        created_at
-      FROM users
-      ORDER BY created_at DESC
-    `);
-
-    res.json(users);
-  } catch (error) {
-    console.error('Error fetching users:', error);
-    res.status(500).json({ error: 'Failed to fetch users' });
-  }
-});
-
-// Feature flags management
-app.get('/api/admin/features', async (req, res) => {
-  try {
-    const features = await redisClient.hGetAll('feature_flags');
-    res.json(features || {});
-  } catch (error) {
-    console.error('Error fetching features:', error);
-    res.status(500).json({ error: 'Failed to fetch feature flags' });
-  }
-});
-
-app.post('/api/admin/features/:featureName', async (req, res) => {
-  try {
-    const { featureName } = req.params;
-    const { enabled } = req.body;
-    
-    await redisClient.hSet('feature_flags', featureName, enabled ? '1' : '0');
-    
-    // Broadcast to all WebSocket clients
-    broadcastMessage({
-      type: 'feature_update',
-      feature: featureName,
-      enabled
-    });
-
-    res.json({ success: true, feature: featureName, enabled });
-  } catch (error) {
-    console.error('Error updating feature flag:', error);
-    res.status(500).json({ error: 'Failed to update feature flag' });
-  }
-});
-
-// ==========================================
-// USER FEATURE FLAGS (MySQL)
-// ==========================================
-
-// 1. Get User Flags
-app.get('/api/admin/users/:userId/flags', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const [rows] = await dbPool.query(
-      "SELECT feature_name, is_enabled, reason FROM user_feature_access WHERE user_id = ?",
-      [userId]
-    );
-    
-    // Convert array to object for easier frontend consumption
-    const flags = {
-      checkout_enabled: { is_enabled: true, reason: null },
-      chat_enabled: { is_enabled: true, reason: null },
-      auction_enabled: { is_enabled: true, reason: null }
-    };
-
-    rows.forEach(row => {
-      if (flags[row.feature_name]) {
-        flags[row.feature_name] = {
-          is_enabled: !!row.is_enabled,
-          reason: row.reason
-        };
-      }
-    });
-
-    res.json(flags);
-  } catch (error) {
-    console.error('Error fetching user flags:', error);
-    res.status(500).json({ error: 'Database error' });
-  }
-});
-
-// 2. Update User Flag
-app.post('/api/admin/users/:userId/flags', async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const { feature_name, is_enabled, reason } = req.body;
-
-    // Validasi input
-    const validFeatures = ['checkout_enabled', 'chat_enabled', 'auction_enabled'];
-    if (!validFeatures.includes(feature_name)) {
-      return res.status(400).json({ error: 'Invalid feature name' });
-    }
-
-    if (!is_enabled && (!reason || reason.length < 5)) {
-      return res.status(400).json({ error: 'Alasan wajib diisi minimal 5 karakter saat mematikan fitur.' });
-    }
-
-    // Cek apakah data sudah ada
-    const [existing] = await dbPool.query(
-      "SELECT access_id FROM user_feature_access WHERE user_id = ? AND feature_name = ?",
-      [userId, feature_name]
-    );
-
-    if (existing.length > 0) {
-      // Update
-      await dbPool.query(
-        "UPDATE user_feature_access SET is_enabled = ?, reason = ? WHERE user_id = ? AND feature_name = ?",
-        [is_enabled, reason || null, userId, feature_name]
-      );
-    } else {
-      // Insert baru
-      await dbPool.query(
-        "INSERT INTO user_feature_access (user_id, feature_name, is_enabled, reason) VALUES (?, ?, ?, ?)",
-        [userId, feature_name, is_enabled, reason || null]
-      );
-    }
-
-    // TODO: Kirim notifikasi realtime ke User via WebSocket agar UI mereka langsung berubah (Opsional)
-    
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error updating user flag:', error);
-    res.status(500).json({ error: 'Database error' });
-  }
-});
-
-// =====================
-// WEBSOCKET SERVER
-// =====================
-
-const wss = new WebSocket.Server({ port: process.env.WS_PORT });
-const clients = new Set();
-
-wss.on('connection', (ws, req) => {
-  console.log('New WebSocket connection established');
-  clients.add(ws);
-
-  // Send welcome message
-  ws.send(JSON.stringify({
-    type: 'connection',
-    message: 'Connected to Nimonspedia WebSocket Server',
+    status: 'ok',
+    service: 'Nimonspedia Node.js Backend',
     timestamp: new Date().toISOString()
-  }));
-
-  // Handle incoming messages
-  ws.on('message', async (message) => {
-    try {
-      const data = JSON.parse(message);
-      console.log('Received:', data);
-
-      // Handle different message types
-      switch (data.type) {
-        case 'ping':
-          ws.send(JSON.stringify({ type: 'pong', timestamp: new Date().toISOString() }));
-          break;
-
-        case 'chat':
-          // Broadcast chat message to all clients
-          broadcastMessage({
-            type: 'chat',
-            userId: data.userId,
-            message: data.message,
-            timestamp: new Date().toISOString()
-          });
-          break;
-
-        case 'order_update':
-          // Notify relevant users about order updates
-          broadcastMessage({
-            type: 'order_update',
-            orderId: data.orderId,
-            status: data.status,
-            timestamp: new Date().toISOString()
-          });
-          break;
-
-        case 'auction_bid':
-          // Handle auction bid
-          broadcastMessage({
-            type: 'auction_bid',
-            auctionId: data.auctionId,
-            bidAmount: data.bidAmount,
-            userId: data.userId,
-            timestamp: new Date().toISOString()
-          });
-          break;
-
-        default:
-          ws.send(JSON.stringify({ 
-            type: 'error', 
-            message: 'Unknown message type' 
-          }));
-      }
-    } catch (error) {
-      console.error('Error processing message:', error);
-      ws.send(JSON.stringify({ 
-        type: 'error', 
-        message: 'Failed to process message' 
-      }));
-    }
-  });
-
-  ws.on('close', () => {
-    console.log('WebSocket connection closed');
-    clients.delete(ws);
-  });
-
-  ws.on('error', (error) => {
-    console.error('WebSocket error:', error);
-    clients.delete(ws);
   });
 });
-
-// Broadcast message to all connected clients
-function broadcastMessage(data) {
-  const message = JSON.stringify(data);
-  clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(message);
-    }
-  });
-}
 
 // =====================
 // START SERVERS
@@ -374,11 +42,13 @@ function broadcastMessage(data) {
 const PORT = process.env.PORT || 3000;
 const WS_PORT = process.env.WS_PORT || 3001;
 
+// Start REST API server
 app.listen(PORT, () => {
   console.log(`✅ Admin REST API running on port ${PORT}`);
 });
 
-console.log(`✅ WebSocket Server running on port ${WS_PORT}`);
+// Start WebSocket server
+const wss = initializeWebSocket(WS_PORT);
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
