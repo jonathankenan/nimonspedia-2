@@ -6,10 +6,8 @@ const Layout = ({ children }) => {
     const navigate = useNavigate();
 
     const handleLogout = () => {
-        if (window.confirm('Yakin ingin logout?')) {
             localStorage.clear();
             navigate('/login');
-        }
     };
 
     return (
@@ -25,12 +23,6 @@ const Layout = ({ children }) => {
 
                 {/* Tengah */}
                 <div className="nav-center" style={{ display: 'flex', gap: '20px', marginLeft: '40px' }}>
-                    {userRole === 'ADMIN' && (
-                        <Link to="/" style={{ color: 'white', textDecoration: 'none', fontSize: '0.95rem' }}>
-                            Dashboard
-                        </Link>
-                    )}
-
                     {(userRole === 'BUYER' || userRole === 'SELLER') && (
                         <>
                             <Link to="/auction" style={{ color: 'white', textDecoration: 'none', fontSize: '0.95rem' }}>

@@ -57,7 +57,6 @@ export default function Login() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="login-input"
-              placeholder="admin@nimonspedia.com"
             />
           </div>
 
@@ -69,7 +68,6 @@ export default function Login() {
               onChange={(e) => setPassword(e.target.value)}
               required
               className="login-input"
-              placeholder="••••••••"
             />
           </div>
 
