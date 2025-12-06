@@ -88,59 +88,40 @@ const MyBids = () => {
     }
 
     return (
-        <div style={{ padding: '20px' }}>
+        <div className="p-5">
             {/* Header */}
-            <div style={{ marginBottom: '24px' }}>
-                <h1 style={{ margin: '0 0 8px 0', color: '#0A75BD', fontSize: '2rem', fontWeight: '700' }}>
+            <div className="mb-6">
+                <h1 className="text-3xl font-bold text-brand mb-2">
                     💰 Tawaran Saya
                 </h1>
-                <p style={{ margin: 0, color: '#6b7280' }}>
+                <p className="m-0 text-gray-500">
                     Lihat semua lelang yang Anda ikuti
                 </p>
             </div>
 
             {error && (
-                <div style={{
-                    backgroundColor: '#fee2e2',
-                    border: '1px solid #fecaca',
-                    color: '#991b1b',
-                    padding: '16px',
-                    borderRadius: '8px',
-                    marginBottom: '20px'
-                }}>
+                <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mb-5">
                     {error}
                 </div>
             )}
 
             {bids.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '60px 20px', color: '#6b7280' }}>
-                    <div style={{ fontSize: '1.1rem', marginBottom: '8px' }}>
+                <div className="text-center py-16 text-gray-500">
+                    <div className="text-lg mb-2">
                         Belum ada tawaran aktif
                     </div>
-                    <div style={{ fontSize: '0.9rem', marginBottom: '16px' }}>
+                    <div className="text-sm mb-4">
                         Jelajahi lelang dan mulai menawar
                     </div>
                     <button
                         onClick={() => navigate('/auction')}
-                        style={{
-                            padding: '12px 24px',
-                            backgroundColor: '#0A75BD',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '8px',
-                            fontWeight: '600',
-                            cursor: 'pointer'
-                        }}
+                        className="px-6 py-3 bg-brand text-white rounded-lg font-semibold hover:bg-[#085f9a] transition-colors"
                     >
                         Lihat Lelang
                     </button>
                 </div>
             ) : (
-                <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                    gap: '20px'
-                }}>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {bids.map((bid) => {
                         const isWinning = bid.user_highest_bid >= bid.current_price;
 
@@ -148,137 +129,66 @@ const MyBids = () => {
                             <div
                                 key={bid.auction_id}
                                 onClick={() => navigate(`/auction/${bid.auction_id}`)}
-                                style={{
-                                    backgroundColor: 'white',
-                                    borderRadius: '12px',
-                                    overflow: 'hidden',
-                                    cursor: 'pointer',
-                                    border: isWinning ? '2px solid #10b981' : '1px solid #e0e0e0',
-                                    transition: 'transform 0.2s, box-shadow 0.2s'
-                                }}
-                                onMouseEnter={(e) => {
-                                    e.currentTarget.style.transform = 'translateY(-4px)';
-                                    e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.1)';
-                                }}
-                                onMouseLeave={(e) => {
-                                    e.currentTarget.style.transform = 'translateY(0)';
-                                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-                                }}
+                                className={`bg-white rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${isWinning ? 'border-2 border-emerald-500' : 'border border-gray-200'
+                                    }`}
                             >
                                 {/* Image */}
-                                <div style={{
-                                    width: '100%',
-                                    height: '180px',
-                                    backgroundColor: '#f3f4f6',
-                                    overflow: 'hidden',
-                                    position: 'relative'
-                                }}>
+                                <div className="w-full h-48 bg-gray-100 relative">
                                     <img
                                         src={bid.main_image_path || '/assets/images/default.png'}
                                         alt={bid.product_name}
-                                        style={{
-                                            width: '100%',
-                                            height: '100%',
-                                            objectFit: 'cover'
-                                        }}
+                                        className="w-full h-full object-cover"
                                     />
                                     {/* Status Badge */}
-                                    <div style={{
-                                        position: 'absolute',
-                                        top: '8px',
-                                        right: '8px',
-                                        padding: '4px 12px',
-                                        backgroundColor: getStatusColor(bid.status),
-                                        color: 'white',
-                                        borderRadius: '20px',
-                                        fontSize: '0.75rem',
-                                        fontWeight: '600',
-                                        textTransform: 'capitalize'
-                                    }}>
+                                    <div
+                                        className="absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-semibold text-white capitalize"
+                                        style={{ backgroundColor: getStatusColor(bid.status) }}
+                                    >
                                         {bid.status}
                                     </div>
                                     {/* Winning Badge */}
                                     {isWinning && (
-                                        <div style={{
-                                            position: 'absolute',
-                                            top: '8px',
-                                            left: '8px',
-                                            padding: '4px 12px',
-                                            backgroundColor: '#10b981',
-                                            color: 'white',
-                                            borderRadius: '20px',
-                                            fontSize: '0.75rem',
-                                            fontWeight: '600'
-                                        }}>
+                                        <div className="absolute top-2 left-2 px-3 py-1 bg-emerald-500 text-white rounded-full text-xs font-semibold">
                                             🏆 Tertinggi
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Content */}
-                                <div style={{ padding: '16px' }}>
+                                <div className="p-4">
                                     {/* Store Name */}
-                                    <div style={{
-                                        fontSize: '0.75rem',
-                                        color: '#6b7280',
-                                        marginBottom: '4px'
-                                    }}>
+                                    <div className="text-xs text-gray-500 mb-1">
                                         {bid.store_name}
                                     </div>
 
                                     {/* Product Name */}
-                                    <h3 style={{
-                                        margin: '0 0 12px 0',
-                                        fontSize: '1rem',
-                                        fontWeight: '600',
-                                        color: '#333',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        whiteSpace: 'nowrap'
-                                    }}>
+                                    <h3 className="text-base font-semibold text-gray-800 mb-3 truncate">
                                         {bid.product_name}
                                     </h3>
 
                                     {/* Prices */}
-                                    <div style={{ marginBottom: '12px' }}>
-                                        <div style={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between',
-                                            marginBottom: '4px'
-                                        }}>
-                                            <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>
+                                    <div className="mb-3">
+                                        <div className="flex justify-between mb-1">
+                                            <span className="text-sm text-gray-500">
                                                 Harga sekarang
                                             </span>
-                                            <span style={{ fontSize: '1rem', fontWeight: '700', color: '#0A75BD' }}>
+                                            <span className="text-base font-bold text-brand">
                                                 {formatCurrency(bid.current_price)}
                                             </span>
                                         </div>
-                                        <div style={{
-                                            display: 'flex',
-                                            justifyContent: 'space-between'
-                                        }}>
-                                            <span style={{ fontSize: '0.85rem', color: '#6b7280' }}>
+                                        <div className="flex justify-between">
+                                            <span className="text-sm text-gray-500">
                                                 Tawaran Anda
                                             </span>
-                                            <span style={{
-                                                fontSize: '0.95rem',
-                                                fontWeight: '600',
-                                                color: isWinning ? '#10b981' : '#6b7280'
-                                            }}>
+                                            <span className={`text-sm font-semibold ${isWinning ? 'text-emerald-500' : 'text-gray-500'}`}>
                                                 {formatCurrency(bid.user_highest_bid)}
                                             </span>
                                         </div>
                                     </div>
 
                                     {/* Time Remaining */}
-                                    <div style={{
-                                        paddingTop: '12px',
-                                        borderTop: '1px solid #e0e0e0',
-                                        fontSize: '0.85rem',
-                                        fontWeight: '600',
-                                        color: bid.status === 'active' ? '#10b981' : '#6b7280',
-                                        textAlign: 'center'
-                                    }}>
+                                    <div className={`pt-3 border-t border-gray-200 text-sm font-semibold text-center ${bid.status === 'active' ? 'text-emerald-500' : 'text-gray-500'
+                                        }`}>
                                         {formatTimeRemaining(bid.end_time)}
                                     </div>
                                 </div>

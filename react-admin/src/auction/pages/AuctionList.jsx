@@ -21,13 +21,13 @@ const AuctionList = () => {
       setError('');
       const response = await fetchAuctions(LIMIT, offset);
       const data = response.data || response;
-      
+
       if (offset === 0) {
         setAuctions(data);
       } else {
         setAuctions(prev => [...prev, ...data]);
       }
-      
+
       setHasMore(data.length === LIMIT);
     } catch (err) {
       console.error('Error loading auctions:', err);
@@ -42,77 +42,45 @@ const AuctionList = () => {
   };
 
   return (
-    <div style={{ padding: '20px' }}>
-      <div style={{ marginBottom: '32px' }}>
-        <h1 style={{ margin: '0 0 8px 0', color: '#0A75BD', fontSize: '2rem', fontWeight: '700' }}>
+    <div className="p-5">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-brand mb-2">
           🔨 Lelang Aktif
         </h1>
-        <p style={{ margin: 0, color: '#6b7280' }}>
+        <p className="text-gray-500 m-0">
           Jelajahi produk yang tersedia untuk dilelang
         </p>
       </div>
 
       {error && (
-        <div
-          style={{
-            backgroundColor: '#fee2e2',
-            border: '1px solid #fecaca',
-            color: '#991b1b',
-            padding: '16px',
-            borderRadius: '8px',
-            marginBottom: '20px'
-          }}
-        >
+        <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mb-5">
           {error}
         </div>
       )}
 
       {loading && offset === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: '#6b7280' }}>
-          <div style={{ marginBottom: '16px' }}>Memuat lelang...</div>
+        <div className="text-center py-16 text-gray-500">
+          <div className="mb-4">Memuat lelang...</div>
         </div>
       ) : auctions.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', color: '#6b7280' }}>
-          <div style={{ fontSize: '1.1rem', marginBottom: '8px' }}>Belum ada lelang aktif</div>
-          <div style={{ fontSize: '0.9rem' }}>Coba kembali nanti</div>
+        <div className="text-center py-16 text-gray-500">
+          <div className="text-lg mb-2">Belum ada lelang aktif</div>
+          <div className="text-sm">Coba kembali nanti</div>
         </div>
       ) : (
         <>
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))',
-              gap: '20px',
-              marginBottom: '32px'
-            }}
-          >
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 mb-8">
             {auctions.map((auction) => (
               <AuctionCard key={auction.auction_id} auction={auction} />
             ))}
           </div>
 
           {hasMore && (
-            <div style={{ textAlign: 'center' }}>
+            <div className="text-center">
               <button
                 onClick={handleLoadMore}
                 disabled={loading}
-                style={{
-                  padding: '12px 32px',
-                  backgroundColor: '#0A75BD',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontWeight: '600',
-                  cursor: loading ? 'not-allowed' : 'pointer',
-                  opacity: loading ? 0.7 : 1,
-                  transition: 'background-color 0.2s'
-                }}
-                onMouseEnter={(e) => {
-                  if (!loading) e.target.style.backgroundColor = '#085f9a';
-                }}
-                onMouseLeave={(e) => {
-                  if (!loading) e.target.style.backgroundColor = '#0A75BD';
-                }}
+                className="px-8 py-3 bg-brand text-white rounded-lg font-semibold hover:bg-[#085f9a] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {loading ? 'Memuat...' : 'Muat Lebih Banyak'}
               </button>

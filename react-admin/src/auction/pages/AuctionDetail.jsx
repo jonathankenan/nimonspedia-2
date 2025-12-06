@@ -31,7 +31,7 @@ const AuctionDetail = () => {
 
   const handleBidSubmit = async (bidAmount) => {
     const token = localStorage.getItem('adminToken');
-    
+
     if (!token) {
       alert('Silakan login terlebih dahulu');
       navigate('/login');
@@ -110,86 +110,65 @@ const AuctionDetail = () => {
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="p-5 max-w-7xl mx-auto">
       {/* Breadcrumb */}
-      <div style={{ marginBottom: '20px', color: '#6b7280', fontSize: '0.9rem' }}>
-        <span onClick={() => navigate('/auction')} style={{ cursor: 'pointer', color: '#0A75BD' }}>
+      <div className="mb-5 text-gray-500 text-sm">
+        <span onClick={() => navigate('/auction')} className="cursor-pointer text-brand hover:underline">
           ← Kembali ke Lelang
         </span>
       </div>
 
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: '32px',
-          '@media (max-width: 768px)': {
-            gridTemplateColumns: '1fr'
-          }
-        }}
-      >
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Left Column - Image & Details */}
         <div>
           {/* Product Image */}
-          <div
-            style={{
-              backgroundColor: '#f3f4f6',
-              borderRadius: '12px',
-              overflow: 'hidden',
-              marginBottom: '20px',
-              height: '400px'
-            }}
-          >
+          <div className="bg-gray-100 rounded-xl overflow-hidden mb-5 h-96">
             <img
               src={auction.main_image_path || '/assets/images/default.png'}
               alt={auction.product_name}
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover'
-              }}
+              className="w-full h-full object-cover"
             />
           </div>
 
           {/* Product Info */}
-          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px' }}>
-            <h2 style={{ margin: '0 0 12px 0', color: '#333' }}>
+          <div className="bg-white rounded-xl p-5">
+            <h2 className="text-2xl font-bold text-gray-800 mb-3">
               {auction.product_name}
             </h2>
-            
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '4px' }}>
+
+            <div className="mb-4">
+              <div className="text-sm text-gray-500 mb-1">
                 Toko
               </div>
-              <div style={{ fontSize: '1.1rem', fontWeight: '600', color: '#333' }}>
+              <div className="text-lg font-semibold text-gray-800">
                 {auction.store_name}
               </div>
             </div>
 
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '4px' }}>
+            <div className="mb-4">
+              <div className="text-sm text-gray-500 mb-1">
                 Deskripsi
               </div>
-              <p style={{ margin: 0, color: '#555', lineHeight: '1.5' }}>
+              <p className="m-0 text-gray-600 leading-relaxed">
                 {auction.description || 'Tidak ada deskripsi'}
               </p>
             </div>
 
-            <div style={{ borderTop: '1px solid #e0e0e0', paddingTop: '16px' }}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            <div className="border-t border-gray-200 pt-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <div style={{ fontSize: '0.85rem', color: '#6b7280', marginBottom: '4px' }}>
+                  <div className="text-sm text-gray-500 mb-1">
                     Harga Mulai
                   </div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: '600', color: '#333' }}>
+                  <div className="text-lg font-semibold text-gray-800">
                     {formatCurrency(auction.starting_price)}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: '0.85rem', color: '#6b7280', marginBottom: '4px' }}>
+                  <div className="text-sm text-gray-500 mb-1">
                     Min Increment
                   </div>
-                  <div style={{ fontSize: '1.1rem', fontWeight: '600', color: '#333' }}>
+                  <div className="text-lg font-semibold text-gray-800">
                     {formatCurrency(auction.min_increment)}
                   </div>
                 </div>
@@ -201,47 +180,31 @@ const AuctionDetail = () => {
         {/* Right Column - Bidding */}
         <div>
           {/* Price & Status Card */}
-          <div style={{ backgroundColor: 'white', borderRadius: '12px', padding: '20px', marginBottom: '20px' }}>
-            <div style={{ marginBottom: '16px' }}>
-              <div style={{ fontSize: '0.9rem', color: '#6b7280', marginBottom: '4px' }}>
+          <div className="bg-white rounded-xl p-5 mb-5">
+            <div className="mb-4">
+              <div className="text-sm text-gray-500 mb-1">
                 Harga Sekarang
               </div>
-              <div style={{
-                fontSize: '2.5rem',
-                fontWeight: '700',
-                color: '#0A75BD'
-              }}>
+              <div className="text-4xl font-bold text-brand">
                 {formatCurrency(auction.current_price || auction.starting_price)}
               </div>
             </div>
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '12px',
-              paddingTop: '16px',
-              borderTop: '1px solid #e0e0e0'
-            }}>
+            <div className="grid grid-cols-2 gap-3 pt-4 border-t border-gray-200">
               <div>
-                <div style={{ fontSize: '0.85rem', color: '#6b7280', marginBottom: '4px' }}>
+                <div className="text-sm text-gray-500 mb-1">
                   Status
                 </div>
-                <div style={{
-                  padding: '8px 12px',
-                  backgroundColor: auction.status === 'active' ? '#f0fdf4' : '#f3f4f6',
-                  borderRadius: '6px',
-                  color: auction.status === 'active' ? '#166534' : '#6b7280',
-                  fontWeight: '600',
-                  textTransform: 'capitalize'
-                }}>
+                <div className={`inline-block px-3 py-2 rounded-md font-semibold capitalize ${auction.status === 'active' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'
+                  }`}>
                   {auction.status}
                 </div>
               </div>
               <div>
-                <div style={{ fontSize: '0.85rem', color: '#6b7280', marginBottom: '4px' }}>
+                <div className="text-sm text-gray-500 mb-1">
                   Kuantitas
                 </div>
-                <div style={{ fontSize: '1.1rem', fontWeight: '600', color: '#333' }}>
+                <div className="text-lg font-semibold text-gray-800">
                   {auction.quantity} item
                 </div>
               </div>
@@ -256,7 +219,7 @@ const AuctionDetail = () => {
           />
 
           {/* Bid History */}
-          <div style={{ marginTop: '20px' }}>
+          <div className="mt-5">
             <BidHistory auctionId={auctionId} />
           </div>
         </div>

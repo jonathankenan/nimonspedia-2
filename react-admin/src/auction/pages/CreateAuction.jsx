@@ -144,63 +144,41 @@ const CreateAuction = () => {
     }
 
     return (
-        <div style={{ padding: '20px', maxWidth: '800px', margin: '0 auto' }}>
+        <div className="p-5 max-w-3xl mx-auto">
             {/* Header */}
-            <div style={{ marginBottom: '24px' }}>
+            <div className="mb-6">
                 <button
                     onClick={() => navigate('/seller/auctions')}
-                    style={{
-                        padding: '8px 16px',
-                        backgroundColor: 'transparent',
-                        color: '#0A75BD',
-                        border: '1px solid #0A75BD',
-                        borderRadius: '6px',
-                        cursor: 'pointer',
-                        marginBottom: '16px'
-                    }}
+                    className="px-4 py-2 bg-transparent text-brand border border-brand rounded-md mb-4 hover:bg-sky-50 transition-colors"
                 >
                     ← Kembali
                 </button>
-                <h1 style={{ margin: '0 0 8px 0', color: '#0A75BD', fontSize: '2rem', fontWeight: '700' }}>
+                <h1 className="text-3xl font-bold text-brand mb-2">
                     Buat Lelang Baru
                 </h1>
-                <p style={{ margin: 0, color: '#6b7280' }}>
+                <p className="m-0 text-gray-500">
                     Isi formulir untuk membuat lelang produk
                 </p>
             </div>
 
             {error && (
-                <div style={{
-                    backgroundColor: '#fee2e2',
-                    border: '1px solid #fecaca',
-                    color: '#991b1b',
-                    padding: '16px',
-                    borderRadius: '8px',
-                    marginBottom: '20px'
-                }}>
+                <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg mb-5">
                     {error}
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} style={{ backgroundColor: 'white', borderRadius: '12px', padding: '24px' }}>
+            <form onSubmit={handleSubmit} className="bg-white rounded-xl p-6 shadow-sm">
                 {/* Product Selection */}
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#333' }}>
-                        Produk <span style={{ color: '#ef4444' }}>*</span>
+                <div className="mb-5">
+                    <label className="block mb-2 font-semibold text-gray-800">
+                        Produk <span className="text-red-500">*</span>
                     </label>
                     <select
                         name="product_id"
                         value={formData.product_id}
                         onChange={handleProductChange}
                         required
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            border: '2px solid #e0e0e0',
-                            borderRadius: '8px',
-                            fontSize: '1rem',
-                            fontFamily: 'inherit'
-                        }}
+                        className="w-full p-3 border-2 border-gray-200 rounded-lg text-base outline-none focus:border-brand transition-colors"
                     >
                         <option value="">-- Pilih Produk --</option>
                         {products.map(product => (
@@ -210,18 +188,16 @@ const CreateAuction = () => {
                         ))}
                     </select>
                     {selectedProduct && (
-                        <div style={{ marginTop: '8px', padding: '12px', backgroundColor: '#f3f4f6', borderRadius: '8px' }}>
-                            <div style={{ fontSize: '0.9rem', color: '#6b7280' }}>
-                                <strong>Stock tersedia:</strong> {selectedProduct.stock} item
-                            </div>
+                        <div className="mt-2 p-3 bg-gray-50 rounded-lg text-sm text-gray-600">
+                            <strong>Stock tersedia:</strong> {selectedProduct.stock} item
                         </div>
                     )}
                 </div>
 
                 {/* Starting Price */}
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#333' }}>
-                        Harga Mulai (Rp) <span style={{ color: '#ef4444' }}>*</span>
+                <div className="mb-5">
+                    <label className="block mb-2 font-semibold text-gray-800">
+                        Harga Mulai (Rp) <span className="text-red-500">*</span>
                     </label>
                     <input
                         type="number"
@@ -232,21 +208,14 @@ const CreateAuction = () => {
                         min="1"
                         step="1000"
                         placeholder="Contoh: 100000"
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            border: '2px solid #e0e0e0',
-                            borderRadius: '8px',
-                            fontSize: '1rem',
-                            fontFamily: 'inherit'
-                        }}
+                        className="w-full p-3 border-2 border-gray-200 rounded-lg text-base outline-none focus:border-brand transition-colors"
                     />
                 </div>
 
                 {/* Min Increment */}
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#333' }}>
-                        Increment Minimal (Rp) <span style={{ color: '#ef4444' }}>*</span>
+                <div className="mb-5">
+                    <label className="block mb-2 font-semibold text-gray-800">
+                        Increment Minimal (Rp) <span className="text-red-500">*</span>
                     </label>
                     <input
                         type="number"
@@ -257,24 +226,17 @@ const CreateAuction = () => {
                         min="1"
                         step="1000"
                         placeholder="Contoh: 10000"
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            border: '2px solid #e0e0e0',
-                            borderRadius: '8px',
-                            fontSize: '1rem',
-                            fontFamily: 'inherit'
-                        }}
+                        className="w-full p-3 border-2 border-gray-200 rounded-lg text-base outline-none focus:border-brand transition-colors"
                     />
-                    <div style={{ marginTop: '4px', fontSize: '0.85rem', color: '#6b7280' }}>
+                    <div className="mt-1 text-sm text-gray-500">
                         Jumlah minimum kenaikan setiap bid
                     </div>
                 </div>
 
                 {/* Quantity */}
-                <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#333' }}>
-                        Kuantitas <span style={{ color: '#ef4444' }}>*</span>
+                <div className="mb-5">
+                    <label className="block mb-2 font-semibold text-gray-800">
+                        Kuantitas <span className="text-red-500">*</span>
                     </label>
                     <input
                         type="number"
@@ -285,26 +247,19 @@ const CreateAuction = () => {
                         min="1"
                         max={selectedProduct ? selectedProduct.stock : undefined}
                         placeholder="Jumlah item yang dilelang"
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            border: '2px solid #e0e0e0',
-                            borderRadius: '8px',
-                            fontSize: '1rem',
-                            fontFamily: 'inherit'
-                        }}
+                        className="w-full p-3 border-2 border-gray-200 rounded-lg text-base outline-none focus:border-brand transition-colors"
                     />
                     {selectedProduct && (
-                        <div style={{ marginTop: '4px', fontSize: '0.85rem', color: '#6b7280' }}>
+                        <div className="mt-1 text-sm text-gray-500">
                             Maksimal: {selectedProduct.stock} item
                         </div>
                     )}
                 </div>
 
                 {/* Start Time */}
-                <div style={{ marginBottom: '24px' }}>
-                    <label style={{ display: 'block', marginBottom: '8px', fontWeight: '600', color: '#333' }}>
-                        Waktu Mulai <span style={{ color: '#ef4444' }}>*</span>
+                <div className="mb-6">
+                    <label className="block mb-2 font-semibold text-gray-800">
+                        Waktu Mulai <span className="text-red-500">*</span>
                     </label>
                     <input
                         type="datetime-local"
@@ -312,37 +267,19 @@ const CreateAuction = () => {
                         value={formData.start_time}
                         onChange={handleChange}
                         required
-                        style={{
-                            width: '100%',
-                            padding: '12px',
-                            border: '2px solid #e0e0e0',
-                            borderRadius: '8px',
-                            fontSize: '1rem',
-                            fontFamily: 'inherit'
-                        }}
+                        className="w-full p-3 border-2 border-gray-200 rounded-lg text-base outline-none focus:border-brand transition-colors"
                     />
-                    <div style={{ marginTop: '4px', fontSize: '0.85rem', color: '#6b7280' }}>
+                    <div className="mt-1 text-sm text-gray-500">
                         Lelang akan dimulai pada waktu yang ditentukan
                     </div>
                 </div>
 
                 {/* Submit Button */}
-                <div style={{ display: 'flex', gap: '12px' }}>
+                <div className="flex gap-3">
                     <button
                         type="submit"
                         disabled={submitting}
-                        style={{
-                            flex: 1,
-                            padding: '14px',
-                            backgroundColor: '#0A75BD',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '8px',
-                            fontWeight: '600',
-                            fontSize: '1rem',
-                            cursor: submitting ? 'not-allowed' : 'pointer',
-                            opacity: submitting ? 0.7 : 1
-                        }}
+                        className="flex-1 p-3.5 bg-brand text-white rounded-lg font-semibold hover:bg-[#085f9a] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                         {submitting ? 'Membuat Lelang...' : 'Buat Lelang'}
                     </button>
@@ -350,16 +287,7 @@ const CreateAuction = () => {
                         type="button"
                         onClick={() => navigate('/seller/auctions')}
                         disabled={submitting}
-                        style={{
-                            padding: '14px 24px',
-                            backgroundColor: '#6b7280',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '8px',
-                            fontWeight: '600',
-                            cursor: submitting ? 'not-allowed' : 'pointer',
-                            opacity: submitting ? 0.7 : 1
-                        }}
+                        className="px-6 py-3.5 bg-gray-500 text-white rounded-lg font-semibold hover:bg-gray-600 transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                         Batal
                     </button>
