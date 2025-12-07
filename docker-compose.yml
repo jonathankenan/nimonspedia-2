@@ -40,9 +40,11 @@ services:
     expose:
       - "3000"
       - "3001"
+      - "3002"
     volumes:
       - ./node/src:/app/src
       - ./node/.env:/app/.env
+      - ./php/src/public/assets/images/chat:/var/www/html/public/assets/images/chat
     working_dir: /app
     depends_on:
       - db
