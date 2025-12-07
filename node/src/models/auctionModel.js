@@ -1,35 +1,102 @@
+
 const dbPool = require('../config/db');
 
 class AuctionModel {
+  static async updateAuctionStatuses() {
+    const connection = await dbPool.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      // 1. Update scheduled -> active
+      await connection.query(`
+        UPDATE auctions 
+        SET status = 'active' 
+        WHERE status = 'scheduled' AND start_time <= NOW()
+  `);
+
+      // 2. Find active auctions that have ended
+      const [endedAuctions] = await connection.query(`
+        SELECT a.*, p.store_id, p.product_name
+        FROM auctions a
+        JOIN products p ON a.product_id = p.product_id
+        WHERE a.status = 'active' AND a.end_time <= NOW()
+        FOR UPDATE
+  `);
+
+      for (const auction of endedAuctions) {
+        // Mark as ended
+        await connection.query(
+          'UPDATE auctions SET status = "ended" WHERE auction_id = ?',
+          [auction.auction_id]
+        );
+
+        // If there is a winner, create order
+        if (auction.winner_id) {
+          const [users] = await connection.query(
+            'SELECT address FROM users WHERE user_id = ?',
+            [auction.winner_id]
+          );
+
+          if (users.length > 0) {
+            const shippingAddress = users[0].address || 'Address not provided';
+
+            // Create Order
+            const [orderResult] = await connection.query(
+              'INSERT INTO orders (buyer_id, store_id, total_price, shipping_address, status) VALUES (?, ?, ?, ?, ?)',
+              [auction.winner_id, auction.store_id, auction.current_price, shippingAddress, 'approved']
+            );
+            const orderId = orderResult.insertId;
+
+            // Create Order Item
+            const priceAtOrder = auction.current_price / auction.quantity;
+            await connection.query(
+              'INSERT INTO order_items (order_id, product_id, quantity, price_at_order, subtotal) VALUES (?, ?, ?, ?, ?)',
+              [orderId, auction.product_id, auction.quantity, priceAtOrder, auction.current_price]
+            );
+          }
+        }
+      }
+
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      console.error('Error updating auction statuses:', error);
+    } finally {
+      connection.release();
+    }
+  }
+
   static async getActiveAuctions(limit = 20, offset = 0) {
     try {
+      await this.updateAuctionStatuses();
+
       const [rows] = await dbPool.query(`
-        SELECT 
-          a.auction_id,
-          a.product_id,
-          a.starting_price,
-          a.current_price,
-          a.min_increment,
-          a.quantity,
-          a.start_time,
-          a.end_time,
-          a.status,
-          a.winner_id,
-          p.product_name,
-          p.price AS original_price,
-          p.main_image_path,
-          s.store_id,
-          s.store_name,
-          u.name AS seller_name,
-          (SELECT COUNT(*) FROM auction_bids WHERE auction_id = a.auction_id) AS bid_count
+SELECT
+a.auction_id,
+  a.product_id,
+  a.starting_price,
+  a.current_price,
+  a.min_increment,
+  a.quantity,
+  a.start_time,
+  a.end_time,
+  a.status,
+  a.winner_id,
+  p.product_name,
+  p.price AS original_price,
+    p.main_image_path,
+    s.store_id,
+    s.store_name,
+    u.name AS seller_name,
+      (SELECT COUNT(*) FROM auction_bids WHERE auction_id = a.auction_id) AS bid_count
         FROM auctions a
         JOIN products p ON a.product_id = p.product_id
         JOIN stores s ON p.store_id = s.store_id
         JOIN users u ON s.user_id = u.user_id
-        WHERE a.status IN ('active', 'scheduled')
+        WHERE a.status IN('active', 'scheduled')
         ORDER BY a.start_time DESC
-        LIMIT ? OFFSET ?
-      `, [limit, offset]);
+LIMIT ? OFFSET ?
+  `, [limit, offset]);
 
       return rows;
     } catch (error) {
@@ -40,33 +107,35 @@ class AuctionModel {
 
   static async getAuctionDetail(auctionId) {
     try {
+      await this.updateAuctionStatuses();
+
       const [rows] = await dbPool.query(`
-        SELECT 
-          a.auction_id,
-          a.product_id,
-          a.starting_price,
-          a.current_price,
-          a.min_increment,
-          a.quantity,
-          a.start_time,
-          a.end_time,
-          a.status,
-          a.winner_id,
-          a.created_at,
-          p.product_name,
-          p.description,
-          p.price AS original_price,
-          p.main_image_path,
-          s.store_id,
-          s.store_name,
-          u.user_id AS seller_id,
-          u.name AS seller_name
+        SELECT
+a.auction_id,
+  a.product_id,
+  a.starting_price,
+  a.current_price,
+  a.min_increment,
+  a.quantity,
+  a.start_time,
+  a.end_time,
+  a.status,
+  a.winner_id,
+  a.created_at,
+  p.product_name,
+  p.description,
+  p.price AS original_price,
+    p.main_image_path,
+    s.store_id,
+    s.store_name,
+    u.user_id AS seller_id,
+      u.name AS seller_name
         FROM auctions a
         JOIN products p ON a.product_id = p.product_id
         JOIN stores s ON p.store_id = s.store_id
         JOIN users u ON s.user_id = u.user_id
         WHERE a.auction_id = ?
-      `, [auctionId]);
+  `, [auctionId]);
 
       if (rows.length === 0) return null;
       return rows[0];
@@ -79,19 +148,19 @@ class AuctionModel {
   static async getBidHistory(auctionId, limit = 50) {
     try {
       const [rows] = await dbPool.query(`
-        SELECT 
-          ab.bid_id,
-          ab.bid_amount,
-          ab.bid_time,
-          u.user_id AS bidder_id,
-          u.name AS bidder_name,
-          u.email AS bidder_email
+        SELECT
+ab.bid_id,
+  ab.bid_amount,
+  ab.bid_time,
+  u.user_id AS bidder_id,
+    u.name AS bidder_name,
+      u.email AS bidder_email
         FROM auction_bids ab
         JOIN users u ON ab.bidder_id = u.user_id
         WHERE ab.auction_id = ?
-        ORDER BY ab.bid_time DESC
-        LIMIT ?
-      `, [auctionId, limit]);
+  ORDER BY ab.bid_time DESC
+LIMIT ?
+  `, [auctionId, limit]);
 
       return rows;
     } catch (error) {
@@ -123,18 +192,32 @@ class AuctionModel {
         : currentAuction.current_price + currentAuction.min_increment;
 
       if (bidAmount < minBidAmount) {
-        throw new Error(`Bid amount must be at least ${minBidAmount}`);
+        throw new Error(`Bid amount must be at least ${minBidAmount} `);
       }
 
       // Check if bidder has enough balance
       const [user] = await connection.query(
-        'SELECT balance FROM users WHERE user_id = ?',
+        'SELECT balance FROM users WHERE user_id = ? FOR UPDATE',
         [bidderId]
       );
 
       if (user.length === 0 || user[0].balance < bidAmount) {
         throw new Error('Insufficient balance');
       }
+
+      // 1. Refund previous winner if exists
+      if (currentAuction.winner_id) {
+        await connection.query(
+          'UPDATE users SET balance = balance + ? WHERE user_id = ?',
+          [currentAuction.current_price, currentAuction.winner_id]
+        );
+      }
+
+      // 2. Deduct balance from new bidder
+      await connection.query(
+        'UPDATE users SET balance = balance - ? WHERE user_id = ?',
+        [bidAmount, bidderId]
+      );
 
       // insert bid
       const [bidResult] = await connection.query(
@@ -183,24 +266,24 @@ class AuctionModel {
   static async getUserActiveBids(userId) {
     try {
       const [rows] = await dbPool.query(`
-        SELECT 
-          a.auction_id,
-          a.product_id,
-          a.current_price,
-          a.status,
-          a.end_time,
-          p.product_name,
-          p.main_image_path,
-          s.store_name,
-          MAX(ab.bid_amount) AS user_highest_bid
+SELECT
+a.auction_id,
+  a.product_id,
+  a.current_price,
+  a.status,
+  a.end_time,
+  p.product_name,
+  p.main_image_path,
+  s.store_name,
+  MAX(ab.bid_amount) AS user_highest_bid
         FROM auction_bids ab
         JOIN auctions a ON ab.auction_id = a.auction_id
         JOIN products p ON a.product_id = p.product_id
         JOIN stores s ON p.store_id = s.store_id
-        WHERE ab.bidder_id = ? AND a.status IN ('active', 'scheduled')
+        WHERE ab.bidder_id = ? AND a.status IN('active', 'scheduled')
         GROUP BY a.auction_id
         ORDER BY a.end_time ASC
-      `, [userId]);
+  `, [userId]);
 
       return rows;
     } catch (error) {
@@ -246,7 +329,7 @@ class AuctionModel {
         JOIN products p ON a.product_id = p.product_id
         JOIN stores s ON p.store_id = s.store_id
         WHERE a.auction_id = ?
-      `, [auctionId]);
+  `, [auctionId]);
 
       if (rows.length === 0) {
         throw new Error('Auction not found');
@@ -295,7 +378,7 @@ class AuctionModel {
           // Calculate subtotal (price * quantity)
           const subtotal = auction.current_price * auction.quantity; // Assuming current_price is per unit? 
           // Wait, auction price usually is for the whole lot if quantity > 1? 
-          // Or per unit? In `create-auction.php`, quantity is input.
+          // Or per unit? In `create - auction.php`, quantity is input.
           // Usually auctions are for the specific item(s).
           // If I bid 100000 for 5 items, is it 100000 total or each?
           // Standard auction logic: Price is for the LOT.

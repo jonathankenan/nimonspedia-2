@@ -11,22 +11,33 @@ const Layout = ({ children }) => {
 
     useEffect(() => {
         const token = localStorage.getItem('adminToken');
-        if (!token) return;
 
         if (userRole === 'BUYER') {
             const loadBalance = async () => {
                 try {
-                    const bal = await fetchUserBalance(token);
+                    let bal = 0;
+                    const res = await fetch('/api/user-balance.php', {
+                        credentials: 'include'
+                    });
+                    const data = await res.json();
+                    bal = data.balance ?? 0;
                     setBalance(bal);
                 } catch (err) {
                     console.error('Failed to load balance', err);
                 }
             };
             loadBalance();
-        } else if (userRole === 'SELLER') {
+        }
+
+        if (userRole === 'SELLER') {
             const loadSellerAuction = async () => {
                 try {
-                    const id = await fetchSellerActiveAuction(token);
+                    let id = null;
+                    const res = await fetch('/api/seller-active-auction.php', {
+                        credentials: 'include'
+                    });
+                    const data = await res.json();
+                    id = data.auction_id ?? null;
                     setSellerAuctionId(id);
                 } catch (err) {
                     console.error('Failed to load seller auction', err);
@@ -115,7 +126,7 @@ const Layout = ({ children }) => {
                                 Kelola Produk
                             </a>
                             {sellerAuctionId && (
-                                <Link to={`/ auction / ${ sellerAuctionId } `} className="nav-link">
+                                <Link to={`/ auction / ${sellerAuctionId} `} className="nav-link">
                                     Auction
                                 </Link>
                             )}

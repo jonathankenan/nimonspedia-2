@@ -12,17 +12,14 @@ const BidForm = ({ auction, onBidSubmit, loading = false }) => {
   }, []);
 
   const loadUserBalance = async () => {
-    const token = localStorage.getItem('adminToken');
-    if (!token) return;
-
     try {
-      setLoadingBalance(true);
-      const userBalance = await fetchUserBalance(token);
-      setBalance(Number(userBalance));
+      const res = await fetch('http://localhost:8080/api/user-balance.php', {
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (data.balance !== undefined) setBalance(Number(data.balance));
     } catch (err) {
       console.error('Failed to load balance:', err);
-    } finally {
-      setLoadingBalance(false);
     }
   };
 

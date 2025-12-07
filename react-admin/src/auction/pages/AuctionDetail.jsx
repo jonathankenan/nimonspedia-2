@@ -14,6 +14,7 @@ const AuctionDetail = () => {
   const [error, setError] = useState('');
   const [bidding, setBidding] = useState(false);
   const { lastMessage } = useWebSocket();
+  const [balance, setBalance] = useState(0);
 
   // Edit State
   const [editing, setEditing] = useState(false);
@@ -58,6 +59,29 @@ const AuctionDetail = () => {
     return () => clearInterval(interval);
   }, [auction?.status]);
 
+  useEffect(() => {
+      loadBalance();
+  }, []);
+
+
+  const loadBalance = async () => {
+      try {
+          let bal = 0;
+
+          // fetch dari PHP session
+          const res = await fetch('/api/user-balance.php', {
+              credentials: 'include'
+          });
+          const data = await res.json();
+          bal = data.balance ?? 0;
+
+          setBalance(bal);
+      } catch (err) {
+          console.error('Gagal load balance:', err);
+      }
+  };
+
+
   const loadAuctionDetail = async () => {
     try {
       // Don't set loading=true to avoid flickering on real-time updates
@@ -78,7 +102,7 @@ const AuctionDetail = () => {
 
     if (!token) {
       alert('Silakan login terlebih dahulu');
-      navigate('/login');
+      window.location.href = '/authentication/login.php';
       return;
     }
 
