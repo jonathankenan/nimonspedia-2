@@ -158,14 +158,15 @@ export default function Chat() {
   console.log('[Chat] Current userRole:', userRole);
 
   return (
-    <div className="flex h-[calc(100vh-64px)] bg-gray-50">
+    <div className="rounded-lg shadow-lg overflow-hidden flex h-[calc(100vh-64px)] bg-gray-50 ">
       {/* Sidebar - Chat Room List */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col">
+      <div className={`${
+        activeRoomId ? 'hidden md:flex' : 'flex'
+      } w-full md:w-80 bg-white border-r border-gray-200 flex-col`}>
         {/* Header */}
         <div className="px-4 py-4 border-b border-gray-200">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xl font-bold text-gray-900">Chat</h2>
-            {/* Show button for BUYER or if role not loaded yet (for testing) */}
             {(userRole === 'BUYER' || userRole !== 'SELLER') && (
               <button
                 onClick={() => setShowNewChatModal(true)}
@@ -173,14 +174,13 @@ export default function Chat() {
                 title="Chat Baru"
               >
                 <Plus size={20} />
-                <span className="text-sm font-medium">Chat Baru</span>
+                <span className="text-sm font-medium hidden sm:inline">Chat Baru</span>
               </button>
             )}
           </div>
 
           {/* Search */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={18} />
             <input
               type="text"
               value={searchQuery}
@@ -217,12 +217,15 @@ export default function Chat() {
       </div>
 
       {/* Main - Chat Room Interface */}
-      <div className="flex-1 flex flex-col">
+      <div className={`${
+        activeRoomId ? 'flex' : 'hidden md:flex'
+      } flex-1 flex-col`}>
         {activeRoom ? (
           <ChatRoom
             room={activeRoom}
             userRole={userRole}
             socket={socket}
+            onBack={() => setActiveRoomId(null)}
           />
         ) : (
           <div className="flex-1 flex items-center justify-center text-gray-400">

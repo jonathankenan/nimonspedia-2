@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { getMessages, sendMessage, markMessagesAsRead, uploadImage } from '../api/chatApi';
 import MessageBubble from './MessageBubble';
-import { Upload, Send } from 'lucide-react';
+import { Upload, Send, ArrowLeft } from 'lucide-react';
 
-export default function ChatRoom({ room, userRole, socket }) {
+export default function ChatRoom({ room, userRole, socket, onBack }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -229,8 +229,19 @@ export default function ChatRoom({ room, userRole, socket }) {
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
-      <div className="px-6 py-4 border-b border-gray-200 bg-white">
+      <div className="px-4 md:px-6 py-4 border-b border-gray-200 bg-white">
         <div className="flex items-center gap-3">
+          {/* Back button for mobile */}
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="md:hidden p-2 hover:bg-gray-100 rounded-full transition"
+              title="Kembali"
+            >
+              <ArrowLeft size={20} />
+            </button>
+          )}
+          
           {displayImage ? (
             <img
               src={displayImage}
@@ -242,8 +253,8 @@ export default function ChatRoom({ room, userRole, socket }) {
               {displayName?.charAt(0).toUpperCase()}
             </div>
           )}
-          <div>
-            <h3 className="font-semibold text-lg text-gray-900">{displayName}</h3>
+          <div className="flex-1 min-w-0">
+            <h3 className="font-semibold text-lg text-gray-900 truncate">{displayName}</h3>
           </div>
         </div>
       </div>
@@ -251,7 +262,7 @@ export default function ChatRoom({ room, userRole, socket }) {
       {/* Messages */}
       <div
         ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto px-6 py-4 bg-gray-50"
+        className="flex-1 overflow-y-auto px-4 md:px-6 py-4 bg-gray-50"
       >
         {hasMore && (
           <div className="text-center mb-4">
@@ -296,8 +307,8 @@ export default function ChatRoom({ room, userRole, socket }) {
       </div>
 
       {/* Input */}
-      <div className="px-6 py-4 border-t border-gray-200 bg-white">
-        <div className="flex items-end gap-3">
+      <div className="px-4 md:px-6 py-3 md:py-4 border-t border-gray-200 bg-white">
+        <div className="flex items-center gap-2 md:gap-3">
           <input
             ref={fileInputRef}
             type="file"
@@ -309,10 +320,10 @@ export default function ChatRoom({ room, userRole, socket }) {
           <button
             onClick={() => fileInputRef.current?.click()}
             disabled={sending}
-            className="p-2 text-gray-500 hover:text-gray-700 transition"
+            className="p-2 text-gray-500 hover:text-gray-700 transition flex-shrink-0"
             title="Kirim gambar"
           >
-            <Upload size={20} />
+            <Upload size={18} className="md:w-5 md:h-5" />
           </button>
 
           <textarea
@@ -329,17 +340,17 @@ export default function ChatRoom({ room, userRole, socket }) {
             }}
             placeholder="Ketik pesan..."
             rows={1}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-full resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="flex-1 px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded-full resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             style={{ maxHeight: '120px' }}
           />
 
           <button
             onClick={handleSendMessage}
             disabled={!newMessage.trim() || sending}
-            className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition"
+            className="p-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition flex-shrink-0"
             title="Kirim"
           >
-            <Send size={20} />
+            <Send size={18} className="md:w-5 md:h-5" />
           </button>
         </div>
       </div>
