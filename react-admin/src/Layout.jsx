@@ -1,27 +1,38 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { fetchUserBalance } from './auction/api/auctionApi';
+import { fetchUserBalance, fetchSellerActiveAuction } from './auction/api/auctionApi';
 
 const Layout = ({ children }) => {
     const adminName = localStorage.getItem('adminName') || localStorage.getItem('userName') || 'User';
     const userRole = localStorage.getItem('userRole') || 'ADMIN';
     const navigate = useNavigate();
     const [balance, setBalance] = useState(0);
+    const [sellerAuctionId, setSellerAuctionId] = useState(null);
 
     useEffect(() => {
+        const token = localStorage.getItem('adminToken');
+        if (!token) return;
+
         if (userRole === 'BUYER') {
             const loadBalance = async () => {
                 try {
-                    const token = localStorage.getItem('adminToken');
-                    if (token) {
-                        const bal = await fetchUserBalance(token);
-                        setBalance(bal);
-                    }
+                    const bal = await fetchUserBalance(token);
+                    setBalance(bal);
                 } catch (err) {
                     console.error('Failed to load balance', err);
                 }
             };
             loadBalance();
+        } else if (userRole === 'SELLER') {
+            const loadSellerAuction = async () => {
+                try {
+                    const id = await fetchSellerActiveAuction(token);
+                    setSellerAuctionId(id);
+                } catch (err) {
+                    console.error('Failed to load seller auction', err);
+                }
+            };
+            loadSellerAuction();
         }
     }, [userRole]);
 
@@ -103,9 +114,11 @@ const Layout = ({ children }) => {
                             <a href="/seller/kelola_produk.php" className="nav-link">
                                 Kelola Produk
                             </a>
-                            <Link to="/auction" className="nav-link">
-                                Auction
-                            </Link>
+                            {sellerAuctionId && (
+                                <Link to={`/ auction / ${ sellerAuctionId } `} className="nav-link">
+                                    Auction
+                                </Link>
+                            )}
                             <a href="/seller/order_management.php" className="nav-link">
                                 Lihat Pesanan
                             </a>
@@ -131,28 +144,28 @@ const Layout = ({ children }) => {
             </main>
 
             <style>{`
-                .nav-link {
-                    color: white;
-                    text-decoration: none;
-                    font-size: 0.95rem;
-                    transition: opacity 0.2s;
-                }
-                .nav-link:hover {
-                    opacity: 0.8;
-                }
-                .top-nav {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 0 20px;
-                    background-color: #0A75BD; /* Match PHP navbar color if possible */
-                    height: 60px;
-                }
-                .nav-brand h2 {
-                    margin: 0;
-                    color: white;
-                }
-            `}</style>
+    .nav - link {
+    color: white;
+    text - decoration: none;
+    font - size: 0.95rem;
+    transition: opacity 0.2s;
+}
+                .nav - link:hover {
+    opacity: 0.8;
+}
+                .top - nav {
+    display: flex;
+    justify - content: space - between;
+    align - items: center;
+    padding: 0 20px;
+    background - color: #0A75BD; /* Match PHP navbar color if possible */
+    height: 60px;
+}
+                .nav - brand h2 {
+    margin: 0;
+    color: white;
+}
+`}</style>
         </div>
     );
 };

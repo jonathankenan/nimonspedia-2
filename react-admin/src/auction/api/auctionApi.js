@@ -193,6 +193,26 @@ export const editAuction = async (auctionData, token) => {
 };
 
 /**
+ * Get seller's active auction ID
+ */
+export const fetchSellerActiveAuction = async (token) => {
+  try {
+    const response = await axios.get(
+      '/seller/api/get-active-auction.php',
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+    return response.data.data.auction_id;
+  } catch (error) {
+    console.error('Error fetching seller active auction:', error);
+    return null;
+  }
+};
+
+/**
  * Delete auction (PHP Seller API)
  */
 export const deleteAuction = async (auctionId, token) => {

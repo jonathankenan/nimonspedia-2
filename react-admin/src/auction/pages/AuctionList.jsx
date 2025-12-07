@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { fetchAuctions } from '../api/auctionApi';
+import { useNavigate } from 'react-router-dom';
+import { fetchAuctions, fetchSellerActiveAuction } from '../api/auctionApi';
 import AuctionCard from '../components/AuctionCard';
 
 const AuctionList = () => {
+  const navigate = useNavigate();
   const [auctions, setAuctions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -11,6 +13,29 @@ const AuctionList = () => {
   const [activeTab, setActiveTab] = useState('active'); // 'active' or 'scheduled'
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+
+  const userRole = localStorage.getItem('userRole');
+
+  // Redirect Sellers
+  useEffect(() => {
+    if (userRole === 'SELLER') {
+      const checkSellerAuction = async () => {
+        const token = localStorage.getItem('adminToken');
+        if (token) {
+          const auctionId = await fetchSellerActiveAuction(token);
+          if (auctionId) {
+            navigate(`/auction/${auctionId}`);
+          } else {
+            // If no active auction, redirect to dashboard or products
+            window.location.href = '/seller/kelola_produk.php';
+          }
+        } else {
+          window.location.href = '/seller/dashboard.php';
+        }
+      };
+      checkSellerAuction();
+    }
+  }, [userRole, navigate]);
 
   const LIMIT = 12;
 
@@ -30,8 +55,10 @@ const AuctionList = () => {
   }, [activeTab]);
 
   useEffect(() => {
-    loadAuctions();
-  }, [offset, activeTab, debouncedSearch]);
+    if (userRole !== 'SELLER') {
+      loadAuctions();
+    }
+  }, [offset, activeTab, debouncedSearch, userRole]);
 
   const loadAuctions = async () => {
     try {
@@ -102,8 +129,8 @@ const AuctionList = () => {
           <button
             onClick={() => setActiveTab('active')}
             className={`px-6 py-2 rounded-md text-sm font-semibold transition-all ${activeTab === 'active'
-                ? 'bg-white text-brand shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-white text-brand shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
               }`}
           >
             Sedang Berlangsung
@@ -111,8 +138,8 @@ const AuctionList = () => {
           <button
             onClick={() => setActiveTab('scheduled')}
             className={`px-6 py-2 rounded-md text-sm font-semibold transition-all ${activeTab === 'scheduled'
-                ? 'bg-white text-brand shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-white text-brand shadow-sm'
+              : 'text-gray-500 hover:text-gray-700'
               }`}
           >
             Akan Datang

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchAuctionDetail, placeBid, deleteAuction, stopAuction } from '../api/auctionApi';
+import { fetchAuctionDetail, placeBid, deleteAuction, stopAuction, editAuction } from '../api/auctionApi';
 import BidForm from '../components/BidForm';
 import BidHistory from '../components/BidHistory';
 import { useWebSocket } from '../../shared/hooks/useWebSocket';
@@ -14,6 +14,13 @@ const AuctionDetail = () => {
   const [error, setError] = useState('');
   const [bidding, setBidding] = useState(false);
   const { lastMessage } = useWebSocket();
+
+  // Edit State
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    starting_price: '',
+    min_increment: ''
+  });
 
   // User Info
   const userRole = localStorage.getItem('userRole');
@@ -107,7 +114,6 @@ const AuctionDetail = () => {
 
     const token = localStorage.getItem('adminToken');
     try {
-      // Call stopAuction endpoint
       await stopAuction(auctionId, token);
 
       alert('Lelang berhasil dihentikan');
@@ -115,6 +121,33 @@ const AuctionDetail = () => {
     } catch (err) {
       alert('Gagal menghentikan lelang');
       console.error(err);
+    }
+  };
+
+  // Edit Handlers
+  const handleEditClick = () => {
+    setEditForm({
+      starting_price: auction.starting_price,
+      min_increment: auction.min_increment
+    });
+    setEditing(true);
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('adminToken');
+    try {
+      await editAuction({
+        auction_id: auction.auction_id,
+        starting_price: parseFloat(editForm.starting_price),
+        min_increment: parseFloat(editForm.min_increment)
+      }, token);
+
+      alert('Lelang berhasil diperbarui');
+      setEditing(false);
+      loadAuctionDetail();
+    } catch (err) {
+      alert(`Gagal memperbarui lelang: ${err.error || err.message}`);
     }
   };
 
@@ -184,6 +217,56 @@ const AuctionDetail = () => {
           ← Kembali ke Lelang
         </span>
       </div>
+
+      {/* Edit Modal */}
+      {editing && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+            <h3 className="text-xl font-bold mb-4">Edit Lelang</h3>
+            <form onSubmit={handleEditSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Harga Mulai</label>
+                <input
+                  type="number"
+                  value={editForm.starting_price}
+                  onChange={e => setEditForm({ ...editForm, starting_price: e.target.value })}
+                  className="w-full p-2 border rounded"
+                  min="1000"
+                  step="1000"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Increment Minimal</label>
+                <input
+                  type="number"
+                  value={editForm.min_increment}
+                  onChange={e => setEditForm({ ...editForm, min_increment: e.target.value })}
+                  className="w-full p-2 border rounded"
+                  min="1000"
+                  step="1000"
+                  required
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditing(false)}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Simpan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Left Column - Image & Details */}
@@ -287,7 +370,17 @@ const AuctionDetail = () => {
           {isOwner && (
             <div className="bg-white rounded-xl p-5 mb-5 border border-blue-200">
               <h3 className="font-bold text-gray-800 mb-3">Kontrol Penjual</h3>
-              <div className="flex gap-3">
+              <div className="flex gap-3 flex-wrap">
+                {/* Edit Button - Only if no bids and active/scheduled */}
+                {(auction.status === 'active' || auction.status === 'scheduled') && (!auction.bid_count || auction.bid_count === 0) && (
+                  <button
+                    onClick={handleEditClick}
+                    className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold"
+                  >
+                    Edit Lelang
+                  </button>
+                )}
+
                 {auction.status === 'active' && (
                   <button
                     onClick={handleStopAuction}

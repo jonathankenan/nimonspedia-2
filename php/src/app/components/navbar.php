@@ -58,9 +58,40 @@ $cart_count = $_SESSION['cart_count'] ?? 0;
 
         <?php elseif ($role === 'SELLER'): ?>
             <!-- Seller -->
+            <?php
+                // Fetch active auction for seller
+                $seller_auction_id = null;
+                if (isset($_SESSION['user_id'])) {
+                    require_once __DIR__ . '/../config/db.php';
+                    $stmt = $conn->prepare("SELECT store_id FROM stores WHERE user_id = ?");
+                    $stmt->bind_param("i", $_SESSION['user_id']);
+                    $stmt->execute();
+                    $store_res = $stmt->get_result()->fetch_assoc();
+                    
+                    if ($store_res) {
+                        $store_id = $store_res['store_id'];
+                        $stmt = $conn->prepare("
+                            SELECT a.auction_id 
+                            FROM auctions a
+                            JOIN products p ON a.product_id = p.product_id
+                            WHERE p.store_id = ? 
+                            AND a.status IN ('active', 'scheduled')
+                            LIMIT 1
+                        ");
+                        $stmt->bind_param("i", $store_id);
+                        $stmt->execute();
+                        $auction_res = $stmt->get_result()->fetch_assoc();
+                        if ($auction_res) {
+                            $seller_auction_id = $auction_res['auction_id'];
+                        }
+                    }
+                }
+            ?>
             <a href="/seller/dashboard.php">Dashboard</a>
             <a href="/seller/kelola_produk.php">Kelola Produk</a>
-            <a href="/auction">Auction</a>
+            <?php if ($seller_auction_id): ?>
+                <a href="/admin/auction/<?= $seller_auction_id ?>">Auction</a>
+            <?php endif; ?>
             <a href="/seller/order_management.php">Lihat Pesanan</a>
             <a href="/seller/tambah_produk.php">Tambah Produk</a>
             <a href="/authentication/logout.php">Logout</a>
