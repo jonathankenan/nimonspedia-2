@@ -1,20 +1,43 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { fetchUserBalance } from './auction/api/auctionApi';
 
 const Layout = ({ children }) => {
     const adminName = localStorage.getItem('adminName') || localStorage.getItem('userName') || 'User';
     const userRole = localStorage.getItem('userRole') || 'ADMIN';
     const navigate = useNavigate();
+    const [balance, setBalance] = useState(0);
+
+    useEffect(() => {
+        if (userRole === 'BUYER') {
+            const loadBalance = async () => {
+                try {
+                    const token = localStorage.getItem('adminToken');
+                    if (token) {
+                        const bal = await fetchUserBalance(token);
+                        setBalance(bal);
+                    }
+                } catch (err) {
+                    console.error('Failed to load balance', err);
+                }
+            };
+            loadBalance();
+        }
+    }, [userRole]);
 
     const handleLogout = () => {
         if (window.confirm('Yakin ingin logout?')) {
             localStorage.clear();
-
-            if (userRole === 'BUYER' || userRole === 'SELLER') {
-                window.location.href = '/authentication/login.php';
-            } else {
-                navigate('/authentication/login');
-            }
+            window.location.href = '/authentication/logout.php';
         }
+    };
+
+    const formatCurrency = (amount) => {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0
+        }).format(amount);
     };
 
     return (
@@ -22,51 +45,82 @@ const Layout = ({ children }) => {
             <nav className="top-nav">
 
                 {/* Kiri */}
-                <Link to="/" style={{ textDecoration: 'none' }}>
-                    <div className="nav-brand">
-                        <h2>Nimonspedia</h2>
-                    </div>
-                </Link>
+                <div className="nav-brand">
+                    {userRole === 'SELLER' ? (
+                        <a href="/seller/dashboard.php" style={{ textDecoration: 'none', color: 'inherit' }}>
+                            <h2>Nimonspedia</h2>
+                        </a>
+                    ) : userRole === 'BUYER' ? (
+                        <a href="/index.php" style={{ textDecoration: 'none', color: 'inherit' }}>
+                            <h2>Nimonspedia</h2>
+                        </a>
+                    ) : (
+                        <Link to="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+                            <h2>Nimonspedia</h2>
+                        </Link>
+                    )}
+                </div>
 
-                {/* Tengah - Nav Links */}
-                <div className="nav-center" style={{ display: 'flex', gap: '20px', marginLeft: '40px' }}>
+                {/* Kanan - Nav Links */}
+                <div className="nav-right" style={{ display: 'flex', gap: '20px', alignItems: 'center', marginLeft: 'auto' }}>
+
+                    {/* ADMIN Links */}
                     {userRole === 'ADMIN' && (
-                        <Link to="/" style={{ color: 'white', textDecoration: 'none', fontSize: '0.95rem' }}>
+                        <Link to="/" className="nav-link">
                             Dashboard
                         </Link>
                     )}
 
-                    {(userRole === 'BUYER' || userRole === 'SELLER') && (
+                    {/* BUYER Links */}
+                    {userRole === 'BUYER' && (
                         <>
-                            <Link to="/auction" style={{ color: 'white', textDecoration: 'none', fontSize: '0.95rem' }}>
-                                🔨 Auction
+                            <Link to="/auction" className="nav-link">
+                                Auction
                             </Link>
-                            {userRole === 'BUYER' && (
-                                <Link to="/my-bids" style={{ color: 'white', textDecoration: 'none', fontSize: '0.95rem' }}>
-                                    💰 My Bids
-                                </Link>
-                            )}
-                            {userRole === 'SELLER' && (
-                                <>
-                                    <Link to="/seller/auctions" style={{ color: 'white', textDecoration: 'none', fontSize: '0.95rem' }}>
-                                        📋 My Auctions
-                                    </Link>
-                                    <Link to="/seller/auction/create" style={{ color: '#90EE90', textDecoration: 'none', fontSize: '0.95rem', fontWeight: '600' }}>
-                                        + Create
-                                    </Link>
-                                </>
-                            )}
+                            <a href="/buyer/cart.php" className="nav-link">
+                                Keranjang
+                            </a>
+                            <span className="nav-text" style={{ color: 'white' }}>
+                                Balance: {formatCurrency(balance)}
+                            </span>
+
+                            {/* Dropdown-like Profile Links (Simplified as inline for now) */}
+                            <a href="/buyer/profile.php" className="nav-link">
+                                Profile
+                            </a>
+                            <a href="/buyer/orders.php" className="nav-link">
+                                Order History
+                            </a>
                         </>
                     )}
-                </div>
 
-                {/* Kanan */}
-                <div className="nav-right">
-                    <div className="admin-profile">
-                        <div className="admin-name">Halo, {adminName}</div>
+                    {/* SELLER Links */}
+                    {userRole === 'SELLER' && (
+                        <>
+                            <a href="/seller/dashboard.php" className="nav-link">
+                                Dashboard
+                            </a>
+                            <a href="/seller/kelola_produk.php" className="nav-link">
+                                Kelola Produk
+                            </a>
+                            <Link to="/auction" className="nav-link">
+                                Auction
+                            </Link>
+                            <a href="/seller/order_management.php" className="nav-link">
+                                Lihat Pesanan
+                            </a>
+                            <a href="/seller/tambah_produk.php" className="nav-link">
+                                Tambah Produk
+                            </a>
+                        </>
+                    )}
+
+                    {/* User Profile & Logout */}
+                    <div className="admin-profile" style={{ marginLeft: '10px' }}>
+                        <div className="admin-name">{adminName}</div>
                     </div>
 
-                    <button onClick={handleLogout} className="btn-logout">
+                    <button onClick={handleLogout} className="btn-logout" style={{ marginLeft: '10px' }}>
                         Logout
                     </button>
                 </div>
@@ -75,6 +129,30 @@ const Layout = ({ children }) => {
             <main className="main-content">
                 {children}
             </main>
+
+            <style>{`
+                .nav-link {
+                    color: white;
+                    text-decoration: none;
+                    font-size: 0.95rem;
+                    transition: opacity 0.2s;
+                }
+                .nav-link:hover {
+                    opacity: 0.8;
+                }
+                .top-nav {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding: 0 20px;
+                    background-color: #0A75BD; /* Match PHP navbar color if possible */
+                    height: 60px;
+                }
+                .nav-brand h2 {
+                    margin: 0;
+                    color: white;
+                }
+            `}</style>
         </div>
     );
 };
