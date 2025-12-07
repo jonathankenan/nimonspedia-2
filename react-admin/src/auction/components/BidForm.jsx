@@ -1,8 +1,30 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { fetchUserBalance } from '../api/auctionApi';
 
 const BidForm = ({ auction, onBidSubmit, loading = false }) => {
   const [bidAmount, setBidAmount] = useState('');
   const [error, setError] = useState('');
+  const [balance, setBalance] = useState(null);
+  const [loadingBalance, setLoadingBalance] = useState(false);
+
+  useEffect(() => {
+    loadUserBalance();
+  }, []);
+
+  const loadUserBalance = async () => {
+    const token = localStorage.getItem('adminToken');
+    if (!token) return;
+
+    try {
+      setLoadingBalance(true);
+      const userBalance = await fetchUserBalance(token);
+      setBalance(Number(userBalance));
+    } catch (err) {
+      console.error('Failed to load balance:', err);
+    } finally {
+      setLoadingBalance(false);
+    }
+  };
 
   const minBidAmount = auction.current_price === 0
     ? auction.starting_price
@@ -24,8 +46,14 @@ const BidForm = ({ auction, onBidSubmit, loading = false }) => {
       return;
     }
 
+    if (balance !== null && amount > balance) {
+      setError(`Saldo tidak mencukupi. Saldo Anda: ${formatCurrency(balance)}`);
+      return;
+    }
+
     onBidSubmit(amount);
     setBidAmount('');
+    loadUserBalance(); // Reload balance after bid (optimistic or wait for result)
   };
 
   const formatCurrency = (amount) => {
@@ -43,6 +71,13 @@ const BidForm = ({ auction, onBidSubmit, loading = false }) => {
       {auction.status !== 'active' && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-red-700 text-sm">
           ⚠️ Lelang tidak aktif. Status: <strong>{auction.status}</strong>
+        </div>
+      )}
+
+      {balance !== null && (
+        <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-lg flex justify-between items-center">
+          <span className="text-sm text-blue-700">Saldo Anda</span>
+          <span className="font-bold text-blue-800">{formatCurrency(balance)}</span>
         </div>
       )}
 

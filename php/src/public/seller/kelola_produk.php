@@ -61,6 +61,9 @@ $totalPages = $data['totalPages'];
                         <div class="product-card" data-product-id="<?= htmlspecialchars($product['product_id']) ?>">
                             <a href="/seller/edit_produk.php?id=<?= htmlspecialchars($product['product_id']) ?>" class="card-image-link">
                                 <img src="<?= htmlspecialchars($imagePath) ?>" alt="<?= htmlspecialchars($product['product_name']) ?>">
+                                <?php if (!empty($product['auction_status'])): ?>
+                                    <span class="badge-auction">DALAM LELANG</span>
+                                <?php endif; ?>
                             </a>
                             <div class="product-info">
                                 <h3><a href="/seller/edit_produk.php?id=<?= htmlspecialchars($product['product_id']) ?>"><?= htmlspecialchars($product['product_name']) ?></a></h3>
@@ -68,8 +71,17 @@ $totalPages = $data['totalPages'];
                                 <p class="stock">Stok: <?= htmlspecialchars($product['stock']) ?></p>
                             </div>
                             <div class="actions">
-                                <a href="/seller/edit_produk.php?id=<?= htmlspecialchars($product['product_id']) ?>" class="edit-button">Edit</a>
-                                <button onclick="confirmDelete(<?= htmlspecialchars($product['product_id']) ?>)" class="delete-button">Hapus</button>
+                                <?php if (!empty($product['auction_status'])): ?>
+                                    <button class="edit-button" disabled style="opacity: 0.5; cursor: not-allowed;">Edit</button>
+                                    <button class="delete-button" disabled style="opacity: 0.5; cursor: not-allowed;">Hapus</button>
+                                    <a href="/auction/<?= htmlspecialchars($product['auction_id']) ?>" class="auction-button" style="background-color: #f59e0b; color: white; padding: 8px 12px; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">Lihat Lelang</a>
+                                <?php else: ?>
+                                    <a href="/seller/edit_produk.php?id=<?= htmlspecialchars($product['product_id']) ?>" class="edit-button">Edit</a>
+                                    <button onclick="confirmDelete(<?= htmlspecialchars($product['product_id']) ?>)" class="delete-button">Hapus</button>
+                                    <?php if ($product['stock'] > 0): ?>
+                                        <a href="/admin/seller/auction/create?productId=<?= htmlspecialchars($product['product_id']) ?>" class="auction-button" style="background-color: #0A75BD; color: white; padding: 8px 12px; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">Jadikan Lelang</a>
+                                    <?php endif; ?>
+                                <?php endif; ?>
                             </div>
                         </div>
                     <?php endforeach; ?>

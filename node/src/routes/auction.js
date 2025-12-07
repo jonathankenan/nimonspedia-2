@@ -15,7 +15,13 @@ router.get('/:auctionId/bids', AuctionController.getBidHistory);
 // Place a bid
 router.post('/:auctionId/bid', verifyToken, AuctionController.placeBid);
 
+// Stop auction (Seller only)
+router.post('/:auctionId/stop', verifyToken, AuctionController.stopAuction);
+
 // Get user's active bids
 router.get('/user/active-bids', verifyToken, AuctionController.getUserActiveBids);
+
+// Get user balance
+router.get('/user/balance', verifyToken, AuctionController.getUserBalance);
 
 module.exports = router;

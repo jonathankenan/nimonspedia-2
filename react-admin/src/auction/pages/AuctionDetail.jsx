@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchAuctionDetail, placeBid } from '../api/auctionApi';
+import { fetchAuctionDetail, placeBid, deleteAuction, stopAuction } from '../api/auctionApi';
 import BidForm from '../components/BidForm';
 import BidHistory from '../components/BidHistory';
+import { useWebSocket } from '../../shared/hooks/useWebSocket';
+import { useCountdown } from '../hooks/useCountdown';
 
 const AuctionDetail = () => {
   const { auctionId } = useParams();
@@ -11,14 +13,49 @@ const AuctionDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [bidding, setBidding] = useState(false);
+  const { lastMessage } = useWebSocket();
+
+  // User Info
+  const userRole = localStorage.getItem('userRole');
+  const adminName = localStorage.getItem('adminName') || localStorage.getItem('userName');
+  const isSeller = userRole === 'SELLER';
+  const isOwner = isSeller && auction?.seller_name === adminName;
+
+  // Timer
+  const targetTime = auction?.status === 'scheduled' ? auction.start_time : auction?.end_time;
+  const { formattedTime, isEnded } = useCountdown(targetTime, () => {
+    // Optional: Refresh when timer ends
+    if (auction?.status === 'active') {
+      loadAuctionDetail();
+    }
+  });
 
   useEffect(() => {
     loadAuctionDetail();
   }, [auctionId]);
 
+  // Real-time update via WebSocket
+  useEffect(() => {
+    if (lastMessage?.type === 'auction_bid_update' && lastMessage.auction_id === parseInt(auctionId)) {
+      loadAuctionDetail();
+    }
+  }, [lastMessage, auctionId]);
+
+  // Auto-sync every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (auction?.status === 'active') {
+        loadAuctionDetail();
+      }
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [auction?.status]);
+
   const loadAuctionDetail = async () => {
     try {
-      setLoading(true);
+      // Don't set loading=true to avoid flickering on real-time updates
+      if (!auction) setLoading(true);
+
       const data = await fetchAuctionDetail(auctionId);
       setAuction(data);
     } catch (err) {
@@ -48,6 +85,36 @@ const AuctionDetail = () => {
       console.error('Error placing bid:', err);
     } finally {
       setBidding(false);
+    }
+  };
+
+  const handleCancelAuction = async () => {
+    if (!window.confirm('Apakah Anda yakin ingin membatalkan lelang ini?')) return;
+
+    const token = localStorage.getItem('adminToken');
+    try {
+      await deleteAuction(auctionId, token);
+      alert('Lelang berhasil dibatalkan');
+      navigate('/auction');
+    } catch (err) {
+      alert('Gagal membatalkan lelang');
+      console.error(err);
+    }
+  };
+
+  const handleStopAuction = async () => {
+    if (!window.confirm('Apakah Anda yakin ingin menghentikan lelang ini sekarang? Pemenang saat ini akan menang.')) return;
+
+    const token = localStorage.getItem('adminToken');
+    try {
+      // Call stopAuction endpoint
+      await stopAuction(auctionId, token);
+
+      alert('Lelang berhasil dihentikan');
+      loadAuctionDetail();
+    } catch (err) {
+      alert('Gagal menghentikan lelang');
+      console.error(err);
     }
   };
 
@@ -202,21 +269,53 @@ const AuctionDetail = () => {
               </div>
               <div>
                 <div className="text-sm text-gray-500 mb-1">
-                  Kuantitas
+                  {auction.status === 'scheduled' ? 'Mulai Dalam' : 'Berakhir Dalam'}
                 </div>
-                <div className="text-lg font-semibold text-gray-800">
-                  {auction.quantity} item
+                <div className={`text-lg font-bold ${auction.status === 'active' ? 'text-red-600' : 'text-gray-800'}`}>
+                  {formattedTime}
                 </div>
               </div>
             </div>
+
+            <div className="mt-4 text-xs text-gray-500">
+              <div>Mulai: {formatDate(auction.start_time)}</div>
+              <div>Selesai: {formatDate(auction.end_time)}</div>
+            </div>
           </div>
 
-          {/* Bid Form */}
-          <BidForm
-            auction={auction}
-            onBidSubmit={handleBidSubmit}
-            loading={bidding}
-          />
+          {/* Seller Controls */}
+          {isOwner && (
+            <div className="bg-white rounded-xl p-5 mb-5 border border-blue-200">
+              <h3 className="font-bold text-gray-800 mb-3">Kontrol Penjual</h3>
+              <div className="flex gap-3">
+                {auction.status === 'active' && (
+                  <button
+                    onClick={handleStopAuction}
+                    className="flex-1 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 font-semibold"
+                  >
+                    Hentikan Lelang
+                  </button>
+                )}
+                {(auction.status === 'active' || auction.status === 'scheduled') && (
+                  <button
+                    onClick={handleCancelAuction}
+                    className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-semibold"
+                  >
+                    Batalkan Lelang
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Bid Form (Only for Buyers) */}
+          {!isSeller && (
+            <BidForm
+              auction={auction}
+              onBidSubmit={handleBidSubmit}
+              loading={bidding}
+            />
+          )}
 
           {/* Bid History */}
           <div className="mt-5">

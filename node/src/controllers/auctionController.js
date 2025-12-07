@@ -7,7 +7,7 @@ class AuctionController {
       const offset = parseInt(req.query.offset) || 0;
 
       const auctions = await AuctionModel.getActiveAuctions(limit, offset);
-      
+
       res.json({
         success: true,
         data: auctions,
@@ -24,7 +24,7 @@ class AuctionController {
       const { auctionId } = req.params;
 
       const auction = await AuctionModel.getAuctionDetail(auctionId);
-      
+
       if (!auction) {
         return res.status(404).json({ error: 'Auction not found' });
       }
@@ -45,7 +45,7 @@ class AuctionController {
       const limit = parseInt(req.query.limit) || 50;
 
       const bidHistory = await AuctionModel.getBidHistory(auctionId, limit);
-      
+
       res.json({
         success: true,
         data: bidHistory
@@ -67,8 +67,36 @@ class AuctionController {
         return res.status(400).json({ error: 'Invalid auction ID or bid amount' });
       }
 
+      // Get previous highest bidder BEFORE placing new bid (for notification)
+      const currentAuction = await AuctionModel.getAuctionDetail(auctionId);
+      const previousWinnerId = currentAuction ? currentAuction.winner_id : null;
+
       const bid = await AuctionModel.placeBid(auctionId, bidderId, bidAmount);
-      
+
+      // Broadcast bid update
+      const { broadcastMessage } = require('../utils/websocket');
+      broadcastMessage({
+        type: 'auction_bid_update',
+        auction_id: auctionId,
+        current_price: bidAmount,
+        bidder_name: req.user.userName || 'Someone', // Assuming userName is in token/req.user
+        timestamp: new Date().toISOString()
+      });
+
+      // Send Outbid Notification
+      if (previousWinnerId && previousWinnerId !== bidderId) {
+        // In a real app, we would send to specific user via WebSocket or Push
+        // For now, we broadcast an event that clients can filter
+        broadcastMessage({
+          type: 'notification_outbid',
+          auction_id: auctionId,
+          user_id: previousWinnerId, // Target user
+          product_name: currentAuction.product_name,
+          new_amount: bidAmount,
+          message: `You have been outbid on ${currentAuction.product_name}!`
+        });
+      }
+
       res.json({
         success: true,
         message: 'Bid placed successfully',
@@ -80,12 +108,41 @@ class AuctionController {
     }
   }
 
+  static async stopAuction(req, res) {
+    try {
+      const { auctionId } = req.params;
+      const userId = req.user.userId;
+
+      const result = await AuctionModel.stopAuction(auctionId, userId);
+
+      // Send Win Notification
+      if (result.winner_id) {
+        const { broadcastMessage } = require('../utils/websocket');
+        broadcastMessage({
+          type: 'notification_win',
+          auction_id: auctionId,
+          user_id: result.winner_id, // Target user
+          product_name: result.product_name,
+          message: `Congratulations! You won the auction for ${result.product_name}!`
+        });
+      }
+
+      res.json({
+        success: true,
+        message: 'Auction stopped successfully',
+        data: result
+      });
+    } catch (error) {
+      console.error('Error in stopAuction:', error);
+      res.status(400).json({ error: error.message || 'Failed to stop auction' });
+    }
+  }
   static async getUserActiveBids(req, res) {
     try {
       const userId = req.user.userId;
 
       const bids = await AuctionModel.getUserActiveBids(userId);
-      
+
       res.json({
         success: true,
         data: bids
@@ -93,6 +150,20 @@ class AuctionController {
     } catch (error) {
       console.error('Error in getUserActiveBids:', error);
       res.status(500).json({ error: 'Failed to fetch user bids' });
+    }
+  }
+  static async getUserBalance(req, res) {
+    try {
+      const userId = req.user.userId;
+      const balance = await AuctionModel.getUserBalance(userId);
+
+      res.json({
+        success: true,
+        data: { balance }
+      });
+    } catch (error) {
+      console.error('Error in getUserBalance:', error);
+      res.status(500).json({ error: 'Failed to fetch user balance' });
     }
   }
 }

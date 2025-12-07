@@ -5,11 +5,13 @@ import { useWebSocket } from '../../shared/hooks/useWebSocket';
 const BidHistory = ({ auctionId }) => {
   const [bids, setBids] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [limit, setLimit] = useState(10);
   const { lastMessage, isConnected } = useWebSocket();
+  const currentUserName = localStorage.getItem('adminName') || localStorage.getItem('userName');
 
   useEffect(() => {
     loadBidHistory();
-  }, [auctionId]);
+  }, [auctionId, limit]);
 
   useEffect(() => {
     if (lastMessage?.type === 'auction_bid_update' && lastMessage.auction_id === parseInt(auctionId)) {
@@ -19,8 +21,10 @@ const BidHistory = ({ auctionId }) => {
 
   const loadBidHistory = async () => {
     try {
-      setLoading(true);
-      const bidData = await fetchBidHistory(auctionId);
+      // Don't set loading on refresh to avoid flickering
+      if (bids.length === 0) setLoading(true);
+
+      const bidData = await fetchBidHistory(auctionId, limit);
       setBids(Array.isArray(bidData) ? bidData : []);
     } catch (error) {
       console.error('Error loading bid history:', error);
@@ -28,6 +32,10 @@ const BidHistory = ({ auctionId }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleLoadMore = () => {
+    setLimit(prev => prev + 10);
   };
 
   const formatCurrency = (amount) => {
@@ -44,11 +52,14 @@ const BidHistory = ({ auctionId }) => {
       month: 'short',
       year: 'numeric',
       hour: '2-digit',
-      minute: '2-digit'
+      minute: '2-digit',
+      second: '2-digit'
     }).format(new Date(dateString));
   };
 
-  if (loading) {
+  const uniqueBidders = new Set(bids.map(b => b.bidder_id)).size;
+
+  if (loading && bids.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '40px 20px', color: '#6b7280' }}>
         Memuat riwayat penawaran...
@@ -66,11 +77,16 @@ const BidHistory = ({ auctionId }) => {
 
   return (
     <div className="bg-white rounded-xl p-5">
-      <div className="mb-4">
-        <h3 className="text-lg font-bold text-gray-800 mb-1">Riwayat Penawaran</h3>
-        <div className="text-sm text-gray-500">
-          {isConnected && <span className="text-emerald-500 font-bold">● </span>}
-          Total: {bids.length} penawaran
+      <div className="mb-4 flex justify-between items-end">
+        <div>
+          <h3 className="text-lg font-bold text-gray-800 mb-1">Riwayat Penawaran</h3>
+          <div className="text-sm text-gray-500">
+            {isConnected && <span className="text-emerald-500 font-bold">● </span>}
+            Total: {bids.length} penawaran
+          </div>
+        </div>
+        <div className="text-sm font-medium text-brand bg-blue-50 px-3 py-1 rounded-lg">
+          {uniqueBidders} Penawar Unik
         </div>
       </div>
 
@@ -90,25 +106,40 @@ const BidHistory = ({ auctionId }) => {
             </tr>
           </thead>
           <tbody>
-            {bids.map((bid, index) => (
-              <tr
-                key={bid.bid_id || index}
-                className={`border-b border-gray-200 ${index === 0 ? 'bg-green-50' : 'bg-white'}`}
-              >
-                <td className="p-3 text-gray-800">
-                  <div className="font-semibold">{bid.bidder_name}</div>
-                  <div className="text-xs text-gray-500">{bid.bidder_email}</div>
-                </td>
-                <td className="p-3 text-right text-brand font-bold">
-                  {formatCurrency(bid.bid_amount)}
-                </td>
-                <td className="p-3 text-right text-sm text-gray-500">
-                  {formatDate(bid.bid_time)}
-                </td>
-              </tr>
-            ))}
+            {bids.map((bid, index) => {
+              const isMyBid = bid.bidder_name === currentUserName;
+              return (
+                <tr
+                  key={bid.bid_id || index}
+                  className={`border-b border-gray-200 ${isMyBid ? 'bg-blue-50' : (index === 0 ? 'bg-green-50' : 'bg-white')}`}
+                >
+                  <td className="p-3 text-gray-800">
+                    <div className="font-semibold flex items-center gap-2">
+                      {bid.bidder_name}
+                      {isMyBid && <span className="text-xs bg-brand text-white px-2 py-0.5 rounded-full">Anda</span>}
+                    </div>
+                    <div className="text-xs text-gray-500">{bid.bidder_email}</div>
+                  </td>
+                  <td className="p-3 text-right text-brand font-bold">
+                    {formatCurrency(bid.bid_amount)}
+                  </td>
+                  <td className="p-3 text-right text-sm text-gray-500">
+                    {formatDate(bid.bid_time)}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
+      </div>
+
+      <div className="mt-4 flex justify-center">
+        <button
+          onClick={handleLoadMore}
+          className="text-sm text-brand font-semibold hover:underline cursor-pointer"
+        >
+          Muat Lebih Banyak
+        </button>
       </div>
 
       {isConnected && (

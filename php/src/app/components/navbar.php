@@ -60,7 +60,7 @@ $cart_count = $_SESSION['cart_count'] ?? 0;
             <!-- Seller -->
             <a href="/seller/dashboard.php">Dashboard</a>
             <a href="/seller/kelola_produk.php">Kelola Produk</a>
-            <a href="/auction">🔨 Lelang</a>
+            <a href="/auction">Auction</a>
             <a href="/seller/order_management.php">Lihat Pesanan</a>
             <a href="/seller/tambah_produk.php">Tambah Produk</a>
             <a href="/authentication/logout.php">Logout</a>

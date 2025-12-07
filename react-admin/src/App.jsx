@@ -4,9 +4,7 @@ import Login from './admin/pages/Login';
 import Dashboard from './admin/pages/Dashboard';
 import AuctionList from './auction/pages/AuctionList';
 import AuctionDetail from './auction/pages/AuctionDetail';
-import MyAuctions from './auction/pages/MyAuctions';
 import CreateAuction from './auction/pages/CreateAuction';
-import EditAuction from './auction/pages/EditAuction';
 import MyBids from './auction/pages/MyBids';
 import Layout from './Layout';
 
@@ -122,26 +120,10 @@ function App() {
       } />
 
       {/* Seller Routes */}
-      <Route path="/seller/auctions" element={
-        <ProtectedRoute allowedRoles={['SELLER']}>
-          <Layout>
-            <MyAuctions />
-          </Layout>
-        </ProtectedRoute>
-      } />
-
       <Route path="/seller/auction/create" element={
         <ProtectedRoute allowedRoles={['SELLER']}>
           <Layout>
             <CreateAuction />
-          </Layout>
-        </ProtectedRoute>
-      } />
-
-      <Route path="/seller/auction/:auctionId/edit" element={
-        <ProtectedRoute allowedRoles={['SELLER']}>
-          <Layout>
-            <EditAuction />
           </Layout>
         </ProtectedRoute>
       } />

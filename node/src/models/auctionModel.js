@@ -118,8 +118,8 @@ class AuctionModel {
       const currentAuction = auction[0];
 
       // validasi jumlah bid
-      const minBidAmount = currentAuction.current_price === 0 
-        ? currentAuction.starting_price 
+      const minBidAmount = currentAuction.current_price === 0
+        ? currentAuction.starting_price
         : currentAuction.current_price + currentAuction.min_increment;
 
       if (bidAmount < minBidAmount) {
@@ -143,10 +143,24 @@ class AuctionModel {
       );
 
       // update current price
-      await connection.query(
-        'UPDATE auctions SET current_price = ?, winner_id = ? WHERE auction_id = ?',
-        [bidAmount, bidderId, auctionId]
-      );
+      let updateQuery = 'UPDATE auctions SET current_price = ?, winner_id = ?';
+      const updateParams = [bidAmount, bidderId];
+
+      // 15s Rule: If remaining time < 15s, extend it to 15s from now
+      const now = new Date();
+      const endTime = new Date(currentAuction.end_time);
+      const diffSeconds = (endTime - now) / 1000;
+
+      if (diffSeconds < 15) {
+        const newEndTime = new Date(now.getTime() + 15000); // Add 15 seconds
+        updateQuery += ', end_time = ?';
+        updateParams.push(newEndTime);
+      }
+
+      updateQuery += ' WHERE auction_id = ?';
+      updateParams.push(auctionId);
+
+      await connection.query(updateQuery, updateParams);
 
       await connection.commit();
 
@@ -206,6 +220,120 @@ class AuctionModel {
     } catch (error) {
       console.error('Error fetching auction by product ID:', error);
       throw error;
+    }
+  }
+  static async getUserBalance(userId) {
+    try {
+      const [rows] = await dbPool.query(
+        'SELECT balance FROM users WHERE user_id = ?',
+        [userId]
+      );
+      return rows.length > 0 ? rows[0].balance : 0;
+    } catch (error) {
+      console.error('Error fetching user balance:', error);
+      throw error;
+    }
+  }
+  static async stopAuction(auctionId, userId) {
+    const connection = await dbPool.getConnection();
+    try {
+      await connection.beginTransaction();
+
+      // 1. Get auction details and verify ownership
+      const [rows] = await connection.query(`
+        SELECT a.*, p.store_id, s.user_id as seller_id, p.product_name, p.main_image_path
+        FROM auctions a
+        JOIN products p ON a.product_id = p.product_id
+        JOIN stores s ON p.store_id = s.store_id
+        WHERE a.auction_id = ?
+      `, [auctionId]);
+
+      if (rows.length === 0) {
+        throw new Error('Auction not found');
+      }
+
+      const auction = rows[0];
+
+      if (auction.seller_id !== userId) {
+        throw new Error('Unauthorized: You are not the seller of this auction');
+      }
+
+      if (auction.status !== 'active') {
+        throw new Error('Auction is not active');
+      }
+
+      // 2. Update auction status to 'ended'
+      await connection.query(
+        'UPDATE auctions SET status = "ended", end_time = NOW() WHERE auction_id = ?',
+        [auctionId]
+      );
+
+      let orderId = null;
+      let winnerInfo = null;
+
+      // 3. If there is a winner, create an order
+      if (auction.winner_id) {
+        // Get winner details (address)
+        const [users] = await connection.query(
+          'SELECT user_id, name, email, address FROM users WHERE user_id = ?',
+          [auction.winner_id]
+        );
+
+        if (users.length > 0) {
+          const winner = users[0];
+          winnerInfo = winner;
+          const shippingAddress = winner.address || 'Address not provided';
+
+          // Create Order
+          const [orderResult] = await connection.query(
+            'INSERT INTO orders (buyer_id, store_id, total_price, shipping_address, status) VALUES (?, ?, ?, ?, ?)',
+            [winner.user_id, auction.store_id, auction.current_price, shippingAddress, 'approved']
+          );
+          orderId = orderResult.insertId;
+
+          // Create Order Item
+          // Calculate subtotal (price * quantity)
+          const subtotal = auction.current_price * auction.quantity; // Assuming current_price is per unit? 
+          // Wait, auction price usually is for the whole lot if quantity > 1? 
+          // Or per unit? In `create-auction.php`, quantity is input.
+          // Usually auctions are for the specific item(s).
+          // If I bid 100000 for 5 items, is it 100000 total or each?
+          // Standard auction logic: Price is for the LOT.
+          // So price_at_order should be current_price / quantity? Or just current_price as total?
+          // Let's assume current_price is the TOTAL price for the lot.
+          // So price_at_order = current_price / quantity.
+          // But to avoid float issues, let's just store current_price as subtotal?
+          // `order_items` has `price_at_order` and `subtotal`.
+          // If quantity is 1, price = current_price.
+          // If quantity > 1, let's say price = current_price / quantity.
+
+          const priceAtOrder = auction.current_price / auction.quantity;
+
+          await connection.query(
+            'INSERT INTO order_items (order_id, product_id, quantity, price_at_order, subtotal) VALUES (?, ?, ?, ?, ?)',
+            [orderId, auction.product_id, auction.quantity, priceAtOrder, auction.current_price]
+          );
+        }
+      }
+
+      await connection.commit();
+
+      return {
+        success: true,
+        auction_id: auctionId,
+        status: 'ended',
+        winner_id: auction.winner_id,
+        order_id: orderId,
+        winner_info: winnerInfo,
+        product_name: auction.product_name
+      };
+
+    } catch (error) {
+      await connection.rollback();
+      console.error('Error stopping auction:', error);
+      throw error;
+    } finally {
+      connection.release();
     }
   }
 }
