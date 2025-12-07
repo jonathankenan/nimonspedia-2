@@ -2,16 +2,16 @@ import { useEffect, useState } from 'react';
 import Layout from '../../Layout';
 
 const Dashboard = () => {
-  // --- STATE DASHBOARD ---
+  // --- STATE USER LIST & PAGINATION ---
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
   const [filterRole, setFilterRole] = useState('ALL'); 
   const [loadingUsers, setLoadingUsers] = useState(true);
-
-  // State Pagination
+  
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const itemsPerPage = 10; // Bisa diubah mau tampilkan berapa
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPerPage = 10;
 
   // --- STATE GLOBAL FLAGS ---
   const [globalFeatures, setGlobalFeatures] = useState({
@@ -20,6 +20,7 @@ const Dashboard = () => {
   const [processingGlobal, setProcessingGlobal] = useState(null);
   const [globalReason, setGlobalReason] = useState('');
   const [editingGlobalFeature, setEditingGlobalFeature] = useState(null);
+  const [globalError, setGlobalError] = useState('');
 
   // --- STATE MODAL USER FLAGS ---
   const [selectedUser, setSelectedUser] = useState(null);
@@ -27,6 +28,10 @@ const Dashboard = () => {
   const [savingFlags, setSavingFlags] = useState(false);
   const [formFlags, setFormFlags] = useState({});
   const [formReasons, setFormReasons] = useState({});
+  const [userModalError, setUserModalError] = useState('');
+
+  // --- STATE TOAST NOTIFICATION ---
+  const [toast, setToast] = useState(null); 
 
   const token = localStorage.getItem('adminToken');
 
@@ -35,20 +40,21 @@ const Dashboard = () => {
     fetchGlobalFeatures();
   }, []);
 
-  //Fetch Users dipanggil setiap kali page, search, atau filter berubah
   useEffect(() => {
-    // Gunakan timeout (debounce) agar tidak request server tiap ketik 1 huruf
     const timer = setTimeout(() => {
       fetchUsers();
-    }, 500);
-
+    }, 300);
     return () => clearTimeout(timer);
   }, [currentPage, search, filterRole]);
 
+  // Helper Toast
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
+
   const fetchUsers = () => {
     setLoadingUsers(true);
-    
-    // Bangun URL dengan Query Params
     const queryParams = new URLSearchParams({
         page: currentPage,
         limit: itemsPerPage,
@@ -61,14 +67,14 @@ const Dashboard = () => {
     })
       .then(res => res.json())
       .then(response => {
-        // Menangani format response baru dari server
         if (response.data) {
             setUsers(response.data);
             setTotalPages(response.pagination.totalPages);
+            setTotalItems(response.pagination.totalItems);
         } else {
-            setUsers([]); // Fallback jika error/kosong
+            setUsers([]);
         }
-        setLoadingUsers(false); 
+        setLoadingUsers(false);
       })
       .catch(err => {
           console.error(err);
@@ -76,7 +82,6 @@ const Dashboard = () => {
       });
   };
 
-  // Reset page ke 1 jika filter/search berubah
   const handleFilterChange = (newRole) => {
       setFilterRole(newRole);
       setCurrentPage(1);
@@ -84,9 +89,10 @@ const Dashboard = () => {
   
   const handleSearchChange = (e) => {
       setSearch(e.target.value);
-      setCurrentPage(1); // Balik ke halaman 1 saat mencari baru
+      setCurrentPage(1);
   };
 
+  // --- LOGIC GLOBAL FLAGS ---
   const fetchGlobalFeatures = () => {
     fetch('/api/admin/features', { headers: { 'Authorization': `Bearer ${token}` } })
       .then(res => res.json())
@@ -98,10 +104,51 @@ const Dashboard = () => {
       .catch(err => console.error(err));
   };
 
+  const handleToggleGlobal = (featureName) => {
+    const isCurrentlyEnabled = globalFeatures[featureName] === '1';
+    setGlobalError(''); 
+    if (isCurrentlyEnabled) {
+      setEditingGlobalFeature(featureName);
+      setGlobalReason('');
+    } else {
+      executeGlobalChange(featureName, true);
+    }
+  };
+
+  const executeGlobalChange = (featureName, isEnabled) => {
+    if (!isEnabled && globalReason.length < 20) {
+        const msg = "Gagal: Alasan maintenance wajib diisi minimal 20 karakter!";
+        setGlobalError(msg);
+        showToast(msg, 'error'); 
+        return; 
+    }
+    setGlobalError('');
+
+    setProcessingGlobal(featureName);
+    fetch(`/api/admin/features/${featureName}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+      body: JSON.stringify({ enabled: isEnabled, reason: isEnabled ? null : globalReason })
+    }).then(res => res.json()).then(data => {
+      setGlobalFeatures(prev => ({ ...prev, [featureName]: data.enabled ? '1' : '0' }));
+      setProcessingGlobal(null);
+      setEditingGlobalFeature(null);
+      
+      showToast(`Fitur ${featureName.replace('_', ' ')} berhasil ${isEnabled ? 'dinyalakan' : 'dimatikan'}!`, 'success');
+    })
+    .catch(err => {
+      console.error(err);
+      showToast('Gagal mengubah feature flag.', 'error');
+      setProcessingGlobal(null);
+    });
+  };
+
+  // --- LOGIC MODAL USER FLAGS ---
   const handleOpenUserModal = (user) => {
     setSelectedUser(user);
     setLoadingFlags(true);
     setSavingFlags(false);
+    setUserModalError(''); 
     setFormFlags({});
     setFormReasons({});
     fetch(`/api/admin/users/${user.user_id}/flags`, { headers: { 'Authorization': `Bearer ${token}` } })
@@ -132,15 +179,20 @@ const Dashboard = () => {
   };
 
   const handleSaveUserFlags = async () => {
+    setUserModalError(''); 
+
     for (const [feature, isEnabled] of Object.entries(formFlags)) {
       if (!isEnabled) {
         const reason = formReasons[feature] || '';
         if (reason.length < 10) {
-          alert(`Gagal: Alasan mematikan fitur "${feature.replace('_', ' ')}" wajib diisi minimal 10 karakter.`);
-          return;
+          const msg = `Gagal: Alasan mematikan fitur "${feature.replace('_', ' ')}" wajib diisi minimal 10 karakter.`;
+          setUserModalError(msg);
+          showToast(msg, 'error');
+          return; 
         }
       }
     }
+
     setSavingFlags(true);
     const promises = Object.keys(formFlags).map(feature => {
       const isEnabled = formFlags[feature];
@@ -153,39 +205,15 @@ const Dashboard = () => {
     });
     try {
       await Promise.all(promises);
-      alert('Berhasil: Pengaturan akses user telah diperbarui.');
       setSelectedUser(null);
       fetchUsers();
+      showToast('Akses user berhasil disimpan!', 'success');
     } catch (error) {
       console.error(error);
-      alert('Terjadi kesalahan saat menyimpan data.');
+      showToast('Terjadi kesalahan jaringan/server.', 'error');
     } finally {
       setSavingFlags(false);
     }
-  };
-
-  const handleToggleGlobal = (featureName) => {
-    const isCurrentlyEnabled = globalFeatures[featureName] === '1';
-    if (isCurrentlyEnabled) {
-      setEditingGlobalFeature(featureName);
-      setGlobalReason('');
-    } else {
-      executeGlobalChange(featureName, true);
-    }
-  };
-
-  const executeGlobalChange = (featureName, isEnabled) => {
-    if (!isEnabled && globalReason.length < 20) return alert("Alasan maintenance wajib diisi minimal 20 karakter!");
-    setProcessingGlobal(featureName);
-    fetch(`/api/admin/features/${featureName}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify({ enabled: isEnabled, reason: isEnabled ? null : globalReason })
-    }).then(res => res.json()).then(data => {
-      setGlobalFeatures(prev => ({ ...prev, [featureName]: data.enabled ? '1' : '0' }));
-      setProcessingGlobal(null);
-      setEditingGlobalFeature(null);
-    });
   };
 
   const formatDate = (dateString) => {
@@ -199,17 +227,18 @@ const Dashboard = () => {
     <Layout>
       <h1>Admin Dashboard</h1>
       
-      {/* GLOBAL SETTINGS */}
+      {/* 1. GLOBAL SETTINGS */}
       <div className="card" style={{ borderLeft: '5px solid #0A75BD' }}>
-        <h2 style={{ marginTop: 0 }}>🌐 Global Feature Flags (Maintenance Mode)</h2>
+        <h2 style={{ marginTop: 0 }}>Global Feature Flags (Maintenance Mode)</h2>
         <p style={{ color: '#666', fontSize: '0.9rem', marginBottom: '1.5rem' }}>
           Matikan fitur di sini akan berdampak pada <b>seluruh pengguna</b>.
         </p>
+        
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem' }}>
           {[
-            { id: 'checkout_enabled', label: '🛒 Sistem Checkout' },
-            { id: 'auction_enabled', label: '🔨 Sistem Lelang' },
-            { id: 'chat_enabled', label: '💬 Fitur Chat' }
+            { id: 'checkout_enabled', label: 'Sistem Checkout' },
+            { id: 'auction_enabled', label: 'Sistem Lelang' },
+            { id: 'chat_enabled', label: 'Fitur Chat' }
           ].map(feat => {
             const isEnabled = globalFeatures[feat.id] === '1';
             const isEditing = editingGlobalFeature === feat.id;
@@ -231,13 +260,15 @@ const Dashboard = () => {
                 </div>
                 {isEditing && (
                   <div style={{ marginTop: '10px' }}>
+                    {globalError && <div className="alert-error">{globalError}</div>}
+                    
                     <textarea 
                       placeholder="Alasan maintenance (Wajib, Min. 20 huruf)..." 
                       value={globalReason} onChange={e => setGlobalReason(e.target.value)} rows="2"
                     />
                     <div style={{ display: 'flex', gap: '5px' }}>
                       <button className="btn btn-sm btn-outline" onClick={() => setEditingGlobalFeature(null)}>Batal</button>
-                      <button className="btn btn-sm btn-danger" onClick={() => executeGlobalChange(feat.id, false)}>Konfirmasi</button>
+                      <button className="btn btn-sm btn-danger" onClick={() => executeGlobalChange(feat.id, false)}>Simpan</button>
                     </div>
                   </div>
                 )}
@@ -248,14 +279,14 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* USER MANAGEMENT */}
+      {/* 2. USER MANAGEMENT */}
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <h2 style={{ margin: 0 }}>👥 User Management</h2>
-          <button className="btn btn-outline btn-sm" onClick={fetchUsers}>🔄 Refresh</button>
+          <button className="btn btn-outline btn-sm" onClick={() => fetchUsers()}>🔄 Refresh</button>
         </div>
 
-        {/* FILTER CONTROL */}
+        {/* Filter & Search */}
         <div style={{ display: 'flex', gap: '10px', marginBottom: '1rem', flexWrap: 'wrap' }}>
           <div className="btn-group" style={{ display: 'flex', gap: '5px' }}>
             <button className={`btn btn-sm ${filterRole === 'ALL' ? 'btn-primary' : 'btn-outline'}`} onClick={() => handleFilterChange('ALL')}>Semua</button>
@@ -271,7 +302,7 @@ const Dashboard = () => {
           />
         </div>
 
-        {/* TABLE */}
+        {/* Table */}
         <div className="table-container">
           <table>
             <thead>
@@ -294,7 +325,7 @@ const Dashboard = () => {
                     <td>Rp {user.balance ? parseInt(user.balance).toLocaleString() : '0'}</td>
                     <td style={{ fontSize: '0.85rem', color: '#555' }}>{formatDate(user.created_at)}</td>
                     <td style={{ textAlign: 'center' }}>
-                      <button className="btn btn-outline btn-sm" onClick={() => handleOpenUserModal(user)}>⚙️ Kelola Flags</button>
+                      <button className="btn btn-outline btn-sm" onClick={() => handleOpenUserModal(user)}>Kelola Flags</button>
                     </td>
                   </tr>
                 ))
@@ -303,41 +334,41 @@ const Dashboard = () => {
           </table>
         </div>
 
-        {/* PAGINATION CONTROLS */}
+        {/* Pagination Controls */}
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '15px', marginTop: '20px' }}>
             <button 
                 className="btn btn-outline btn-sm"
-                disabled={currentPage === 1}
+                disabled={currentPage === 1 || loadingUsers}
                 onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             >
                 &laquo; Sebelumnya
             </button>
             
             <span style={{ fontSize: '0.9rem', color: '#555' }}>
-                Halaman <b>{currentPage}</b> dari <b>{totalPages}</b>
+                Halaman <b>{currentPage}</b> dari <b>{totalPages}</b> (Total: {totalItems} user)
             </span>
 
             <button 
                 className="btn btn-outline btn-sm"
-                disabled={currentPage >= totalPages}
+                disabled={currentPage >= totalPages || loadingUsers}
                 onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             >
                 Selanjutnya &raquo;
             </button>
         </div>
-
       </div>
 
-      {/* MODAL USER FLAGS (TETAP SAMA) */}
+      {/* 3. MODAL USER FLAGS */}
       {selectedUser && (
         <div className="modal-overlay">
           <div className="modal-content">
-             {/* Isi modal disamakan dengan kode sebelumnya */}
              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
               <h3 style={{ margin: 0 }}>Kelola Akses User</h3>
               <button onClick={() => setSelectedUser(null)} style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer' }}>&times;</button>
             </div>
             
+            {userModalError && <div className="alert-error">{userModalError}</div>}
+
             <div style={{ marginBottom: '1.5rem', paddingBottom: '1rem', borderBottom: '1px solid #eee' }}>
               <div>User: <b>{selectedUser.name}</b></div>
               <small style={{ color: '#666' }}>{selectedUser.email}</small>
@@ -365,13 +396,22 @@ const Dashboard = () => {
                 })}
                 <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
                   <button className="btn btn-outline" onClick={() => setSelectedUser(null)}>Batal</button>
-                  <button className="btn btn-primary" onClick={handleSaveUserFlags} disabled={savingFlags}>{savingFlags ? 'Menyimpan...' : 'Simpan Perubahan'}</button>
+                  <button className="btn btn-primary" onClick={handleSaveUserFlags} disabled={savingFlags}>{savingFlags ? 'Menyimpan...' : 'Simpan'}</button>
                 </div>
               </div>
             )}
           </div>
         </div>
       )}
+
+      {/* --- TOAST NOTIFICATION COMPONENT --- */}
+      {toast && (
+        <div className={`toast-notification ${toast.type === 'error' ? 'toast-error' : 'toast-success'}`}>
+          <span>{toast.type === 'error' ? '⚠️' : '✅'}</span>
+          {toast.message}
+        </div>
+      )}
+
     </Layout>
   );
 };

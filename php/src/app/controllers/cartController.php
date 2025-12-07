@@ -2,17 +2,29 @@
 namespace App\Controllers;
 
 use App\Models\Cart;
+require_once __DIR__ . '/../models/feature.php';
+use App\Models\Feature;
 
 class CartController {
     private $cartModel;
     private $buyerId;
+    private $db;
 
     public function __construct($db, $buyerId) {
+        $this->db = $db;
+        
         $this->cartModel = new Cart($db);
         $this->buyerId = $buyerId;
     }
 
     public function add() {
+        $featureModel = new Feature($this->db);
+        $access = $featureModel->checkAccess($this->buyerId, 'checkout_enabled');
+        if (!$access['allowed']) {
+            header('Location: /disabled.php?reason=' . urlencode($access['reason']));
+            exit;
+        }
+
         if (!isset($_POST['product_id'])) {
             $this->redirectWithError('cart_error=1');
         }
@@ -31,6 +43,20 @@ class CartController {
     }
 
     public function update() {
+
+        $featureModel = new Feature($this->db);
+        $access = $featureModel->checkAccess($this->buyerId, 'checkout_enabled');
+
+        if (!$access['allowed']) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => false, 
+                'message' => $access['reason'],
+                'redirect_url' => '/disabled.php?reason=' . urlencode($access['reason'])
+            ]);
+            exit;
+        }
+
         $input = json_decode(file_get_contents('php://input'), true);
         $cartItemId = $input['cart_item_id'] ?? null;
         $quantity = $input['quantity'] ?? null;
@@ -45,6 +71,19 @@ class CartController {
     }
 
     public function remove() {
+        $featureModel = new Feature($this->db);
+        $access = $featureModel->checkAccess($this->buyerId, 'checkout_enabled');
+
+        if (!$access['allowed']) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'success' => false, 
+                'message' => $access['reason'],
+                'redirect_url' => '/disabled.php?reason=' . urlencode($access['reason'])
+            ]);
+            exit;
+        }
+
         $input = json_decode(file_get_contents('php://input'), true);
         $cartItemId = $input['cart_item_id'] ?? null;
 

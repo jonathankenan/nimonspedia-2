@@ -4,12 +4,15 @@ include_once(__DIR__ . '/../../app/config/db.php');
 include_once(__DIR__ . '/../../app/models/cart.php');
 include_once(__DIR__ . '/../../app/controllers/cartController.php');
 include_once(__DIR__ . '/../../app/utils/imageHandler.php');
+require_once(__DIR__ . '/../../app/models/feature.php');
 
 requireLogin();
 requireRole('BUYER');
 
 use App\Controllers\CartController;
 use App\Utils\ImageHandler;
+use App\Models\Cart;
+use App\Models\Feature; 
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $controller = new CartController($conn, $_SESSION['user_id']);
@@ -32,7 +35,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-use App\Models\Cart;
+if (!isset($conn)) { global $conn; }
+
+$featureModel = new \App\Models\Feature($conn);
+$access = $featureModel->checkAccess($_SESSION['user_id'], 'checkout_enabled');
+
+if (!$access['allowed']) {
+    // Redirect paksa ke halaman disabled
+    header('Location: /disabled.php?reason=' . urlencode($access['reason']));
+    exit;
+}
+
+$checkout_url = '/buyer/checkout.php'; 
 
 $cartModel = new Cart($conn);
 $cartItemsResult = $cartModel->getCartItems($_SESSION['user_id']);
@@ -115,7 +129,9 @@ $_SESSION['cart_count'] = $cartModel->getCartItemCount($_SESSION['user_id']);
                         <p>Grand Total</p>
                         <p id="grand-total-value">Rp 0</p>
                     </div>
-                    <a href="/buyer/checkout.php" id="checkout-btn" class="btn">Checkout</a>
+                    
+                    <a href="<?= $checkout_url ?>" id="checkout-btn" class="btn">Checkout</a>
+                    
                 </div>
             </div>
         <?php endif; ?>

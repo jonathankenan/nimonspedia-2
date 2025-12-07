@@ -9,6 +9,18 @@ include_once(__DIR__ . '/../../app/controllers/checkoutController.php');
 requireLogin();
 requireRole('BUYER');
 
+require_once(__DIR__ . '/../../app/models/feature.php');
+
+if (!isset($conn)) { global $conn; }
+
+$featureModel = new \App\Models\Feature($conn);
+$access = $featureModel->checkAccess($_SESSION['user_id'], 'checkout_enabled');
+
+if (!$access['allowed']) {
+    header('Location: /disabled.php?reason=' . urlencode($access['reason']));
+    exit;
+}
+
 use App\Controllers\CheckoutController;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
