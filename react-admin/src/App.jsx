@@ -8,6 +8,7 @@ import MyAuctions from './auction/pages/MyAuctions';
 import CreateAuction from './auction/pages/CreateAuction';
 import EditAuction from './auction/pages/EditAuction';
 import MyBids from './auction/pages/MyBids';
+import Chat from './chat/pages/Chat';
 import Layout from './Layout';
 
 // Komponen Proteksi dengan Role-Based Access
@@ -43,10 +44,13 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
         console.log('[ProtectedRoute] PHP session data:', data);
 
         if (data.ok && (allowedRoles.length === 0 || allowedRoles.includes(data.role))) {
-          // Simpan role dari PHP session ke localStorage untuk UI
+          // Simpan role dan user_id dari PHP session ke localStorage untuk UI
           localStorage.setItem('userRole', data.role);
           localStorage.setItem('userName', data.name || '');
-          console.log('[ProtectedRoute] Allowed via PHP session, role:', data.role);
+          if (data.user_id) {
+            localStorage.setItem('user_id', data.user_id.toString());
+          }
+          console.log('[ProtectedRoute] Allowed via PHP session, role:', data.role, 'user_id:', data.user_id);
           setAllowed(true);
         } else {
           console.log('[ProtectedRoute] PHP session check failed or role mismatch');
@@ -142,6 +146,15 @@ function App() {
         <ProtectedRoute allowedRoles={['SELLER']}>
           <Layout>
             <EditAuction />
+          </Layout>
+        </ProtectedRoute>
+      } />
+
+      {/* Chat Page (Buyer & Seller) */}
+      <Route path="/chat" element={
+        <ProtectedRoute allowedRoles={['BUYER', 'SELLER']}>
+          <Layout>
+            <Chat />
           </Layout>
         </ProtectedRoute>
       } />
