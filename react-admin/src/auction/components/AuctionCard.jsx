@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useCountdown } from '../hooks/useCountdown';
 
 const AuctionCard = ({ auction }) => {
   const navigate = useNavigate();
@@ -9,10 +10,14 @@ const AuctionCard = ({ auction }) => {
     starting_price,
     current_price,
     end_time,
+    start_time,
     status,
     store_name,
     bid_count
   } = auction;
+
+  const targetTime = status === 'scheduled' ? start_time : end_time;
+  const { formattedTime } = useCountdown(targetTime);
 
   const handleClick = () => {
     navigate(`/auction/${auction_id}`);
@@ -26,24 +31,11 @@ const AuctionCard = ({ auction }) => {
     }).format(amount);
   };
 
-  const timeRemaining = () => {
-    if (!end_time) return 'Belum mulai';
-
-    const now = new Date();
-    const endDate = new Date(end_time);
-    const diff = endDate - now;
-
-    if (diff <= 0) return 'Selesai';
-
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-    if (hours > 24) {
-      const days = Math.floor(hours / 24);
-      return `${days}h ${hours % 24}j lagi`;
-    }
-
-    return `${hours}j ${minutes}m lagi`;
+  const getTimeLabel = () => {
+    if (status === 'scheduled') return 'Mulai dalam';
+    if (status === 'ended') return 'Berakhir';
+    if (status === 'cancelled') return 'Dibatalkan';
+    return 'Berakhir dalam';
   };
 
   const getStatusColor = () => {
@@ -112,7 +104,7 @@ const AuctionCard = ({ auction }) => {
           <div
             className={`font-semibold ${status === 'active' ? 'text-emerald-500' : 'text-gray-500'}`}
           >
-            {timeRemaining()}
+            {getTimeLabel()}: {formattedTime}
           </div>
         </div>
       </div>

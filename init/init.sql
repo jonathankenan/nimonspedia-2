@@ -214,7 +214,28 @@ VALUES
 ('c@gmail.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'SELLER', 'Caca Penjual', 'Jl. Anggrek No. 3',0), -- user_id: 3
 ('buyer@test.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'BUYER', 'Budi Pembeli', 'Jl. Mawar No. 1, Jakarta', 500000),
 ('seller@test.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'SELLER', 'Susi Penjual', 'Jl. Melati No. 2, Jakarta', 0),
-('admin@nimonspedia.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'ADMIN', 'Admin', 'Admin HQ', 0);
+('admin@nimonspedia.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'ADMIN', 'Admin', 'Admin HQ', 0),
+
+-- --- TAMBAHAN BUYER (UNTUK TESTING PAGINATION & SEARCH) ---
+('dani@gmail.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'BUYER', 'Dani Dermawan', 'Jl. Kenanga No. 4, Bandung', 1500000),
+('eko@yahoo.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'BUYER', 'Eko Purnomo', 'Jl. Dago No. 10, Bandung', 250000),
+('fanny@outlook.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'BUYER', 'Fanny Wijaya', 'Jl. Sudirman No. 55, Jakarta', 5000000),
+('gilang@gmail.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'BUYER', 'Gilang Ramadhan', 'Jl. Kaliurang KM 5, Yogyakarta', 75000),
+('hani@gmail.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'BUYER', 'Hani Handayani', 'Jl. Pahlawan No. 12, Surabaya', 3000000),
+('indah@test.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'BUYER', 'Indah Permata', 'Jl. Gajah Mada, Medan', 125000),
+('joko@test.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'BUYER', 'Joko Susilo', 'Jl. Slamet Riyadi, Solo', 0),
+('kiki@gmail.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'BUYER', 'Kiki Amalia', 'Jl. Diponegoro, Semarang', 850000),
+('linda@yahoo.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'BUYER', 'Linda Santoso', 'Jl. Kuta, Bali', 4500000),
+('mario@gmail.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'BUYER', 'Mario Bros', 'Mushroom Kingdom', 9999999),
+
+-- --- TAMBAHAN SELLER (UNTUK TESTING FILTER ROLE) ---
+('erik@gmail.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'SELLER', 'Erik Elektronik', 'Jl. Flamboyan No. 5, Jakarta', 500000),
+('nana@shop.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'SELLER', 'Nana Fashion', 'Jl. Mangga Dua, Jakarta', 1200000),
+('omni@store.id', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'SELLER', 'Omni Gadget', 'Ruko Glodok Plaza, Jakarta', 15000000),
+('putra@motor.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'SELLER', 'Putra Motor', 'Jl. Otista, Jakarta', 350000),
+('queen@beauty.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'SELLER', 'Queen Beauty', 'Mall Taman Anggrek, Jakarta', 750000),
+('rudi@sports.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'SELLER', 'Rudi Sport Station', 'Jl. Senayan, Jakarta', 0),
+('sari@roti.com', '$2y$10$zzrJzY8Ak7pHkQzd7JtpUuMTPgRiRvzT42WnSBNGGvdWZb5sOjhiC', 'SELLER', 'Sari Roti Cabang', 'Jl. Industri, Cikarang', 200000);
 
 -- Create store for seller user with initial balance 0
 INSERT INTO stores (user_id, store_name, store_description, store_logo_path, balance)

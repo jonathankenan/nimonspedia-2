@@ -18,12 +18,19 @@ const CreateAuction = () => {
     });
 
     const [selectedProduct, setSelectedProduct] = useState(null);
+    const queryParams = new URLSearchParams(window.location.search);
+    const preSelectedProductId = queryParams.get('productId');
 
     useEffect(() => {
-        loadProducts();
-    }, []);
+        if (!preSelectedProductId) {
+            setError('Produk tidak ditemukan. Silakan pilih produk dari halaman Kelola Produk.');
+            setLoading(false);
+            return;
+        }
+        loadProduct();
+    }, [preSelectedProductId]);
 
-    const loadProducts = async () => {
+    const loadProduct = async () => {
         try {
             setLoading(true);
 
@@ -31,30 +38,33 @@ const CreateAuction = () => {
             let data;
 
             if (token) {
-                data = await fetchSellerProducts(token);
+                data = await fetchSellerProducts(token, preSelectedProductId);
             } else {
-                const response = await fetch('/seller/api/seller-products.php', {
+                const response = await fetch(`/seller/api/seller-products.php?id=${preSelectedProductId}`, {
                     credentials: 'include'
                 });
                 const result = await response.json();
                 data = result.data || result;
             }
 
-            setProducts(Array.isArray(data) ? data : []);
+            // API might return array or single object depending on implementation, 
+            // but our PHP returns array even for single item
+            const product = Array.isArray(data) ? data[0] : data;
+
+            if (product) {
+                setProducts([product]); // Keep it as array for consistency if needed, though we don't map anymore
+                setSelectedProduct(product);
+                setFormData(prev => ({ ...prev, product_id: product.product_id }));
+            } else {
+                setError('Produk tidak ditemukan atau bukan milik Anda.');
+            }
+
         } catch (err) {
-            console.error('Error loading products:', err);
+            console.error('Error loading product:', err);
             setError('Gagal memuat produk');
         } finally {
             setLoading(false);
         }
-    };
-
-    const handleProductChange = (e) => {
-        const productId = e.target.value;
-        setFormData({ ...formData, product_id: productId });
-
-        const product = products.find(p => p.product_id === parseInt(productId));
-        setSelectedProduct(product || null);
     };
 
     const handleChange = (e) => {
@@ -114,8 +124,9 @@ const CreateAuction = () => {
                 start_time: formData.start_time
             };
 
+            let result;
             if (token) {
-                await createAuction(auctionData, token);
+                result = await createAuction(auctionData, token);
             } else {
                 const response = await fetch('/seller/api/create-auction.php', {
                     method: 'POST',
@@ -123,11 +134,27 @@ const CreateAuction = () => {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(auctionData)
                 });
-                if (!response.ok) throw new Error('Failed to create auction');
+                const text = await response.text();
+                console.log('Raw response:', text);
+
+                let responseData;
+                try {
+                    responseData = JSON.parse(text);
+                } catch (e) {
+                    throw new Error('Server returned invalid JSON: ' + text.substring(0, 100));
+                }
+
+                if (!response.ok) throw new Error(responseData.error || 'Failed to create auction');
+                result = responseData.data || responseData;
             }
 
-            alert('Lelang berhasil dibuat!');
-            navigate('/seller/auctions');
+            const newAuctionId = result.auction_id;
+            if (newAuctionId) {
+                alert('Lelang berhasil dibuat!');
+                navigate(`/auction/${newAuctionId}`);
+            } else {
+                throw new Error('Gagal mendapatkan ID lelang baru');
+            }
         } catch (err) {
             setError(err.message || 'Gagal membuat lelang');
         } finally {
@@ -168,30 +195,30 @@ const CreateAuction = () => {
             )}
 
             <form onSubmit={handleSubmit} className="bg-white rounded-xl p-6 shadow-sm">
-                {/* Product Selection */}
+                {/* Product Info (Read-only) */}
                 <div className="mb-5">
                     <label className="block mb-2 font-semibold text-gray-800">
-                        Produk <span className="text-red-500">*</span>
+                        Produk
                     </label>
-                    <select
-                        name="product_id"
-                        value={formData.product_id}
-                        onChange={handleProductChange}
-                        required
-                        className="w-full p-3 border-2 border-gray-200 rounded-lg text-base outline-none focus:border-brand transition-colors"
-                    >
-                        <option value="">-- Pilih Produk --</option>
-                        {products.map(product => (
-                            <option key={product.product_id} value={product.product_id}>
-                                {product.product_name} (Stock: {product.stock} | Harga: Rp {product.price.toLocaleString()})
-                            </option>
-                        ))}
-                    </select>
-                    {selectedProduct && (
-                        <div className="mt-2 p-3 bg-gray-50 rounded-lg text-sm text-gray-600">
-                            <strong>Stock tersedia:</strong> {selectedProduct.stock} item
-                        </div>
-                    )}
+                    <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg flex items-center gap-4">
+                        {selectedProduct ? (
+                            <>
+                                <img
+                                    src={selectedProduct.main_image_path || '/assets/images/default.png'}
+                                    alt={selectedProduct.product_name}
+                                    className="w-16 h-16 object-cover rounded-md"
+                                />
+                                <div>
+                                    <h3 className="font-bold text-gray-800">{selectedProduct.product_name}</h3>
+                                    <div className="text-sm text-gray-600">
+                                        Harga Asli: Rp {selectedProduct.price.toLocaleString()} | Stock: {selectedProduct.stock}
+                                    </div>
+                                </div>
+                            </>
+                        ) : (
+                            <div className="text-gray-500">Memuat info produk...</div>
+                        )}
+                    </div>
                 </div>
 
                 {/* Starting Price */}
@@ -205,7 +232,7 @@ const CreateAuction = () => {
                         value={formData.starting_price}
                         onChange={handleChange}
                         required
-                        min="1"
+                        min="1000"
                         step="1000"
                         placeholder="Contoh: 100000"
                         className="w-full p-3 border-2 border-gray-200 rounded-lg text-base outline-none focus:border-brand transition-colors"
@@ -223,7 +250,7 @@ const CreateAuction = () => {
                         value={formData.min_increment}
                         onChange={handleChange}
                         required
-                        min="1"
+                        min="1000"
                         step="1000"
                         placeholder="Contoh: 10000"
                         className="w-full p-3 border-2 border-gray-200 rounded-lg text-base outline-none focus:border-brand transition-colors"

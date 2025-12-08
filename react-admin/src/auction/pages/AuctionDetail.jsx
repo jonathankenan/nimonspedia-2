@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchAuctionDetail, placeBid } from '../api/auctionApi';
+import { fetchAuctionDetail, placeBid, deleteAuction, stopAuction, editAuction } from '../api/auctionApi';
 import BidForm from '../components/BidForm';
 import BidHistory from '../components/BidHistory';
+import { useWebSocket } from '../../shared/hooks/useWebSocket';
+import { useCountdown } from '../hooks/useCountdown';
 
 const AuctionDetail = () => {
   const { auctionId } = useParams();
@@ -11,14 +13,80 @@ const AuctionDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [bidding, setBidding] = useState(false);
+  const { lastMessage } = useWebSocket();
+  const [balance, setBalance] = useState(0);
+
+  // Edit State
+  const [editing, setEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    starting_price: '',
+    min_increment: ''
+  });
+
+  // User Info
+  const userRole = localStorage.getItem('userRole');
+  const adminName = localStorage.getItem('adminName') || localStorage.getItem('userName');
+  const isSeller = userRole === 'SELLER';
+  const isOwner = isSeller && auction?.seller_name === adminName;
+
+  // Timer
+  const targetTime = auction?.status === 'scheduled' ? auction.start_time : auction?.end_time;
+  const { formattedTime, isEnded } = useCountdown(targetTime, () => {
+    // Optional: Refresh when timer ends
+    if (auction?.status === 'active') {
+      loadAuctionDetail();
+    }
+  });
 
   useEffect(() => {
     loadAuctionDetail();
   }, [auctionId]);
 
+  // Real-time update via WebSocket
+  useEffect(() => {
+    if (lastMessage?.type === 'auction_bid_update' && lastMessage.auction_id === parseInt(auctionId)) {
+      loadAuctionDetail();
+    }
+  }, [lastMessage, auctionId]);
+
+  // Auto-sync every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (auction?.status === 'active') {
+        loadAuctionDetail();
+      }
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [auction?.status]);
+
+  useEffect(() => {
+      loadBalance();
+  }, []);
+
+
+  const loadBalance = async () => {
+      try {
+          let bal = 0;
+
+          // fetch dari PHP session
+          const res = await fetch('/api/user-balance.php', {
+              credentials: 'include'
+          });
+          const data = await res.json();
+          bal = data.balance ?? 0;
+
+          setBalance(bal);
+      } catch (err) {
+          console.error('Gagal load balance:', err);
+      }
+  };
+
+
   const loadAuctionDetail = async () => {
     try {
-      setLoading(true);
+      // Don't set loading=true to avoid flickering on real-time updates
+      if (!auction) setLoading(true);
+
       const data = await fetchAuctionDetail(auctionId);
       setAuction(data);
     } catch (err) {
@@ -34,7 +102,7 @@ const AuctionDetail = () => {
 
     if (!token) {
       alert('Silakan login terlebih dahulu');
-      navigate('/login');
+      window.location.href = '/authentication/login.php';
       return;
     }
 
@@ -48,6 +116,62 @@ const AuctionDetail = () => {
       console.error('Error placing bid:', err);
     } finally {
       setBidding(false);
+    }
+  };
+
+  const handleCancelAuction = async () => {
+    if (!window.confirm('Apakah Anda yakin ingin membatalkan lelang ini?')) return;
+
+    const token = localStorage.getItem('adminToken');
+    try {
+      await deleteAuction(auctionId, token);
+      alert('Lelang berhasil dibatalkan');
+      navigate('/auction');
+    } catch (err) {
+      alert('Gagal membatalkan lelang');
+      console.error(err);
+    }
+  };
+
+  const handleStopAuction = async () => {
+    if (!window.confirm('Apakah Anda yakin ingin menghentikan lelang ini sekarang? Pemenang saat ini akan menang.')) return;
+
+    const token = localStorage.getItem('adminToken');
+    try {
+      await stopAuction(auctionId, token);
+
+      alert('Lelang berhasil dihentikan');
+      loadAuctionDetail();
+    } catch (err) {
+      alert('Gagal menghentikan lelang');
+      console.error(err);
+    }
+  };
+
+  // Edit Handlers
+  const handleEditClick = () => {
+    setEditForm({
+      starting_price: auction.starting_price,
+      min_increment: auction.min_increment
+    });
+    setEditing(true);
+  };
+
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    const token = localStorage.getItem('adminToken');
+    try {
+      await editAuction({
+        auction_id: auction.auction_id,
+        starting_price: parseFloat(editForm.starting_price),
+        min_increment: parseFloat(editForm.min_increment)
+      }, token);
+
+      alert('Lelang berhasil diperbarui');
+      setEditing(false);
+      loadAuctionDetail();
+    } catch (err) {
+      alert(`Gagal memperbarui lelang: ${err.error || err.message}`);
     }
   };
 
@@ -117,6 +241,56 @@ const AuctionDetail = () => {
           ← Kembali ke Lelang
         </span>
       </div>
+
+      {/* Edit Modal */}
+      {editing && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md">
+            <h3 className="text-xl font-bold mb-4">Edit Lelang</h3>
+            <form onSubmit={handleEditSubmit}>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Harga Mulai</label>
+                <input
+                  type="number"
+                  value={editForm.starting_price}
+                  onChange={e => setEditForm({ ...editForm, starting_price: e.target.value })}
+                  className="w-full p-2 border rounded"
+                  min="1000"
+                  step="1000"
+                  required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Increment Minimal</label>
+                <input
+                  type="number"
+                  value={editForm.min_increment}
+                  onChange={e => setEditForm({ ...editForm, min_increment: e.target.value })}
+                  className="w-full p-2 border rounded"
+                  min="1000"
+                  step="1000"
+                  required
+                />
+              </div>
+              <div className="flex justify-end gap-2">
+                <button
+                  type="button"
+                  onClick={() => setEditing(false)}
+                  className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Simpan
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {/* Left Column - Image & Details */}
@@ -202,21 +376,63 @@ const AuctionDetail = () => {
               </div>
               <div>
                 <div className="text-sm text-gray-500 mb-1">
-                  Kuantitas
+                  {auction.status === 'scheduled' ? 'Mulai Dalam' : 'Berakhir Dalam'}
                 </div>
-                <div className="text-lg font-semibold text-gray-800">
-                  {auction.quantity} item
+                <div className={`text-lg font-bold ${auction.status === 'active' ? 'text-red-600' : 'text-gray-800'}`}>
+                  {formattedTime}
                 </div>
               </div>
             </div>
+
+            <div className="mt-4 text-xs text-gray-500">
+              <div>Mulai: {formatDate(auction.start_time)}</div>
+              <div>Selesai: {formatDate(auction.end_time)}</div>
+            </div>
           </div>
 
-          {/* Bid Form */}
-          <BidForm
-            auction={auction}
-            onBidSubmit={handleBidSubmit}
-            loading={bidding}
-          />
+          {/* Seller Controls */}
+          {isOwner && (
+            <div className="bg-white rounded-xl p-5 mb-5 border border-blue-200">
+              <h3 className="font-bold text-gray-800 mb-3">Kontrol Penjual</h3>
+              <div className="flex gap-3 flex-wrap">
+                {/* Edit Button - Only if no bids and active/scheduled */}
+                {(auction.status === 'active' || auction.status === 'scheduled') && (!auction.bid_count || auction.bid_count === 0) && (
+                  <button
+                    onClick={handleEditClick}
+                    className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold"
+                  >
+                    Edit Lelang
+                  </button>
+                )}
+
+                {auction.status === 'active' && (
+                  <button
+                    onClick={handleStopAuction}
+                    className="flex-1 px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 font-semibold"
+                  >
+                    Hentikan Lelang
+                  </button>
+                )}
+                {(auction.status === 'active' || auction.status === 'scheduled') && (
+                  <button
+                    onClick={handleCancelAuction}
+                    className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 font-semibold"
+                  >
+                    Batalkan Lelang
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Bid Form (Only for Buyers) */}
+          {!isSeller && (
+            <BidForm
+              auction={auction}
+              onBidSubmit={handleBidSubmit}
+              loading={bidding}
+            />
+          )}
 
           {/* Bid History */}
           <div className="mt-5">

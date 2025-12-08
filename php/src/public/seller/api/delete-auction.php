@@ -22,18 +22,20 @@ if (!$auction_id) {
     return sendError("Missing auction_id", 400);
 }
 
-$db = getDatabaseConnection();
+// $db = getDatabaseConnection(); // PDO not available
 
 // --- 1. CEK AUCTION EXISTS & BELONGS TO SELLER ---
-$stmt = $db->prepare("
+$stmt = $conn->prepare("
     SELECT a.auction_id, a.product_id, a.status, a.quantity, s.user_id AS owner_id
     FROM auctions a
     JOIN products p ON a.product_id = p.product_id
     JOIN stores s ON p.store_id = s.store_id
     WHERE a.auction_id = ?
 ");
-$stmt->execute([$auction_id]);
-$auction = $stmt->fetch(PDO::FETCH_ASSOC);
+$stmt->bind_param("i", $auction_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$auction = $result->fetch_assoc();
 
 if (!$auction) {
     return sendError("Auction not found", 404);
@@ -49,29 +51,32 @@ if ($auction['status'] === 'ended' || $auction['status'] === 'cancelled') {
 }
 
 // --- 3. CEK APAKAH SUDAH ADA BID ---
-$stmt = $db->prepare("
+$stmt = $conn->prepare("
     SELECT COUNT(*) as bid_count
     FROM auction_bids
     WHERE auction_id = ?
 ");
-$stmt->execute([$auction_id]);
-$bidCount = $stmt->fetch(PDO::FETCH_ASSOC)['bid_count'];
+$stmt->bind_param("i", $auction_id);
+$stmt->execute();
+$bidCount = $stmt->get_result()->fetch_assoc()['bid_count'];
 
 if ($bidCount > 0) {
     return sendError("Cannot delete auction that already has bids", 400);
 }
 
 // --- 4. DELETE AUCTION ---
-$stmt = $db->prepare("DELETE FROM auctions WHERE auction_id = ?");
-$stmt->execute([$auction_id]);
+$stmt = $conn->prepare("DELETE FROM auctions WHERE auction_id = ?");
+$stmt->bind_param("i", $auction_id);
+$stmt->execute();
 
 // --- 5. KEMBALIKAN STOCK PRODUK ---
-$stmt = $db->prepare("
+$stmt = $conn->prepare("
     UPDATE products 
     SET stock = stock + ? 
     WHERE product_id = ?
 ");
-$stmt->execute([$auction['quantity'], $auction['product_id']]);
+$stmt->bind_param("ii", $auction['quantity'], $auction['product_id']);
+$stmt->execute();
 
 return sendSuccess([
     "auction_id" => (int)$auction_id,

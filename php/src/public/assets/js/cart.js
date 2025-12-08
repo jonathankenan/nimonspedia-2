@@ -79,24 +79,28 @@ document.addEventListener('DOMContentLoaded', () => {
             if (xhr.status >= 200 && xhr.status < 300) {
                 try {
                     const result = JSON.parse(xhr.responseText);
+                    
+                    if (result.redirect_url) {
+                        window.location.href = result.redirect_url;
+                        return; 
+                    }
+
                     if (result.success) {
                         updateSummary();
                     } else {
-                        alert(result.message || 'Gagal memperbarui jumlah barang.');
+                        window.location.reload();
                     }
                 } catch (e) {
-                    alert('Gagal memproses respons server.');
-                    console.error('JSON Parse error:', e);
+                    window.location.reload();
                 }
             } else {
-                alert('Terjadi kesalahan server: ' + xhr.status);
+                window.location.reload();
             }
             hideLoading();
         };
         
         xhr.onerror = function() {
-            alert('Terjadi kesalahan koneksi.');
-            hideLoading();
+            window.location.reload();
         };
         
         xhr.send(JSON.stringify({ cart_item_id: cartItemId, quantity: quantity }));
@@ -114,6 +118,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (xhr.status >= 200 && xhr.status < 300) {
                 try {
                     const result = JSON.parse(xhr.responseText);
+
+                    if (result.redirect_url) {
+                        window.location.href = result.redirect_url;
+                        return; 
+                    }
+
                     if (result.success) {
                         itemToDelete.remove();
                         const badge = document.querySelector('.cart .badge');
@@ -126,23 +136,20 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                         updateSummary();
                     } else {
-                        alert(result.message || 'Gagal menghapus barang.');
+                        window.location.reload();
                     }
                 } catch (e) {
-                    alert('Gagal memproses respons server.');
-                    console.error('JSON Parse error:', e);
+                    window.location.reload();
                 }
             } else {
-                alert('Terjadi kesalahan server: ' + xhr.status);
+                window.location.reload();
             }
             closeModal(true);
             hideLoading();
         };
 
         xhr.onerror = function() {
-            alert('Terjadi kesalahan koneksi.');
-            closeModal(true);
-            hideLoading();
+            window.location.reload();
         };
 
         xhr.send(JSON.stringify({ cart_item_id: itemToDelete.dataset.itemId }));

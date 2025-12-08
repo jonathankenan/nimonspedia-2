@@ -68,6 +68,26 @@ export const placeBid = async (auctionId, bidAmount, token) => {
 };
 
 /**
+ * Get user balance (requires authentication)
+ */
+export const fetchUserBalance = async (token) => {
+  try {
+    const response = await axios.get(
+      `${API_BASE}/user/balance`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+    return response.data.data.balance;
+  } catch (error) {
+    console.error('Error fetching user balance:', error);
+    throw error;
+  }
+};
+
+/**
  * Get user's active bids (requires authentication)
  */
 export const fetchUserActiveBids = async (token) => {
@@ -110,11 +130,12 @@ export const fetchSellerAuctions = async (token) => {
 /**
  * Get seller's products (PHP Seller API)
  */
-export const fetchSellerProducts = async (token) => {
+export const fetchSellerProducts = async (token, id = null) => {
   try {
     const response = await axios.get(
       '/seller/api/seller-products.php',
       {
+        params: id ? { id } : {},
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -172,6 +193,26 @@ export const editAuction = async (auctionData, token) => {
 };
 
 /**
+ * Get seller's active auction ID
+ */
+export const fetchSellerActiveAuction = async (token) => {
+  try {
+    const response = await axios.get(
+      '/seller/api/get-active-auction.php',
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      }
+    );
+    return response.data.data.auction_id;
+  } catch (error) {
+    console.error('Error fetching seller active auction:', error);
+    return null;
+  }
+};
+
+/**
  * Delete auction (PHP Seller API)
  */
 export const deleteAuction = async (auctionId, token) => {
@@ -189,6 +230,28 @@ export const deleteAuction = async (auctionId, token) => {
     return response.data.data || response.data;
   } catch (error) {
     console.error('Error deleting auction:', error);
+    throw error.response?.data || error;
+  }
+};
+
+/**
+ * Stop auction (Node.js API)
+ */
+export const stopAuction = async (auctionId, token) => {
+  try {
+    const response = await axios.post(
+      `${API_BASE}/${auctionId}/stop`,
+      {},
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error stopping auction:', error);
     throw error.response?.data || error;
   }
 };
