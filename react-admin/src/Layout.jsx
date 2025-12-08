@@ -50,7 +50,6 @@ const Layout = ({ children }) => {
     const handleLogout = () => {
             localStorage.clear();
             window.location.href = '/authentication/logout.php';
-        }
     };
 
     const formatCurrency = (amount) => {

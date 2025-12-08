@@ -22,6 +22,7 @@ $can_checkout = true;
 if ($user_id) {
     $access = $featureModel->checkAccess($user_id, 'checkout_enabled');
     $can_checkout = $access['allowed'];
+}
 // --- JWT GENERATION FOR REACT ADMIN ---
 $jwt_token = null;
 if (isset($_SESSION['user_id'])) {

@@ -132,13 +132,13 @@ function App() {
         </ProtectedRoute>
       } />
 
-      <Route path="/seller/auction/:auctionId/edit" element={
+      {/* <Route path="/seller/auction/:auctionId/edit" element={
         <ProtectedRoute allowedRoles={['SELLER']}>
           <Layout>
             <EditAuction />
           </Layout>
         </ProtectedRoute>
-      } />
+      } /> */}
 
       {/* Chat Page (Buyer & Seller) */}
       <Route path="/chat" element={
