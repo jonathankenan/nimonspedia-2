@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { getMessages, sendMessage, markMessagesAsRead, uploadImage } from '../api/chatApi';
 import MessageBubble from './MessageBubble';
-import { Upload, Send, ArrowLeft } from 'lucide-react';
+import ProductPickerModal from './ProductPickerModal';
+import { Upload, Send, ArrowLeft, Package } from 'lucide-react';
+import { compressImage, validateImage } from '../../shared/utils/imageCompression';
 
 export default function ChatRoom({ room, userRole, socket, onBack }) {
   const [messages, setMessages] = useState([]);
@@ -11,6 +13,9 @@ export default function ChatRoom({ room, userRole, socket, onBack }) {
   const [typingUser, setTypingUser] = useState(null);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
+  const [showProductPicker, setShowProductPicker] = useState(false);
+  const [oldestMessageTime, setOldestMessageTime] = useState(null);
+  const [currentUserId, setCurrentUserId] = useState(null);
   
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
@@ -23,18 +28,25 @@ export default function ChatRoom({ room, userRole, socket, onBack }) {
   const displayName = userRole === 'BUYER' ? room.store_name : room.buyer_name;
   const displayImage = userRole === 'BUYER' ? room.store_logo_path : room.buyer_avatar_path;
 
-  // Get current user ID from session storage
-  const getCurrentUserId = () => {
-    try {
-      const userId = sessionStorage.getItem('user_id') || localStorage.getItem('user_id');
-      return userId ? parseInt(userId) : null;
-    } catch (error) {
-      console.error('Failed to get user ID:', error);
-      return null;
-    }
-  };
-
-  const currentUserId = getCurrentUserId();
+  // Fetch current user ID from session API on mount
+  useEffect(() => {
+    const fetchUserId = async () => {
+      try {
+        const response = await fetch('/api/session.php', { credentials: 'include' });
+        const data = await response.json();
+        if (data.ok && data.user_id) {
+          setCurrentUserId(parseInt(data.user_id));
+          console.log('[ChatRoom] Set currentUserId from session API:', data.user_id);
+        } else {
+          console.error('[ChatRoom] Failed to get user_id from session');
+        }
+      } catch (error) {
+        console.error('[ChatRoom] Error fetching user_id:', error);
+      }
+    };
+    
+    fetchUserId();
+  }, []);
 
   // Load messages
   useEffect(() => {
@@ -170,15 +182,30 @@ export default function ChatRoom({ room, userRole, socket, onBack }) {
     try {
       setSending(true);
       
+      // Validate image
+      const validation = validateImage(file);
+      if (!validation.valid) {
+        alert(validation.errors.join('\n'));
+        return;
+      }
+      
+      // Compress image
+      const compressedFile = await compressImage(file);
+      
       // Upload image
-      const uploadData = await uploadImage(file);
+      const uploadData = await uploadImage(compressedFile, storeId, buyerId);
       
       // Send message with image
       const data = await sendMessage(storeId, buyerId, 'image', uploadData.image_url);
       
-      // Broadcast via WebSocket
-      if (socket) {
-        socket.broadcastMessage(storeId, buyerId, data.message.message_id);
+      // Add message to local state immediately
+      if (data.message) {
+        setMessages(prev => [...prev, data.message]);
+        
+        // Broadcast via WebSocket
+        if (socket?.isConnected) {
+          socket.broadcastMessage(storeId, buyerId, data.message.message_id);
+        }
       }
       
       // Reset file input
@@ -187,7 +214,7 @@ export default function ChatRoom({ room, userRole, socket, onBack }) {
       }
     } catch (error) {
       console.error('Failed to upload image:', error);
-      alert('Failed to send image');
+      alert('Gagal mengirim gambar');
     } finally {
       setSending(false);
     }
@@ -213,6 +240,39 @@ export default function ChatRoom({ room, userRole, socket, onBack }) {
       }
     } catch (error) {
       console.error('Failed to mark as read:', error);
+    }
+  };
+
+  const handleSelectProduct = async (product) => {
+    try {
+      setSending(true);
+      const data = await sendMessage(
+        storeId, 
+        buyerId, 
+        'item_preview', 
+        JSON.stringify({
+          product_id: product.product_id,
+          product_name: product.product_name,
+          product_price: product.product_price,
+          product_image: product.product_image
+        }),
+        product.product_id
+      );
+      
+      // Add message to local state immediately
+      if (data.message) {
+        setMessages(prev => [...prev, data.message]);
+        
+        // Broadcast via WebSocket
+        if (socket?.isConnected) {
+          socket.broadcastMessage(storeId, buyerId, data.message.message_id);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to send product:', error);
+      alert('Gagal mengirim produk');
+    } finally {
+      setSending(false);
     }
   };
 
@@ -326,6 +386,15 @@ export default function ChatRoom({ room, userRole, socket, onBack }) {
             <Upload size={18} className="md:w-5 md:h-5" />
           </button>
 
+          <button
+            onClick={() => setShowProductPicker(true)}
+            disabled={sending}
+            className="p-2 text-gray-500 hover:text-gray-700 transition flex-shrink-0"
+            title="Kirim produk"
+          >
+            <Package size={18} className="md:w-5 md:h-5" />
+          </button>
+
           <textarea
             value={newMessage}
             onChange={(e) => {
@@ -354,6 +423,15 @@ export default function ChatRoom({ room, userRole, socket, onBack }) {
           </button>
         </div>
       </div>
+
+      {/* Product Picker Modal */}
+      <ProductPickerModal
+        isOpen={showProductPicker}
+        onClose={() => setShowProductPicker(false)}
+        onSelectProduct={handleSelectProduct}
+        storeId={storeId}
+        userRole={userRole}
+      />
     </div>
   );
 }

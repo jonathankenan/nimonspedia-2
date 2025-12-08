@@ -1,20 +1,16 @@
 <?php
+require_once __DIR__ . '/../../app/utils/session.php';
+
 header('Content-Type: application/json');
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
-
-$role = $_SESSION['role'] ?? null;
-if ($role) {
+if (isLoggedIn()) {
     echo json_encode([
         'ok' => true,
-        'role' => $role,
+        'role' => $_SESSION['role'],
         'name' => $_SESSION['name'] ?? null,
-        'user_id' => $_SESSION['user_id'] ?? null,
+        'user_id' => $_SESSION['user_id'],
         'balance' => $_SESSION['balance'] ?? 0,
     ]);
-    exit(0);
+} else {
+    echo json_encode(['ok' => false]);
 }
-
-echo json_encode(['ok' => false]);

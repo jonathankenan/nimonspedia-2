@@ -71,8 +71,9 @@ export const createChatRoom = async (storeId) => {
 export const uploadImage = async (file, storeId, buyerId) => {
   const formData = new FormData();
   formData.append('image', file);
-  formData.append('store_id', storeId);
-  formData.append('buyer_id', buyerId);
+  
+  if (storeId) formData.append('store_id', storeId);
+  if (buyerId) formData.append('buyer_id', buyerId);
 
   const response = await api.post('/upload-image', formData, {
     headers: {

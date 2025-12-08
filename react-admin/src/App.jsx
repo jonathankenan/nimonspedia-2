@@ -46,7 +46,9 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
           localStorage.setItem('userRole', data.role);
           localStorage.setItem('userName', data.name || '');
           if (data.user_id) {
-            localStorage.setItem('user_id', data.user_id.toString());
+            const userIdStr = data.user_id.toString();
+            localStorage.setItem('user_id', userIdStr);
+            console.log('[ProtectedRoute] Saved user_id to localStorage:', userIdStr);
           }
           console.log('[ProtectedRoute] Allowed via PHP session, role:', data.role, 'user_id:', data.user_id);
           setAllowed(true);
