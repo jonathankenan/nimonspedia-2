@@ -14,11 +14,20 @@ const BidHistory = ({ auctionId }) => {
   }, [auctionId, limit]);
 
   useEffect(() => {
-    if (lastMessage?.type === 'auction_bid_update' && lastMessage.auction_id === parseInt(auctionId)) {
-      loadBidHistory();
-    }
-  }, [lastMessage, auctionId]);
+    if (
+      lastMessage?.type === 'auction_bid_update' &&
+      lastMessage.auction_id === parseInt(auctionId)
+    ) {
+      const newBid = {
+        bidder_name: lastMessage.bidder_name,
+        bid_amount: lastMessage.current_price,
+        bid_time: lastMessage.timestamp
+      };
 
+      setBids(prev => [newBid, ...prev.slice(0, limit - 1)]);
+    }
+  }, [lastMessage, auctionId, limit]);
+  
   const loadBidHistory = async () => {
     try {
       // Don't set loading on refresh to avoid flickering

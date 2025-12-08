@@ -72,6 +72,27 @@ try {
 
     $conn->commit();
 
+    // --- 6. Notify Node.js WebSocket ---
+    $payload = [
+        'type' => 'auction_bid',
+        'auction_id' => $auction_id,
+        'current_price' => $bid_amount,
+        'bidder_name' => $_SESSION['name'] ?? 'Anonymous'
+    ];
+
+    $ws_url = "http://node:3003/notify_bid"; // endpoint Node.js untuk bid notify
+    $options = [
+        'http' => [
+            'method'  => 'POST',
+            'header'  => "Content-Type: application/json\r\n",
+            'content' => json_encode($payload),
+            'timeout' => 1
+        ]
+    ];
+    $context  = stream_context_create($options);
+    @file_get_contents($ws_url, false, $context); // @ untuk suppress warning jika gagal
+
+
     return sendSuccess([
         "auction_id" => (int)$auction_id,
         "bid_amount" => (float)$bid_amount,
