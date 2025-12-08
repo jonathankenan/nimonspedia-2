@@ -48,7 +48,6 @@ const Layout = ({ children }) => {
     }, [userRole]);
 
     const handleLogout = () => {
-        if (window.confirm('Yakin ingin logout?')) {
             localStorage.clear();
             window.location.href = '/authentication/logout.php';
         }

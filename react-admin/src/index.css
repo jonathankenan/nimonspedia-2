@@ -127,6 +127,50 @@ body {
   margin-right: auto;
 }
 
+/* Error Alert */
+.alert-error {
+  background-color: #fee2e2;
+  color: #991b1b;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 10px;
+  font-size: 0.9rem;
+  border: 1px solid #f87171;
+}
+
+/* --- TOAST NOTIFICATION --- */
+.toast-notification {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  color: white;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: slideIn 0.3s ease-out;
+  min-width: 250px;
+}
+
+.toast-success {
+  background-color: #10b981; /* Hijau Segar */
+  border-left: 5px solid #065f46;
+}
+
+.toast-error {
+  background-color: #ef4444; /* Merah */
+  border-left: 5px solid #991b1b;
+}
+
+@keyframes slideIn {
+  from { transform: translateX(100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
 /* --- 5. HALAMAN LOGIN (Gaya authentication.css) --- */
 .login-wrapper {
   min-height: 100vh;

@@ -37,6 +37,10 @@ class LoginController
                     $_SESSION['store_id'] = $store['store_id'];
                 }
             }
+            if ($user['role'] === 'ADMIN') {
+                header("Location: /authentication/login.php?error=admin_not_allowed");
+                exit;
+            }
 
             header("Location: /index.php");
             exit;

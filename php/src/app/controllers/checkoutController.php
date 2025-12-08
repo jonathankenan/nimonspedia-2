@@ -4,6 +4,8 @@ namespace App\Controllers;
 use App\Models\Cart;
 use App\Models\User;
 use App\Models\Order;
+require_once __DIR__ . '/../models/feature.php';
+use App\Models\Feature;
 
 class CheckoutController {
     private $conn;
@@ -15,6 +17,12 @@ class CheckoutController {
     }
     
     public function process() {
+        $access = (new Feature($this->conn))->checkAccess($this->userId, 'checkout_enabled');
+        if (!$access['allowed']) {
+            header('Location: /disabled.php?reason=' . urlencode($access['reason']));
+            exit;
+        }
+
         $cartModel = new Cart($this->conn);
         $cartItemsResult = $cartModel->getCartItems($this->userId);
 
@@ -25,6 +33,7 @@ class CheckoutController {
         
         $itemsByStore = [];
         $grandTotal = 0;
+        
         while ($item = $cartItemsResult->fetch_assoc()) {
             $storeId = $item['store_id'];
             if (!isset($itemsByStore[$storeId])) {
@@ -37,6 +46,7 @@ class CheckoutController {
 
         $userModel = new User($this->conn);
         $user = $userModel->findById($this->userId);
+        
         if ($user['balance'] < $grandTotal) {
             $_SESSION['checkout_error'] = "Saldo Anda tidak mencukupi untuk transaksi ini.";
             header('Location: /buyer/checkout.php');
@@ -50,12 +60,12 @@ class CheckoutController {
 
         if ($success) {
             $_SESSION['balance'] = $user['balance'] - $grandTotal;
-
             unset($_SESSION['checkout_error']);
             $_SESSION['order_success'] = "Pesanan Anda berhasil dibuat!";
             header('Location: /buyer/orders.php');
             exit;
         } else {
+            $_SESSION['checkout_error'] = "Terjadi kesalahan saat memproses pesanan.";
             header('Location: /buyer/checkout.php');
             exit;
         }

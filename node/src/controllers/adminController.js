@@ -98,19 +98,59 @@ class AdminController {
 
   static async getUsers(req, res) {
     try {
+      // 1. Ambil Parameter Pagination & Filter
+      const page = parseInt(req.query.page) || 1;
+      const limit = parseInt(req.query.limit) || 10; // Default 10 user per halaman
+      const search = req.query.search || '';
+      const roleFilter = req.query.role || 'ALL';
+      const offset = (page - 1) * limit;
+
+      // 2. Bangun Query Dasar (Dynamic SQL)
+      let queryBase = "FROM users WHERE role != 'ADMIN'";
+      const queryParams = [];
+
+      // Filter Search (Nama atau Email)
+      if (search) {
+        queryBase += " AND (name LIKE ? OR email LIKE ?)";
+        queryParams.push(`%${search}%`, `%${search}%`);
+      }
+
+      // Filter Role (Buyer/Seller)
+      if (roleFilter !== 'ALL') {
+        queryBase += " AND role = ?";
+        queryParams.push(roleFilter);
+      }
+
+      // 3. Hitung Total Data (Untuk Pagination)
+      const [countResult] = await dbPool.query(
+        `SELECT COUNT(*) as total ${queryBase}`, 
+        queryParams
+      );
+      const totalItems = countResult[0].total;
+      const totalPages = Math.ceil(totalItems / limit);
+
+      // 4. Ambil Data User (Dengan LIMIT & OFFSET)
+      const dataParams = [...queryParams, limit, offset];
+      
       const [users] = await dbPool.query(`
         SELECT 
-          user_id,
-          email,
-          name,
-          role,
-          balance,
-          created_at
-        FROM users
-        ORDER BY created_at DESC
-      `);
+          user_id, email, name, role, balance, created_at
+        ${queryBase}
+        ORDER BY user_id ASC
+        LIMIT ? OFFSET ?
+      `, dataParams);
 
-      res.json(users);
+      // 5. Kirim Response ke React
+      res.json({
+        data: users,
+        pagination: {
+          currentPage: page,
+          itemsPerPage: limit,
+          totalItems: totalItems,
+          totalPages: totalPages
+        }
+      });
+
     } catch (error) {
       console.error('Error fetching users:', error);
       res.status(500).json({ error: 'Failed to fetch users' });

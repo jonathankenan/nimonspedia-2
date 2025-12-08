@@ -3,11 +3,25 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
+require_once __DIR__ . '/../config/db.php';
+require_once __DIR__ . '/../models/feature.php';
+
+if (!isset($conn)) {
+    global $conn;
+}
+
+// [TAMBAHAN] Cek Status
+$featureModel = new \App\Models\Feature($conn);
+$user_id = $_SESSION['user_id'] ?? null;
 $role = $_SESSION['role'] ?? null;
 $name = $_SESSION['name'] ?? 'Guest';
 $balance = $_SESSION['balance'] ?? 0;
 $cart_count = $_SESSION['cart_count'] ?? 0;
 
+$can_checkout = true;
+if ($user_id) {
+    $access = $featureModel->checkAccess($user_id, 'checkout_enabled');
+    $can_checkout = $access['allowed'];
 // --- JWT GENERATION FOR REACT ADMIN ---
 $jwt_token = null;
 if (isset($_SESSION['user_id'])) {
@@ -58,22 +72,21 @@ if (isset($_SESSION['user_id'])) {
 
     <div class="nav-right">
         <?php if (!$role): ?>
-            <!-- Guest -->
             <a href="/index.php">Beranda</a>
             <a href="/authentication/login.php">Masuk</a>
             <a href="/authentication/register_role.php">Daftar</a>
 
         <?php elseif ($role === 'BUYER'): ?>
-            <!-- Buyer -->
             <a href="/auction">Auction</a>
 
-            <a href="/buyer/cart.php" class="cart">
-                Keranjang
-                <?php if ($cart_count > 0): ?>
-                <span class="badge"><?= htmlspecialchars($cart_count) ?></span>
-                <?php endif; ?>
-            </a>
-
+            <?php if ($can_checkout): ?>
+                <a href="/buyer/cart.php" class="cart">
+                    Keranjang
+                    <?php if ($cart_count > 0): ?>
+                    <span class="badge"><?= htmlspecialchars($cart_count) ?></span>
+                    <?php endif; ?>
+                </a>
+            <?php endif; ?>
             <a href="#" id="balance-link">
                 Balance: Rp <?= number_format($balance ?? 0, 0, ',', '.') ?>
             </a>
@@ -140,7 +153,6 @@ if (isset($_SESSION['user_id'])) {
             <input type="number" id="topup-amount" name="amount" min="1000" required>
             <button type="submit">Top Up</button>
         </form>
-        <!-- <p id="topup-msg" style="color:red;"></p> -->
     </div>
 </div>
 <?php endif; ?>
