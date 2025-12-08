@@ -249,7 +249,17 @@ const AuctionDetail = () => {
     <div className="p-5 max-w-7xl mx-auto">
       {/* Breadcrumb */}
       <div className="mb-5 text-gray-500 text-sm">
-        <span onClick={() => navigate('/auction')} className="cursor-pointer text-brand hover:underline">
+        <span
+          onClick={() => {
+            const role = localStorage.getItem('userRole');
+            if (role === 'SELLER') {
+              navigate('/auction/management');
+            } else {
+              navigate('/auction');
+            }
+          }}
+          className="cursor-pointer text-brand hover:underline"
+        >
           ← Kembali ke Lelang
         </span>
       </div>

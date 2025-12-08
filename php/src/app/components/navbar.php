@@ -135,11 +135,9 @@ if (isset($_SESSION['user_id'])) {
                 }
             ?>
             <a href="/seller/dashboard.php">Dashboard</a>
+            <a href="/auction/management">Lelang</a>
             <a href="/seller/kelola_produk.php">Kelola Produk</a>
             <a href="/admin/chat">Chat</a>
-            <?php if ($seller_auction_id): ?>
-                <a href="auction/<?= $seller_auction_id ?>">Auction</a>
-            <?php endif; ?>
             <a href="/seller/order_management.php">Lihat Pesanan</a>
             <a href="/seller/tambah_produk.php">Tambah Produk</a>
             <a href="/authentication/logout.php">Logout</a>

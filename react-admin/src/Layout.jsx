@@ -28,23 +28,6 @@ const Layout = ({ children }) => {
             };
             loadBalance();
         }
-
-        if (userRole === 'SELLER') {
-            const loadSellerAuction = async () => {
-                try {
-                    let id = null;
-                    const res = await fetch('/api/seller-active-auction.php', {
-                        credentials: 'include'
-                    });
-                    const data = await res.json();
-                    id = data.auction_id ?? null;
-                    setSellerAuctionId(id);
-                } catch (err) {
-                    console.error('Failed to load seller auction', err);
-                }
-            };
-            loadSellerAuction();
-        }
     }, [userRole]);
 
     const handleLogout = () => {
