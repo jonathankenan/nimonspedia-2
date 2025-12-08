@@ -77,7 +77,9 @@ if (isset($_SESSION['user_id'])) {
             <a href="/authentication/register_role.php">Daftar</a>
 
         <?php elseif ($role === 'BUYER'): ?>
-            <a href="/auction">Auction</a>
+            <!-- Buyer -->
+            <a href="/auction">Lelang</a>
+            <a href="/chat">Chat</a>
 
             <?php if ($can_checkout): ?>
                 <a href="/buyer/cart.php" class="cart">
@@ -133,6 +135,7 @@ if (isset($_SESSION['user_id'])) {
             ?>
             <a href="/seller/dashboard.php">Dashboard</a>
             <a href="/seller/kelola_produk.php">Kelola Produk</a>
+            <a href="/chat">Chat</a>
             <?php if ($seller_auction_id): ?>
                 <a href="auction/<?= $seller_auction_id ?>">Auction</a>
             <?php endif; ?>

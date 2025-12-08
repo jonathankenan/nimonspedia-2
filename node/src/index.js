@@ -1,6 +1,8 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
+const http = require('http');
 
 // Import configurations
 const dbPool = require('./config/db');
@@ -9,14 +11,20 @@ const redisClient = require('./config/redis');
 // Import routes
 const adminRoutes = require('./routes/admin');
 const auctionRoutes = require('./routes/auction');
+const chatRoutes = require('./routes/chat');
 
 // Import WebSocket utilities
 const { initializeWebSocket, broadcastMessage } = require('./utils/websocket');
+const { initializeChatWebSocket } = require('./utils/chatWebSocket');
 
 // Express App for REST API
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || '*',
+  credentials: true
+}));
 app.use(express.json());
+app.use(cookieParser());
 
 // =====================
 // REST API ROUTES
@@ -25,6 +33,7 @@ app.use(express.json());
 // Mount routes
 app.use('/api/admin', adminRoutes);
 app.use('/api/auction', auctionRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Health check for root
 app.get('/', (req, res) => {
@@ -44,11 +53,20 @@ const WS_PORT = process.env.WS_PORT || 3001;
 
 // Start REST API server
 app.listen(PORT, () => {
-  console.log(`✅ Admin REST API running on port ${PORT}`);
+  console.log(`✅ REST API running on port ${PORT}`);
 });
 
-// Start WebSocket server
-const wss = initializeWebSocket(WS_PORT);
+// Create HTTP server for Socket.IO (Chat WebSocket)
+const chatServer = http.createServer();
+initializeChatWebSocket(chatServer);
+
+chatServer.listen(WS_PORT, () => {
+  console.log(`✅ Chat WebSocket server running on port ${WS_PORT}`);
+});
+
+// Start legacy WebSocket server (for Auction)
+const AUCTION_WS_PORT = process.env.AUCTION_WS_PORT || 3002;
+const wss = initializeWebSocket(AUCTION_WS_PORT);
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
@@ -56,5 +74,6 @@ process.on('SIGTERM', async () => {
   await dbPool.end();
   await redisClient.quit();
   wss.close();
+  chatServer.close();
   process.exit(0);
 });
