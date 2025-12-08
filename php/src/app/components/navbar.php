@@ -80,7 +80,7 @@ if (isset($_SESSION['user_id'])) {
         <?php elseif ($role === 'BUYER'): ?>
             <!-- Buyer -->
             <a href="/auction">Lelang</a>
-            <a href="/chat">Chat</a>
+            <a href="/admin/chat">Chat</a>
 
             <?php if ($can_checkout): ?>
                 <a href="/buyer/cart.php" class="cart">
@@ -136,7 +136,7 @@ if (isset($_SESSION['user_id'])) {
             ?>
             <a href="/seller/dashboard.php">Dashboard</a>
             <a href="/seller/kelola_produk.php">Kelola Produk</a>
-            <a href="/chat">Chat</a>
+            <a href="/admin/chat">Chat</a>
             <?php if ($seller_auction_id): ?>
                 <a href="auction/<?= $seller_auction_id ?>">Auction</a>
             <?php endif; ?>
