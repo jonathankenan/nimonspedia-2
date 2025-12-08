@@ -34,14 +34,14 @@ function sanitize_description($html) {
 <html lang="en">
   <head>
     <title><?= htmlspecialchars($product['product_name']) ?> - Detail Produk</title>
-    <link rel="stylesheet" href="/assets/css/productDetail.css">
+    <link rel="stylesheet" href="/assets/css/productDetail.css?v=1.1">
     <link rel="stylesheet" href="/assets/css/toast.css">
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
     
-    <script src="/assets/js/productDetail.js" defer></script>
+    <script src="/assets/js/productDetail.js?v=1.1" defer></script>
   </head>
   <body>
     <?php include_once(__DIR__ . '/../../app/components/navbar.php'); ?>
@@ -71,6 +71,13 @@ function sanitize_description($html) {
           <a class="store-name" href="/store/detail.php?id=<?= (int)$product['store_id'] ?>"><?= htmlspecialchars($product['store_name']) ?></a>
           <br>
           <?= sanitize_description($product['store_description']) ?>
+          <?php if ($role === 'BUYER'): ?>
+            <button type="button" class="btn-chat-seller" 
+                    data-store-id="<?= (int)$product['store_id'] ?>" 
+                    data-product-id="<?= (int)$product['product_id'] ?>">
+              Chat Seller
+            </button>
+          <?php endif; ?>
         </div>
         
         <?php if ((int)$product['stock'] > 0): ?>

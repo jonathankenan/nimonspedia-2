@@ -36,7 +36,6 @@ export default function ProductPickerModal({ isOpen, onClose, onSelectProduct, s
       }
       
       const text = await response.text();
-      console.log('Raw API Response:', text);
       
       let data;
       try {
@@ -50,7 +49,6 @@ export default function ProductPickerModal({ isOpen, onClose, onSelectProduct, s
       // seller-products.php returns { success: true, data: [...] }
       // buyer endpoint returns { products: [...] }
       const productList = data.data || data.products || [];
-      console.log('Loaded products:', productList);
       setProducts(productList);
     } catch (error) {
       console.error('Failed to load products:', error);

@@ -1,11 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { getMessages, sendMessage, markMessagesAsRead, uploadImage } from '../api/chatApi';
 import MessageBubble from './MessageBubble';
 import ProductPickerModal from './ProductPickerModal';
 import { Upload, Send, ArrowLeft, Package } from 'lucide-react';
 import { compressImage, validateImage } from '../../shared/utils/imageCompression';
 
-export default function ChatRoom({ room, userRole, socket, onBack }) {
+function ChatRoom({ room, userRole, socket, onBack, productIdToSend, onProductSent }) {
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [loading, setLoading] = useState(true);
@@ -36,7 +36,6 @@ export default function ChatRoom({ room, userRole, socket, onBack }) {
         const data = await response.json();
         if (data.ok && data.user_id) {
           setCurrentUserId(parseInt(data.user_id));
-          console.log('[ChatRoom] Set currentUserId from session API:', data.user_id);
         } else {
           console.error('[ChatRoom] Failed to get user_id from session');
         }
@@ -83,7 +82,6 @@ export default function ChatRoom({ room, userRole, socket, onBack }) {
     if (!socket?.isConnected) return;
 
     const handleMessageReceived = (data) => {
-      console.log('[ChatRoom] Message received via WebSocket:', data);
       // Backend sends: { store_id, buyer_id, message: {...} }
       if (data.store_id === storeId && data.buyer_id === buyerId) {
         setMessages(prev => [...prev, data.message]);
@@ -96,7 +94,6 @@ export default function ChatRoom({ room, userRole, socket, onBack }) {
     };
 
     const handleUserTyping = (data) => {
-      console.log('[ChatRoom] Typing event:', data);
       if (data.store_id === storeId && data.buyer_id === buyerId && data.user_id !== currentUserId) {
         setTypingUser(data.is_typing ? displayName : null);
         
@@ -107,7 +104,6 @@ export default function ChatRoom({ room, userRole, socket, onBack }) {
     };
 
     const handleMessagesRead = (data) => {
-      console.log('[ChatRoom] Messages read event:', data);
       if (data.store_id === storeId && data.buyer_id === buyerId) {
         setMessages(prev => 
           prev.map(msg => ({ ...msg, is_read: true }))
@@ -243,7 +239,7 @@ export default function ChatRoom({ room, userRole, socket, onBack }) {
     }
   };
 
-  const handleSelectProduct = async (product) => {
+  const handleSelectProduct = useCallback(async (product) => {
     try {
       setSending(true);
       const data = await sendMessage(
@@ -274,7 +270,52 @@ export default function ChatRoom({ room, userRole, socket, onBack }) {
     } finally {
       setSending(false);
     }
-  };
+  }, [storeId, buyerId, socket]);
+
+  // Auto-send product preview when productIdToSend changes
+  useEffect(() => {
+    if (!productIdToSend || !storeId || !buyerId) return;
+
+    const sendProductPreview = async () => {
+      try {
+        console.log('[Auto-send] Fetching product:', productIdToSend);
+        
+        // Fetch product details
+        const response = await fetch(`/api/products/get.php?id=${productIdToSend}`, { credentials: 'include' });
+        if (!response.ok) throw new Error('Failed to fetch product');
+        
+        const productData = await response.json();
+        console.log('[Auto-send] Product data:', productData);
+        
+        if (productData && productData.product_id) {
+          const product = {
+            product_id: productData.product_id,
+            product_name: productData.product_name,
+            product_price: productData.price,
+            product_image: productData.main_image_path
+          };
+          
+          console.log('[Auto-send] Sending product preview...');
+          await handleSelectProduct(product);
+          console.log('[Auto-send] Product sent successfully');
+          
+          // Notify parent that product has been sent
+          if (onProductSent) {
+            onProductSent();
+          }
+        }
+      } catch (error) {
+        console.error('[Auto-send] Failed to send product preview:', error);
+      }
+    };
+
+    // Delay to ensure chat room is fully loaded
+    const timer = setTimeout(() => {
+      sendProductPreview();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [productIdToSend, storeId, buyerId, handleSelectProduct, onProductSent]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -435,3 +476,7 @@ export default function ChatRoom({ room, userRole, socket, onBack }) {
     </div>
   );
 }
+
+ChatRoom.displayName = 'ChatRoom';
+
+export default ChatRoom;

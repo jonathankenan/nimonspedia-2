@@ -92,6 +92,34 @@ body {
     text-decoration: underline;
 }
 
+.btn-chat-seller {
+    margin-top: 12px;
+    background: #25D366;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    box-shadow: 0 2px 8px rgba(37,211,102,0.2);
+    transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn-chat-seller:hover {
+    background: #20BD5A;
+    box-shadow: 0 4px 12px rgba(37,211,102,0.3);
+    transform: translateY(-1px);
+}
+
+.btn-chat-seller:active {
+    transform: translateY(0);
+}
+
 .cart-label {
     border-top: 0.5px solid #0A75BD;
     padding-top: 15px;
