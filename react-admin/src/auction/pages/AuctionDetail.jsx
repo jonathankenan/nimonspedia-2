@@ -15,6 +15,7 @@ const AuctionDetail = () => {
   const [bidding, setBidding] = useState(false);
   const { lastMessage } = useWebSocket();
   const [balance, setBalance] = useState(0);
+  const [userId, setUserId] = useState(null);
 
   // Edit State
   const [editing, setEditing] = useState(false);
@@ -70,6 +71,12 @@ const AuctionDetail = () => {
   }, []);
 
   useEffect(() => {
+      if (lastMessage?.type === 'balance_update' && lastMessage.user_id === userId) {
+          setBalance(lastMessage.balance);
+      }
+  }, [lastMessage, userId]);
+
+  useEffect(() => {
     if (lastMessage?.type === 'auction_stopped' && lastMessage.auction_id === parseInt(auctionId)) {
       setAuction(prev => ({ ...prev, status: 'ended' }));
       alert('Lelang telah dihentikan');
@@ -93,13 +100,14 @@ const AuctionDetail = () => {
           });
           const data = await res.json();
           bal = data.balance ?? 0;
-
+          if (data.user_id) {
+            setUserId(data.user_id); // simpan di state
+          }
           setBalance(bal);
       } catch (err) {
           console.error('Gagal load balance:', err);
       }
   };
-
 
   const loadAuctionDetail = async () => {
     try {
@@ -454,6 +462,7 @@ const AuctionDetail = () => {
               auction={auction}
               onBidSubmit={handleBidSubmit}
               loading={bidding}
+              balance={balance}
             />
           )}
 

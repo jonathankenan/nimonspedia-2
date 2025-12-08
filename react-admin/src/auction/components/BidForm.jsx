@@ -1,27 +1,8 @@
-import { useState, useEffect } from 'react';
-import { fetchUserBalance } from '../api/auctionApi';
+import { useState } from 'react';
 
-const BidForm = ({ auction, onBidSubmit, loading = false }) => {
+const BidForm = ({ auction, onBidSubmit, loading = false, balance }) => {
   const [bidAmount, setBidAmount] = useState('');
   const [error, setError] = useState('');
-  const [balance, setBalance] = useState(null);
-  const [loadingBalance, setLoadingBalance] = useState(false);
-
-  useEffect(() => {
-    loadUserBalance();
-  }, []);
-
-  const loadUserBalance = async () => {
-    try {
-      const res = await fetch('http://localhost:8080/api/user-balance.php', {
-        credentials: 'include',
-      });
-      const data = await res.json();
-      if (data.balance !== undefined) setBalance(Number(data.balance));
-    } catch (err) {
-      console.error('Failed to load balance:', err);
-    }
-  };
 
   const minBidAmount = auction.current_price === 0
     ? auction.starting_price
@@ -33,7 +14,7 @@ const BidForm = ({ auction, onBidSubmit, loading = false }) => {
 
     const amount = parseInt(bidAmount);
 
-    if (!bidAmount || bidAmount <= 0) {
+    if (!bidAmount || amount <= 0) {
       setError('Masukkan jumlah bid yang valid');
       return;
     }
@@ -50,7 +31,6 @@ const BidForm = ({ auction, onBidSubmit, loading = false }) => {
 
     onBidSubmit(amount);
     setBidAmount('');
-    loadUserBalance(); // Reload balance after bid (optimistic or wait for result)
   };
 
   const formatCurrency = (amount) => {

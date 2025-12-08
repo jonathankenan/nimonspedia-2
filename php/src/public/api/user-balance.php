@@ -11,5 +11,9 @@ if (!isset($_SESSION['user_id'])) {
 
 // Ambil balance dari session atau database
 $balance = $_SESSION['balance'] ?? 0;
+$user_id = $_SESSION['user_id'] ?? 0; // sekalian dah
 
-echo json_encode(['balance' => $balance]);
+echo json_encode([
+    'balance' => $balance,
+    'user_id' => $user_id
+]);
