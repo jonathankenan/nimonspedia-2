@@ -19,21 +19,32 @@ $balance = $_SESSION['balance'] ?? 0;
 $cart_count = $_SESSION['cart_count'] ?? 0;
 
 $can_checkout = true;
+$can_chat = true; // (kenan) [TAMBAHAN] Default true
+
 if ($user_id) {
+    // 1. Cek Checkout
     $access = $featureModel->checkAccess($user_id, 'checkout_enabled');
     $can_checkout = $access['allowed'];
+
+    // 2. (kenan) [TAMBAHAN] Cek Chat
+    $chat_access = $featureModel->checkAccess($user_id, 'chat_enabled');
+    $can_chat = $chat_access['allowed'];
 }
+
 // --- JWT GENERATION FOR REACT ADMIN ---
 $jwt_token = null;
 if (isset($_SESSION['user_id'])) {
-    $secret = 'rahasia_negara_nimons'; // Must match Node.js secret
+    $secret = 'rahasia_negara_nimons'; 
     $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
+    
+    // (kenan) [PERBAIKAN] Payload disesuaikan agar cocok dengan Node.js Controller
     $payload = json_encode([
-        'userId' => $_SESSION['user_id'],
+        'user_id' => $_SESSION['user_id'], 
+        'userId' => $_SESSION['user_id'],   
         'role' => $_SESSION['role'],
-        'userName' => $_SESSION['name'],
+        'name' => $_SESSION['name'],        
         'iat' => time(),
-        'exp' => time() + (60 * 60 * 24) // 24 hours
+        'exp' => time() + (60 * 60 * 24) 
     ]);
 
     $base64UrlHeader = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
@@ -43,6 +54,7 @@ if (isset($_SESSION['user_id'])) {
     $jwt_token = $base64UrlHeader . "." . $base64UrlPayload . "." . $base64UrlSignature;
 }
 ?>
+
 <?php if ($jwt_token): ?>
 <script>
     // Auto-inject token from PHP session
@@ -78,9 +90,11 @@ if (isset($_SESSION['user_id'])) {
             <a href="/authentication/register_role.php">Daftar</a>
 
         <?php elseif ($role === 'BUYER'): ?>
-            <!-- Buyer -->
             <a href="/auction">Lelang</a>
-            <a href="/admin/chat">Chat</a>
+            
+            <?php if ($can_chat): ?>
+                <a href="/admin/chat">Chat</a>
+            <?php endif; ?>
 
             <?php if ($can_checkout): ?>
                 <a href="/buyer/cart.php" class="cart">
@@ -104,7 +118,6 @@ if (isset($_SESSION['user_id'])) {
         </div>
 
         <?php elseif ($role === 'SELLER'): ?>
-            <!-- Seller -->
             <?php
                 // Fetch active auction for seller
                 $seller_auction_id = null;
@@ -136,9 +149,13 @@ if (isset($_SESSION['user_id'])) {
             ?>
             <a href="/seller/dashboard.php">Dashboard</a>
             <a href="/seller/kelola_produk.php">Kelola Produk</a>
-            <a href="/admin/chat">Chat</a>
+            
+            <?php if ($can_chat): ?>
+                <a href="/admin/chat">Chat</a>
+            <?php endif; ?>
+
             <?php if ($seller_auction_id): ?>
-                <a href="auction/<?= $seller_auction_id ?>">Auction</a>
+                <a href="/admin/auction/<?= $seller_auction_id ?>">Auction</a>
             <?php endif; ?>
             <a href="/seller/order_management.php">Lihat Pesanan</a>
             <a href="/seller/tambah_produk.php">Tambah Produk</a>
