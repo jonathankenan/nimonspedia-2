@@ -35,6 +35,23 @@ $stmt->bind_param("i", $auction_id);
 
 if ($stmt->execute()) {
 
+    // =============================
+    // ROLLBACK QUANTITY PRODUK
+    // =============================
+    $stmtInfo = $conn->prepare("SELECT product_id, quantity FROM auctions WHERE auction_id = ?");
+    $stmtInfo->bind_param("i", $auction_id);
+    $stmtInfo->execute();
+    $auctionInfo = $stmtInfo->get_result()->fetch_assoc();
+
+    if ($auctionInfo) {
+        $product_id = $auctionInfo['product_id'];
+        $quantity = $auctionInfo['quantity'];
+
+        $stmtQty = $conn->prepare("UPDATE products SET stock = stock + ? WHERE product_id = ?");
+        $stmtQty->bind_param("ii", $quantity, $product_id);
+        $stmtQty->execute();
+    }
+
     // Notify WS
     $payload = [
         'type' => 'auction_cancelled',
@@ -58,4 +75,3 @@ if ($stmt->execute()) {
 } else {
     sendError("Failed to cancel auction", 500);
 }
-?>
