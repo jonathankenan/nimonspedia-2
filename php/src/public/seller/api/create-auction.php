@@ -20,6 +20,8 @@ $starting_price = $input['starting_price'] ?? null;
 $min_increment  = $input['min_increment']  ?? null;
 $quantity       = $input['quantity']       ?? null;
 $start_time     = $input['start_time']     ?? null;
+$duration_minutes = 60; // durasi lelang default 1 jam
+$end_time = date('Y-m-d H:i:s', strtotime("+$duration_minutes minutes", strtotime($start_time)));
 
 // --- VALIDATION ---
 if (!$product_id || !$starting_price || !$min_increment || !$quantity || !$start_time) {
@@ -73,21 +75,22 @@ if ($stmt->get_result()->fetch_assoc()) {
 // --- 4. INSERT AUCTION ---
 $stmt = $conn->prepare("
     INSERT INTO auctions
-        (product_id, starting_price, current_price, min_increment, quantity, start_time)
-    VALUES (?, ?, ?, ?, ?, ?)
+        (product_id, starting_price, current_price, min_increment, quantity, start_time, end_time)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
 ");
 // starting_price (d), current_price (d), min_increment (d) -> ddd
 // product_id (i), quantity (i) -> ii
 // start_time (s) -> s
 // Types: idddis (i=int, d=double, s=string)
 // product_id (i), starting_price (d), current_price (d), min_increment (d), quantity (i), start_time (s)
-$stmt->bind_param("idddis", 
+$stmt->bind_param("idddiss", 
     $product_id,
     $starting_price,
     $starting_price,
     $min_increment,
     $quantity,
-    $start_time
+    $start_time,
+    $end_time
 );
 
 if (!$stmt->execute()) {
@@ -105,5 +108,6 @@ return sendSuccess([
     "auction_id" => (int)$auction_id,
     "product_id" => (int)$product_id,
     "status"     => "scheduled",
-    "start_time" => $start_time
+    "start_time" => $start_time,
+    "end_time"   => $end_time
 ]);

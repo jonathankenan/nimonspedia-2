@@ -98,7 +98,7 @@ const AuctionDetail = () => {
   };
 
   const handleBidSubmit = async (bidAmount) => {
-    const token = localStorage.getItem('adminToken');
+    const token = localStorage.getItem('adminToken'); // optional, kalau pakai token
 
     if (!token) {
       alert('Silakan login terlebih dahulu');
@@ -108,9 +108,9 @@ const AuctionDetail = () => {
 
     try {
       setBidding(true);
-      await placeBid(auctionId, bidAmount, token);
+      await placeBid(auction.auction_id, bidAmount, token);
       alert('Penawaran berhasil ditempatkan!');
-      loadAuctionDetail();
+      loadAuctionDetail(); // refresh current price & bid history
     } catch (err) {
       alert(`Gagal menempatkan penawaran: ${err.error || err.message || 'Unknown error'}`);
       console.error('Error placing bid:', err);

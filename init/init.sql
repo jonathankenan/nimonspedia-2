@@ -176,6 +176,17 @@ CREATE TABLE IF NOT EXISTS user_feature_access (
     FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
+CREATE INDEX idx_chat_rooms_buyer ON chat_rooms(buyer_id);
+CREATE INDEX idx_chat_rooms_last_message ON chat_rooms(last_message_at DESC);
+
+CREATE INDEX idx_chat_messages_room ON chat_messages(store_id, buyer_id, created_at DESC);
+CREATE INDEX idx_chat_messages_sender ON chat_messages(sender_id);
+CREATE INDEX idx_chat_messages_unread ON chat_messages(store_id, buyer_id, is_read, created_at);
+CREATE INDEX idx_chat_messages_product ON chat_messages(product_id);
+
+CREATE INDEX idx_products_store ON products(store_id, deleted_at);
+CREATE INDEX idx_products_name ON products(product_name);
+
 -- DUMMY DATA --
 
 -- Clear all existing data first to avoid conflicts

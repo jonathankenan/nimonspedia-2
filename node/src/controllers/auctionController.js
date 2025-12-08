@@ -60,7 +60,7 @@ class AuctionController {
     try {
       const { auctionId } = req.params;
       const { bidAmount } = req.body;
-      const bidderId = req.user.userId;
+      const bidderId = req.user.user_id;
 
       // Validate input
       if (!auctionId || !bidAmount || bidAmount <= 0) {
@@ -111,7 +111,7 @@ class AuctionController {
   static async stopAuction(req, res) {
     try {
       const { auctionId } = req.params;
-      const userId = req.user.userId;
+      const userId = req.user.user_id;
 
       const result = await AuctionModel.stopAuction(auctionId, userId);
 
@@ -139,7 +139,7 @@ class AuctionController {
   }
   static async getUserActiveBids(req, res) {
     try {
-      const userId = req.user.userId;
+      const userId = req.user.user_id;
 
       const bids = await AuctionModel.getUserActiveBids(userId);
 
@@ -154,7 +154,7 @@ class AuctionController {
   }
   static async getUserBalance(req, res) {
     try {
-      const userId = req.user.userId;
+      const userId = req.user.user_id;
       const balance = await AuctionModel.getUserBalance(userId);
 
       res.json({
