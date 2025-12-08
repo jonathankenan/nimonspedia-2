@@ -28,7 +28,7 @@ class AdminController {
       const token = jwt.sign(
         { userId: user.user_id, role: user.role, name: user.name },
         JWT_SECRET,
-        { expiresIn: '12h' }
+        { expiresIn: '1h' }
       );
 
       res.json({ 
@@ -170,8 +170,29 @@ class AdminController {
   static async updateFeature(req, res) {
     try {
       const { featureName } = req.params;
-      const { enabled } = req.body;
+      const { enabled, reason } = req.body;
+
+      // Cek apakah data global sudah ada
+      const [existing] = await dbPool.query(
+        "SELECT access_id FROM user_feature_access WHERE user_id IS NULL AND feature_name = ?",
+        [featureName]
+      );
+
+      if (existing.length > 0) {
+        // Update data yang ada
+        await dbPool.query(
+          "UPDATE user_feature_access SET is_enabled = ?, reason = ? WHERE user_id IS NULL AND feature_name = ?",
+          [enabled ? 1 : 0, reason || null, featureName]
+        );
+      } else {
+        // Insert data baru
+        await dbPool.query(
+          "INSERT INTO user_feature_access (user_id, feature_name, is_enabled, reason) VALUES (NULL, ?, ?, ?)",
+          [featureName, enabled ? 1 : 0, reason || null]
+        );
+      }
       
+      // Simpan ke Redis juga (opsional, tapi bagus untuk performa Node.js lain)
       await redisClient.hSet('feature_flags', featureName, enabled ? '1' : '0');
       
       res.json({ success: true, feature: featureName, enabled });
