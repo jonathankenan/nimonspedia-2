@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useCountdown } from '../hooks/useCountdown';
 
 const AuctionCard = ({ auction }) => {
   const navigate = useNavigate();
@@ -9,10 +10,14 @@ const AuctionCard = ({ auction }) => {
     starting_price,
     current_price,
     end_time,
+    start_time,
     status,
     store_name,
     bid_count
   } = auction;
+
+  const targetTime = status === 'scheduled' ? start_time : end_time;
+  const { formattedTime } = useCountdown(targetTime);
 
   const handleClick = () => {
     navigate(`/auction/${auction_id}`);
@@ -26,24 +31,11 @@ const AuctionCard = ({ auction }) => {
     }).format(amount);
   };
 
-  const timeRemaining = () => {
-    if (!end_time) return 'Belum mulai';
-    
-    const now = new Date();
-    const endDate = new Date(end_time);
-    const diff = endDate - now;
-
-    if (diff <= 0) return 'Selesai';
-
-    const hours = Math.floor(diff / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-
-    if (hours > 24) {
-      const days = Math.floor(hours / 24);
-      return `${days}h ${hours % 24}j lagi`;
-    }
-
-    return `${hours}j ${minutes}m lagi`;
+  const getTimeLabel = () => {
+    if (status === 'scheduled') return 'Mulai dalam';
+    if (status === 'ended') return 'Berakhir';
+    if (status === 'cancelled') return 'Dibatalkan';
+    return 'Berakhir dalam';
   };
 
   const getStatusColor = () => {
@@ -64,126 +56,55 @@ const AuctionCard = ({ auction }) => {
   return (
     <div
       onClick={handleClick}
-      style={{
-        border: '1px solid #e0e0e0',
-        borderRadius: '12px',
-        overflow: 'hidden',
-        cursor: 'pointer',
-        transition: 'transform 0.2s, box-shadow 0.2s',
-        backgroundColor: 'white'
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-4px)';
-        e.currentTarget.style.boxShadow = '0 8px 16px rgba(0,0,0,0.1)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
-      }}
+      className="bg-white border border-gray-200 rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg"
     >
       {/* Image Section */}
-      <div
-        style={{
-          width: '100%',
-          height: '200px',
-          backgroundColor: '#f3f4f6',
-          overflow: 'hidden',
-          position: 'relative'
-        }}
-      >
+      <div className="w-full h-48 bg-gray-100 relative overflow-hidden">
         <img
           src={main_image_path || '/assets/images/default.png'}
           alt={product_name}
-          style={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover'
-          }}
+          className="w-full h-full object-cover"
         />
         {/* Status Badge */}
         <div
-          style={{
-            position: 'absolute',
-            top: '8px',
-            right: '8px',
-            padding: '4px 12px',
-            backgroundColor: getStatusColor(),
-            color: 'white',
-            borderRadius: '20px',
-            fontSize: '0.75rem',
-            fontWeight: '600',
-            textTransform: 'capitalize'
-          }}
+          className={`absolute top-2 right-2 px-3 py-1 rounded-full text-xs font-semibold text-white capitalize`}
+          style={{ backgroundColor: getStatusColor() }}
         >
           {status}
         </div>
       </div>
 
       {/* Content Section */}
-      <div style={{ padding: '16px' }}>
+      <div className="p-4">
         {/* Store Name */}
-        <div
-          style={{
-            fontSize: '0.75rem',
-            color: '#6b7280',
-            marginBottom: '4px'
-          }}
-        >
+        <div className="text-xs text-gray-500 mb-1">
           {store_name}
         </div>
 
         {/* Product Name */}
-        <h3
-          style={{
-            margin: '0 0 8px 0',
-            fontSize: '1rem',
-            fontWeight: '600',
-            color: '#333',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap'
-          }}
-        >
+        <h3 className="text-base font-semibold text-gray-800 mb-2 truncate">
           {product_name}
         </h3>
 
         {/* Price Section */}
-        <div style={{ marginBottom: '12px' }}>
-          <div style={{ fontSize: '0.85rem', color: '#6b7280', marginBottom: '2px' }}>
+        <div className="mb-3">
+          <div className="text-sm text-gray-500 mb-0.5">
             Harga sekarang
           </div>
-          <div
-            style={{
-              fontSize: '1.25rem',
-              fontWeight: '700',
-              color: '#0A75BD'
-            }}
-          >
+          <div className="text-xl font-bold text-brand">
             {formatCurrency(current_price || starting_price)}
           </div>
         </div>
 
         {/* Bids & Time */}
-        <div
-          style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            paddingTop: '12px',
-            borderTop: '1px solid #e0e0e0',
-            fontSize: '0.85rem'
-          }}
-        >
-          <div style={{ color: '#6b7280' }}>
+        <div className="flex justify-between items-center pt-3 border-t border-gray-200 text-sm">
+          <div className="text-gray-500">
             {bid_count || 0} bid{bid_count !== 1 ? 's' : ''}
           </div>
           <div
-            style={{
-              fontWeight: '600',
-              color: status === 'active' ? '#10b981' : '#6b7280'
-            }}
+            className={`font-semibold ${status === 'active' ? 'text-emerald-500' : 'text-gray-500'}`}
           >
-            {timeRemaining()}
+            {getTimeLabel()}: {formattedTime}
           </div>
         </div>
       </div>

@@ -3,7 +3,7 @@ require_once __DIR__ . '/../../../app/utils/session.php';
 require_once __DIR__ . '/../../../app/config/db.php';
 require_once __DIR__ . '/../../../app/utils/json_response.php';
 
-session_start();
+ensureJsonResponse();
 
 // --- AUTH CHECK ---
 if (!isLoggedIn() || $_SESSION['role'] !== 'SELLER') {
@@ -30,17 +30,19 @@ if ($starting_price <= 0 || $min_increment <= 0 || $quantity <= 0) {
     return sendError("Invalid numeric values", 400);
 }
 
-$db = getDatabaseConnection();
+// $db = getDatabaseConnection(); // PDO not available
 
 // --- 1. CEK PRODUK MILIK SELLER ---
-$stmt = $db->prepare("
+$stmt = $conn->prepare("
     SELECT p.product_id, p.stock, s.user_id AS owner_id
     FROM products p
     JOIN stores s ON p.store_id = s.store_id
     WHERE p.product_id = ?
 ");
-$stmt->execute([$product_id]);
-$product = $stmt->fetch(PDO::FETCH_ASSOC);
+$stmt->bind_param("i", $product_id);
+$stmt->execute();
+$result = $stmt->get_result();
+$product = $result->fetch_assoc();
 
 if (!$product) {
     return sendError("Product not found", 404);
@@ -54,37 +56,50 @@ if ($quantity > $product['stock']) {
     return sendError("Not enough stock", 400);
 }
 
-// --- 3. CEK SUDAH ADA AUCTION ---
-$stmt = $db->prepare("
-    SELECT auction_id 
-    FROM auctions 
-    WHERE product_id = ? AND status IN ('scheduled', 'active')
+// --- 3. CEK SUDAH ADA AUCTION AKTIF (SINGLE ACTIVE AUCTION RULE) ---
+$stmt = $conn->prepare("
+    SELECT a.auction_id 
+    FROM auctions a
+    JOIN products p ON a.product_id = p.product_id
+    JOIN stores s ON p.store_id = s.store_id
+    WHERE s.user_id = ? AND a.status IN ('scheduled', 'active')
 ");
-$stmt->execute([$product_id]);
-if ($stmt->fetch()) {
-    return sendError("Product already has an upcoming or active auction", 400);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+if ($stmt->get_result()->fetch_assoc()) {
+    return sendError("Anda hanya boleh memiliki 1 lelang aktif/dijadwalkan dalam satu waktu.", 400);
 }
 
 // --- 4. INSERT AUCTION ---
-$stmt = $db->prepare("
+$stmt = $conn->prepare("
     INSERT INTO auctions
         (product_id, starting_price, current_price, min_increment, quantity, start_time)
     VALUES (?, ?, ?, ?, ?, ?)
 ");
-$stmt->execute([
+// starting_price (d), current_price (d), min_increment (d) -> ddd
+// product_id (i), quantity (i) -> ii
+// start_time (s) -> s
+// Types: idddis (i=int, d=double, s=string)
+// product_id (i), starting_price (d), current_price (d), min_increment (d), quantity (i), start_time (s)
+$stmt->bind_param("idddis", 
     $product_id,
     $starting_price,
     $starting_price,
     $min_increment,
     $quantity,
     $start_time
-]);
+);
 
-$auction_id = $db->lastInsertId();
+if (!$stmt->execute()) {
+    return sendError("Failed to create auction: " . $stmt->error, 500);
+}
+
+$auction_id = $conn->insert_id;
 
 // --- 5. KURANGI STOCK PRODUK ---
-$stmt = $db->prepare("UPDATE products SET stock = stock - ? WHERE product_id = ?");
-$stmt->execute([$quantity, $product_id]);
+$stmt = $conn->prepare("UPDATE products SET stock = stock - ? WHERE product_id = ?");
+$stmt->bind_param("ii", $quantity, $product_id);
+$stmt->execute();
 
 return sendSuccess([
     "auction_id" => (int)$auction_id,

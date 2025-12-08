@@ -22,8 +22,37 @@ $can_checkout = true;
 if ($user_id) {
     $access = $featureModel->checkAccess($user_id, 'checkout_enabled');
     $can_checkout = $access['allowed'];
+// --- JWT GENERATION FOR REACT ADMIN ---
+$jwt_token = null;
+if (isset($_SESSION['user_id'])) {
+    $secret = 'rahasia_negara_nimons'; // Must match Node.js secret
+    $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
+    $payload = json_encode([
+        'userId' => $_SESSION['user_id'],
+        'role' => $_SESSION['role'],
+        'userName' => $_SESSION['name'],
+        'iat' => time(),
+        'exp' => time() + (60 * 60 * 24) // 24 hours
+    ]);
+
+    $base64UrlHeader = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($header));
+    $base64UrlPayload = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($payload));
+    $signature = hash_hmac('sha256', $base64UrlHeader . "." . $base64UrlPayload, $secret, true);
+    $base64UrlSignature = str_replace(['+', '/', '='], ['-', '_', ''], base64_encode($signature));
+    $jwt_token = $base64UrlHeader . "." . $base64UrlPayload . "." . $base64UrlSignature;
 }
 ?>
+<?php if ($jwt_token): ?>
+<script>
+    // Auto-inject token from PHP session
+    if (!localStorage.getItem('adminToken') || localStorage.getItem('adminToken') !== '<?= $jwt_token ?>') {
+        localStorage.setItem('adminToken', '<?= $jwt_token ?>');
+        localStorage.setItem('userRole', '<?= $_SESSION['role'] ?>');
+        localStorage.setItem('adminName', '<?= $_SESSION['name'] ?>');
+        console.log('Token synced from PHP session');
+    }
+</script>
+<?php endif; ?>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -72,9 +101,41 @@ if ($user_id) {
         </div>
 
         <?php elseif ($role === 'SELLER'): ?>
+            <!-- Seller -->
+            <?php
+                // Fetch active auction for seller
+                $seller_auction_id = null;
+                if (isset($_SESSION['user_id'])) {
+                    require_once __DIR__ . '/../config/db.php';
+                    $stmt = $conn->prepare("SELECT store_id FROM stores WHERE user_id = ?");
+                    $stmt->bind_param("i", $_SESSION['user_id']);
+                    $stmt->execute();
+                    $store_res = $stmt->get_result()->fetch_assoc();
+                    
+                    if ($store_res) {
+                        $store_id = $store_res['store_id'];
+                        $stmt = $conn->prepare("
+                            SELECT a.auction_id 
+                            FROM auctions a
+                            JOIN products p ON a.product_id = p.product_id
+                            WHERE p.store_id = ? 
+                            AND a.status IN ('active', 'scheduled')
+                            LIMIT 1
+                        ");
+                        $stmt->bind_param("i", $store_id);
+                        $stmt->execute();
+                        $auction_res = $stmt->get_result()->fetch_assoc();
+                        if ($auction_res) {
+                            $seller_auction_id = $auction_res['auction_id'];
+                        }
+                    }
+                }
+            ?>
             <a href="/seller/dashboard.php">Dashboard</a>
             <a href="/seller/kelola_produk.php">Kelola Produk</a>
-            <a href="/auction">🔨 Lelang</a>
+            <?php if ($seller_auction_id): ?>
+                <a href="auction/<?= $seller_auction_id ?>">Auction</a>
+            <?php endif; ?>
             <a href="/seller/order_management.php">Lihat Pesanan</a>
             <a href="/seller/tambah_produk.php">Tambah Produk</a>
             <a href="/authentication/logout.php">Logout</a>

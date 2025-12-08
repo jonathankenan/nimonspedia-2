@@ -89,3 +89,22 @@ function jsonResponse($data, $statusCode = 200) {
     echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
+
+function sendSuccess($data = null, $statusCode = 200) {
+    $response = ['success' => true];
+    if ($data !== null) {
+        $response['data'] = $data;
+    }
+    jsonResponse($response, $statusCode);
+}
+
+function sendError($message, $statusCode = 400, $data = null) {
+    $response = [
+        'success' => false,
+        'error' => $message
+    ];
+    if ($data !== null) {
+        $response['data'] = $data;
+    }
+    jsonResponse($response, $statusCode);
+}

@@ -177,12 +177,15 @@ class Product {
         // Calculate offset
         $offset = ($page - 1) * $perPage;
 
-        // Get products with categories
+        // Get products with categories and auction status
         $sql = "SELECT p.*, 
-                       GROUP_CONCAT(c.name) as categories
+                       GROUP_CONCAT(DISTINCT c.name) as categories,
+                       MAX(a.status) as auction_status,
+                       MAX(a.auction_id) as auction_id
                 FROM {$this->table} p
                 LEFT JOIN category_items ci ON p.product_id = ci.product_id
                 LEFT JOIN categories c ON ci.category_id = c.category_id
+                LEFT JOIN auctions a ON p.product_id = a.product_id AND a.status IN ('active', 'scheduled')
                 WHERE p.store_id = ? AND p.deleted_at IS NULL
                 GROUP BY p.product_id
                 ORDER BY p.created_at DESC
