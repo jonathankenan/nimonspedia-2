@@ -58,19 +58,40 @@ if ($quantity > $product['stock']) {
     return sendError("Not enough stock", 400);
 }
 
-// --- 3. CEK SUDAH ADA AUCTION AKTIF (SINGLE ACTIVE AUCTION RULE) ---
+// --- 3. INSERT AUCTION TANPA CEK ACTIVE ---
 $stmt = $conn->prepare("
-    SELECT a.auction_id 
-    FROM auctions a
-    JOIN products p ON a.product_id = p.product_id
-    JOIN stores s ON p.store_id = s.store_id
-    WHERE s.user_id = ? AND a.status IN ('scheduled', 'active')
+    INSERT INTO auctions
+        (product_id, starting_price, current_price, min_increment, quantity, start_time, end_time, status)
+    VALUES (?, ?, ?, ?, ?, ?, ?, 'scheduled')
 ");
-$stmt->bind_param("i", $user_id);
-$stmt->execute();
-if ($stmt->get_result()->fetch_assoc()) {
-    return sendError("Anda hanya boleh memiliki 1 lelang aktif/dijadwalkan dalam satu waktu.", 400);
+$stmt->bind_param(
+    "idddiss", 
+    $product_id,
+    $starting_price,
+    $starting_price,
+    $min_increment,
+    $quantity,
+    $start_time,
+    $end_time
+);
+
+if (!$stmt->execute()) {
+    return sendError("Failed to create auction: " . $stmt->error, 500);
 }
+$auction_id = $conn->insert_id;
+
+// --- Kurangi stock seperti biasa ---
+$stmt = $conn->prepare("UPDATE products SET stock = stock - ? WHERE product_id = ?");
+$stmt->bind_param("ii", $quantity, $product_id);
+$stmt->execute();
+
+return sendSuccess([
+    "auction_id" => (int)$auction_id,
+    "status" => "scheduled",
+    "start_time" => $start_time,
+    "end_time" => $end_time
+]);
+
 
 // --- 4. INSERT AUCTION ---
 $stmt = $conn->prepare("
