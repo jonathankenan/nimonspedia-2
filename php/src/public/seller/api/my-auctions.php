@@ -38,10 +38,13 @@ $stmt = $conn->prepare("
         a.winner_id,
         p.product_id,
         p.product_name,
-        p.main_image_path AS image_url
+        p.main_image_path,
+        COUNT(b.bid_id) AS bid_count
     FROM auctions a
     JOIN products p ON a.product_id = p.product_id
+    LEFT JOIN auction_bids b ON a.auction_id = b.auction_id
     WHERE p.store_id = ?
+    GROUP BY a.auction_id
     ORDER BY a.start_time DESC
 ");
 $stmt->bind_param("i", $store_id);
@@ -55,7 +58,7 @@ while ($row = $result->fetch_assoc()) {
         'auction_id' => (int)$row['auction_id'],
         'product_id' => (int)$row['product_id'],
         'product_name' => $row['product_name'],
-        'image_url'    => $base_url . $row['image_url'],
+        'image_url'    => $base_url . $row['main_image_path'],
         'quantity' => (int)$row['quantity'],
         'starting_price' => (int)$row['starting_price'],
         'current_price' => (int)$row['current_price'],
@@ -63,7 +66,8 @@ while ($row = $result->fetch_assoc()) {
         'start_time' => $row['start_time'],
         'end_time' => $row['end_time'],
         'winner_id' => $row['winner_id'] ? (int)$row['winner_id'] : null,
-        'store_name' => $store_name
+        'store_name' => $store_name,
+        'bid_count' => (int)$row['bid_count'] 
     ];
 }
 
