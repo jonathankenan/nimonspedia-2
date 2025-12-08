@@ -19,6 +19,9 @@ router.post('/:auctionId/bid', authenticateRest, AuctionController.placeBid);
 // Stop auction (Seller only)
 router.post('/:auctionId/stop', verifyToken, AuctionController.stopAuction);
 
+// Cancel auction (Seller only)
+router.post('/:auctionId/cancel', verifyToken, AuctionController.cancelAuction);
+
 // Get user's active bids
 router.get('/user/active-bids', verifyToken, AuctionController.getUserActiveBids);
 

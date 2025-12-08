@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/../../app/utils/session.php';
-require_once __DIR__ . '/../../app/config/db.php';
-require_once __DIR__ . '/../../app/utils/json_response.php';
+require_once __DIR__ . '/../../../app/utils/session.php';
+require_once __DIR__ . '/../../../app/config/db.php';
+require_once __DIR__ . '/../../../app/utils/json_response.php';
 
 ensureJsonResponse();
 

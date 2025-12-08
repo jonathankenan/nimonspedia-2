@@ -25,9 +25,10 @@ const BidHistory = ({ auctionId }) => {
       };
 
       setBids(prev => [newBid, ...prev.slice(0, limit - 1)]);
+      loadBidHistory(); 
     }
   }, [lastMessage, auctionId, limit]);
-  
+
   const loadBidHistory = async () => {
     try {
       // Don't set loading on refresh to avoid flickering

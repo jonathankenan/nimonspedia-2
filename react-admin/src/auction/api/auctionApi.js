@@ -49,7 +49,7 @@ export const fetchBidHistory = async (auctionId, limit = 50) => {
  * Place a bid (requires authentication)
  */
 export const placeBid = async (auctionId, bidAmount, token) => {
-  const res = await fetch('/api/place-bid.php', {
+  const res = await fetch('/api/auction/place-bid.php', {
     method: 'POST',
     credentials: 'include', // penting agar session cookie ikut
     headers: {
@@ -238,20 +238,39 @@ export const deleteAuction = async (auctionId, token) => {
  * Stop auction (Node.js API)
  */
 export const stopAuction = async (auctionId, token) => {
-  try {
-    const response = await axios.post(
-      `${API_BASE}/${auctionId}/stop`,
-      {},
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-    return response.data;
-  } catch (error) {
-    console.error('Error stopping auction:', error);
-    throw error.response?.data || error;
+  const res = await fetch('/api/auction/stop-auction.php', {
+    method: 'POST',
+    credentials: 'include', // penting agar session cookie ikut
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}` // optional kalau pakai token
+    },
+    body: JSON.stringify({ auction_id: auctionId})
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw err;
   }
+
+  return res.json();
+};
+
+export const cancelAuction = async (auctionId, token) => {
+  const res = await fetch('/api/auction/cancel-auction.php', {
+    method: 'POST',
+    credentials: 'include', // penting agar session cookie ikut
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}` // optional kalau pakai token
+    },
+    body: JSON.stringify({ auction_id: auctionId})
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw err;
+  }
+
+  return res.json();
 };

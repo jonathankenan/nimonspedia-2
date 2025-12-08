@@ -7,10 +7,12 @@ app.use(bodyParser.json());
 
 app.post('/notify_bid', (req, res) => {
   const data = req.body;
+  console.log("Received notify:", data);
   if (!data || !data.auction_id) return res.status(400).send({ ok: false });
+  const type = data.type;
 
   broadcastMessage({
-    type: 'auction_bid_update',
+    type: type,
     auction_id: data.auction_id,
     current_price: data.current_price,
     bidder_name: data.bidder_name,
