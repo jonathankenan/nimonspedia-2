@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const AuctionController = require('../controllers/auctionController');
 const { verifyToken } = require('../middleware/auth');
+const { authenticateRest } = require('../middleware/sessionAuth');
 
 // Get all active auctions (for buyers to browse)
 router.get('/list', AuctionController.getAuctions);
@@ -13,7 +14,7 @@ router.get('/:auctionId', AuctionController.getAuctionDetail);
 router.get('/:auctionId/bids', AuctionController.getBidHistory);
 
 // Place a bid
-router.post('/:auctionId/bid', verifyToken, AuctionController.placeBid);
+router.post('/:auctionId/bid', authenticateRest, AuctionController.placeBid);
 
 // Stop auction (Seller only)
 router.post('/:auctionId/stop', verifyToken, AuctionController.stopAuction);

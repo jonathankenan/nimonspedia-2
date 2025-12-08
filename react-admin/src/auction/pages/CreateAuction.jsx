@@ -14,7 +14,8 @@ const CreateAuction = () => {
         starting_price: '',
         min_increment: '',
         quantity: '',
-        start_time: ''
+        start_time: '',
+        end_time: ''
     });
 
     const [selectedProduct, setSelectedProduct] = useState(null);
@@ -111,6 +112,15 @@ const CreateAuction = () => {
             return;
         }
 
+        if (!formData.end_time) {
+            setError('Waktu selesai wajib diisi');
+            return;
+        }
+
+        if (new Date(formData.end_time) <= new Date(formData.start_time)) {
+            setError('Waktu selesai harus lebih besar dari waktu mulai');
+            return;
+        }
 
         try {
             setSubmitting(true);
@@ -121,7 +131,8 @@ const CreateAuction = () => {
                 starting_price: startingPrice,
                 min_increment: minIncrement,
                 quantity: quantity,
-                start_time: formData.start_time
+                start_time: formData.start_time,
+                end_time: formData.end_time
             };
 
             let result;
@@ -298,6 +309,24 @@ const CreateAuction = () => {
                     />
                     <div className="mt-1 text-sm text-gray-500">
                         Lelang akan dimulai pada waktu yang ditentukan
+                    </div>
+                </div>
+
+                {/* End Time */}
+                <div className="mb-6">
+                    <label className="block mb-2 font-semibold text-gray-800">
+                        Waktu Selesai <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                        type="datetime-local"
+                        name="end_time"
+                        value={formData.end_time}
+                        onChange={handleChange}
+                        required
+                        className="w-full p-3 border-2 border-gray-200 rounded-lg text-base outline-none focus:border-brand transition-colors"
+                    />
+                    <div className="mt-1 text-sm text-gray-500">
+                        Lelang akan berakhir pada waktu yang ditentukan
                     </div>
                 </div>
 

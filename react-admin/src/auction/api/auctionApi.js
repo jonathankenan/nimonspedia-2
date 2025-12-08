@@ -49,22 +49,22 @@ export const fetchBidHistory = async (auctionId, limit = 50) => {
  * Place a bid (requires authentication)
  */
 export const placeBid = async (auctionId, bidAmount, token) => {
-  try {
-    const response = await axios.post(
-      `${API_BASE}/${auctionId}/bid`,
-      { bidAmount },
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-    return response.data.data;
-  } catch (error) {
-    console.error('Error placing bid:', error);
-    throw error;
+  const res = await fetch('/api/place-bid.php', {
+    method: 'POST',
+    credentials: 'include', // penting agar session cookie ikut
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}` // optional kalau pakai token
+    },
+    body: JSON.stringify({ auction_id: auctionId, bid_amount: bidAmount })
+  });
+
+  if (!res.ok) {
+    const err = await res.json();
+    throw err;
   }
+
+  return res.json();
 };
 
 /**
