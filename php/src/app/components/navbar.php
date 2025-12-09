@@ -148,6 +148,7 @@ if (isset($_SESSION['user_id'])) {
                 }
             ?>
             <a href="/seller/dashboard.php">Dashboard</a>
+            <a href="/auction/management">Lelang</a>
             <a href="/seller/kelola_produk.php">Kelola Produk</a>
             
             <?php if ($can_chat): ?>

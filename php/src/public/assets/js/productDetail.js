@@ -1,4 +1,32 @@
+// Handle chat seller button
+function handleChatSeller() {
+  const chatBtn = document.querySelector('.btn-chat-seller');
+  if (chatBtn) {
+    chatBtn.addEventListener('click', async () => {
+      const storeId = chatBtn.dataset.storeId;
+      const productId = chatBtn.dataset.productId;
+      
+      if (!storeId || !productId) {
+        console.error('Missing store or product ID');
+        return;
+      }
+
+      // Store in sessionStorage for React to read
+      sessionStorage.setItem('autoOpenChat', JSON.stringify({
+        storeId: storeId,
+        productId: productId
+      }));
+
+      // Redirect to admin chat page
+      window.location.href = `/admin/chat`;
+    });
+  }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  // Initialize chat seller button
+  handleChatSeller();
+  
   const root = document.querySelector('.product-detail');
   if (!root) return;
   const productId = Number(root.dataset.productId);

@@ -17,8 +17,17 @@ function requireLogin() {
 # Validate user role, if not match, redirect to login
 function requireRole($role) {
     requireLogin();
-    if (!isset($_SESSION['role']) || $_SESSION['role'] !== $role) {
-        header("Location: /authentication/login.php");
-        exit;
+    
+    // Support both single role and array of roles
+    if (is_array($role)) {
+        if (!isset($_SESSION['role']) || !in_array($_SESSION['role'], $role)) {
+            header("Location: /authentication/login.php");
+            exit;
+        }
+    } else {
+        if (!isset($_SESSION['role']) || $_SESSION['role'] !== $role) {
+            header("Location: /authentication/login.php");
+            exit;
+        }
     }
 }

@@ -197,3 +197,67 @@ input[readonly] {
 #popup-close:hover {
     background-color: #085f9a;
 }
+
+/* Notification Settings */
+.profile-section {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    border: 1px solid #e0e0e0;
+}
+
+.notification-option {
+    padding: 15px;
+    background: white;
+    border-radius: 8px;
+    margin-bottom: 12px;
+    border: 1px solid #dee2e6;
+    transition: all 0.2s;
+}
+
+.notification-option:hover {
+    border-color: #0A75BD;
+    box-shadow: 0 2px 8px rgba(10, 117, 189, 0.1);
+}
+
+.notification-option label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin: 0;
+}
+
+.notification-option input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+    cursor: pointer;
+    accent-color: #0A75BD;
+}
+
+.notification-option span {
+    font-size: 0.95rem;
+    color: #333;
+}
+
+.btn-primary {
+    background-color: #0A75BD;
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    transition: background-color 0.3s;
+}
+
+.btn-primary:hover {
+    background-color: #085f9a;
+}
+
+.btn-primary:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}

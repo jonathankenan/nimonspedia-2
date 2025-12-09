@@ -1,13 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Search, Plus } from 'lucide-react';
-import { getChatRooms } from '../api/chatApi';
+import { getChatRooms, createChatRoom } from '../api/chatApi';
 import useChatSocket from '../../shared/hooks/useChatSocket';
 import ChatRoomItem from '../components/ChatRoomItem';
 import ChatRoom from '../components/ChatRoom';
 import NewChatModal from '../components/NewChatModal';
 
-export default function Chat() {
+function Chat() {
   const navigate = useNavigate?.() || null; // Optional navigate for standalone mode
   const [rooms, setRooms] = useState([]);
   const [activeRoomId, setActiveRoomId] = useState(null);
@@ -15,6 +15,8 @@ export default function Chat() {
   const [loading, setLoading] = useState(true);
   const [showNewChatModal, setShowNewChatModal] = useState(false);
   const [userRole, setUserRole] = useState(null);
+  const [autoOpenData, setAutoOpenData] = useState(null);
+  const [productIdToSend, setProductIdToSend] = useState(null);
 
   const socket = useChatSocket();
 
@@ -50,7 +52,6 @@ export default function Chat() {
     try {
       // Get role from localStorage (set by ProtectedRoute in App.jsx)
       const role = localStorage.getItem('userRole');
-      console.log('[Chat] User role from localStorage:', role);
       setUserRole(role);
     } catch (error) {
       console.error('Failed to load user role:', error);
@@ -61,6 +62,89 @@ export default function Chat() {
   useEffect(() => {
     loadChatRooms();
   }, []);
+
+  // Check for auto-open chat from sessionStorage and handle it
+  useEffect(() => {
+    const autoOpenStr = sessionStorage.getItem('autoOpenChat');
+    if (autoOpenStr) {
+      try {
+        const data = JSON.parse(autoOpenStr);
+        setAutoOpenData(data);
+        sessionStorage.removeItem('autoOpenChat'); // Clean up
+      } catch (error) {
+        console.error('Failed to parse autoOpenChat:', error);
+      }
+    }
+  }, []);
+
+  // Handle auto-open chat after rooms are loaded
+  useEffect(() => {
+    // Wait for all required data to be ready
+    if (!autoOpenData || loading || !userRole) return;
+
+    const handleAutoOpen = async () => {
+      let { storeId, productId } = autoOpenData;
+      
+      // Parse storeId and productId to ensure they're numbers
+      storeId = parseInt(storeId);
+      productId = parseInt(productId);
+      
+      console.log('[Auto-open] Starting with:', { storeId, productId, userRole });
+      
+      if (userRole !== 'BUYER') {
+        console.error('[Auto-open] Only available for buyers. Current role:', userRole);
+        setAutoOpenData(null);
+        return;
+      }
+
+      try {
+        // Get userId from session API
+        const sessionResponse = await fetch('/api/session.php', { credentials: 'include' });
+        const sessionData = await sessionResponse.json();
+        
+        if (!sessionData.ok || !sessionData.user_id) {
+          console.error('[Auto-open] Failed to get user session');
+          setAutoOpenData(null);
+          return;
+        }
+        
+        const userId = parseInt(sessionData.user_id);
+        console.log('[Auto-open] Got userId from session:', userId);
+        
+        // Check if room already exists
+        let existingRoom = rooms.find(r => r.store_id == storeId && r.buyer_id == userId);
+        
+        console.log('[Auto-open] Existing room:', existingRoom);
+        
+        if (!existingRoom) {
+          // Create new chat room
+          console.log('[Auto-open] Creating new room...');
+          const result = await createChatRoom(storeId);
+          if (result.room) {
+            existingRoom = result.room;
+            setRooms((prev) => [existingRoom, ...prev]);
+            console.log('[Auto-open] Room created:', existingRoom);
+          }
+        }
+
+        if (existingRoom) {
+          const roomKey = `${existingRoom.store_id}_${existingRoom.buyer_id}`;
+          console.log('[Auto-open] Opening room:', roomKey);
+          setActiveRoomId(roomKey);
+          
+          // Set product ID to send after room is active
+          console.log('[Auto-open] Setting product to send:', productId);
+          setProductIdToSend(productId);
+        }
+      } catch (error) {
+        console.error('[Auto-open] Failed:', error);
+      } finally {
+        setAutoOpenData(null);
+      }
+    };
+
+    handleAutoOpen();
+  }, [autoOpenData, loading, rooms, userRole]);
 
   const loadChatRooms = async () => {
     try {
@@ -166,8 +250,6 @@ export default function Chat() {
     setActiveRoomId(roomKey);
   };
 
-  console.log('[Chat] Current userRole:', userRole);
-
   return (
     <div className="rounded-lg shadow-lg overflow-hidden flex h-[calc(100vh-64px)] bg-gray-50 ">
       {/* Sidebar - Chat Room List */}
@@ -237,6 +319,8 @@ export default function Chat() {
             userRole={userRole}
             socket={socket}
             onBack={() => setActiveRoomId(null)}
+            productIdToSend={productIdToSend}
+            onProductSent={() => setProductIdToSend(null)}
           />
         ) : (
           <div className="flex-1 flex items-center justify-center text-gray-400">
@@ -257,3 +341,7 @@ export default function Chat() {
     </div>
   );
 }
+
+Chat.displayName = 'Chat';
+
+export default Chat;
