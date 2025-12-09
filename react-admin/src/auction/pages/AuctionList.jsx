@@ -17,25 +17,25 @@ const AuctionList = () => {
   const userRole = localStorage.getItem('userRole');
 
   // Redirect Sellers
-  useEffect(() => {
-    if (userRole === 'SELLER') {
-      const checkSellerAuction = async () => {
-        const token = localStorage.getItem('adminToken');
-        if (token) {
-          const auctionId = await fetchSellerActiveAuction(token);
-          if (auctionId) {
-            navigate(`/auction/${auctionId}`);
-          } else {
-            // If no active auction, redirect to dashboard or products
-            window.location.href = '/seller/kelola_produk.php';
-          }
-        } else {
-          window.location.href = '/seller/dashboard.php';
-        }
-      };
-      checkSellerAuction();
-    }
-  }, [userRole, navigate]);
+  // useEffect(() => {
+  //   if (userRole === 'SELLER') {
+  //     const checkSellerAuction = async () => {
+  //       const token = localStorage.getItem('adminToken');
+  //       if (token) {
+  //         const auctionId = await fetchSellerActiveAuction(token);
+  //         if (auctionId) {
+  //           navigate(`/auction/${auctionId}`);
+  //         } else {
+  //           // If no active auction, redirect to dashboard or products
+  //           window.location.href = '/seller/kelola_produk.php';
+  //         }
+  //       } else {
+  //         window.location.href = '/seller/dashboard.php';
+  //       }
+  //     };
+  //     checkSellerAuction();
+  //   }
+  // }, [userRole, navigate]);
 
   const LIMIT = 12;
 

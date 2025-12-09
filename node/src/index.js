@@ -17,6 +17,7 @@ const pushRoutes = require('./routes/push');
 // Import WebSocket utilities
 const { initializeWebSocket, broadcastMessage } = require('./utils/websocket');
 const { initializeChatWebSocket } = require('./utils/chatWebSocket');
+require('./auctionNotify');
 
 // Express App for REST API
 const app = express();

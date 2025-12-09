@@ -4,6 +4,7 @@ import Login from './admin/pages/Login';
 import Dashboard from './admin/pages/Dashboard';
 import AuctionList from './auction/pages/AuctionList';
 import AuctionDetail from './auction/pages/AuctionDetail';
+import AuctionManagement from './auction/pages/AuctionManagement';
 import CreateAuction from './auction/pages/CreateAuction';
 import MyBids from './auction/pages/MyBids';
 import Chat from './chat/pages/Chat';
@@ -76,7 +77,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
     if (isForBuyerSeller) {
       // Redirect to PHP login for buyer/seller routes
-      window.location.href = '/login.php';
+      window.location.href = '/authentication/login.php';
       return null;
     } else {
       // Redirect to React admin login for admin routes
@@ -99,14 +100,24 @@ function App() {
         </ProtectedRoute>
       } />
 
-      {/* Auction Pages (Buyer & Seller) */}
+      {/* Auction Pages*/}
       <Route path="/auction" element={
-        <ProtectedRoute allowedRoles={['BUYER', 'SELLER']}>
+        <ProtectedRoute allowedRoles={['BUYER']}>
           <Layout>
             <AuctionList />
           </Layout>
         </ProtectedRoute>
       } />
+
+      {/* Auction Management */}
+      <Route path="/auction/management" element={
+        <ProtectedRoute allowedRoles={['SELLER']}>
+          <Layout>
+            <AuctionManagement />
+          </Layout>
+        </ProtectedRoute>
+      } />
+
 
       <Route path="/auction/:auctionId" element={
         <ProtectedRoute allowedRoles={['BUYER', 'SELLER']}>
@@ -116,7 +127,7 @@ function App() {
         </ProtectedRoute>
       } />
 
-      {/* Buyer Routes */}
+      {/* Buyer Bids */}
       <Route path="/my-bids" element={
         <ProtectedRoute allowedRoles={['BUYER']}>
           <Layout>
@@ -125,7 +136,7 @@ function App() {
         </ProtectedRoute>
       } />
 
-      {/* Seller Routes */}
+      {/* Seller Create Page */}
       <Route path="/seller/auction/create" element={
         <ProtectedRoute allowedRoles={['SELLER']}>
           <Layout>
@@ -133,14 +144,6 @@ function App() {
           </Layout>
         </ProtectedRoute>
       } />
-
-      {/* <Route path="/seller/auction/:auctionId/edit" element={
-        <ProtectedRoute allowedRoles={['SELLER']}>
-          <Layout>
-            <EditAuction />
-          </Layout>
-        </ProtectedRoute>
-      } /> */}
 
       {/* Chat Page (Buyer & Seller) */}
       <Route path="/chat" element={

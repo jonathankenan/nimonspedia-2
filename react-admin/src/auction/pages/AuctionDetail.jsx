@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { fetchAuctionDetail, placeBid, deleteAuction, stopAuction, editAuction } from '../api/auctionApi';
+import { fetchAuctionDetail, placeBid, cancelAuction, stopAuction, editAuction } from '../api/auctionApi';
 import BidForm from '../components/BidForm';
 import BidHistory from '../components/BidHistory';
 import { useWebSocket } from '../../shared/hooks/useWebSocket';
@@ -15,6 +15,7 @@ const AuctionDetail = () => {
   const [bidding, setBidding] = useState(false);
   const { lastMessage } = useWebSocket();
   const [balance, setBalance] = useState(0);
+  const [userId, setUserId] = useState(null);
 
   // Edit State
   const [editing, setEditing] = useState(false);
@@ -42,6 +43,12 @@ const AuctionDetail = () => {
     loadAuctionDetail();
   }, [auctionId]);
 
+  useEffect(() => {
+    if (lastMessage) {
+      console.log("Received WS message:", lastMessage);
+    }
+  }, [lastMessage]);
+
   // Real-time update via WebSocket
   useEffect(() => {
     if (lastMessage?.type === 'auction_bid_update' && lastMessage.auction_id === parseInt(auctionId)) {
@@ -63,6 +70,25 @@ const AuctionDetail = () => {
       loadBalance();
   }, []);
 
+  useEffect(() => {
+      if (lastMessage?.type === 'balance_update' && lastMessage.user_id === userId) {
+          setBalance(lastMessage.balance);
+      }
+  }, [lastMessage, userId]);
+
+  useEffect(() => {
+    if (lastMessage?.type === 'auction_stopped' && lastMessage.auction_id === parseInt(auctionId)) {
+      setAuction(prev => ({ ...prev, status: 'ended' }));
+      alert('Lelang telah dihentikan');
+    }
+  }, [lastMessage, auctionId]);
+
+  useEffect(() => {
+    if (lastMessage?.type === 'auction_cancelled' && lastMessage.auction_id === parseInt(auctionId)) {
+      setAuction(prev => ({ ...prev, status: 'cancelled' }));
+      alert('Lelang telah dibatalkan');
+    }
+  }, [lastMessage, auctionId]);
 
   const loadBalance = async () => {
       try {
@@ -74,13 +100,14 @@ const AuctionDetail = () => {
           });
           const data = await res.json();
           bal = data.balance ?? 0;
-
+          if (data.user_id) {
+            setUserId(data.user_id); // simpan di state
+          }
           setBalance(bal);
       } catch (err) {
           console.error('Gagal load balance:', err);
       }
   };
-
 
   const loadAuctionDetail = async () => {
     try {
@@ -100,12 +127,6 @@ const AuctionDetail = () => {
   const handleBidSubmit = async (bidAmount) => {
     const token = localStorage.getItem('adminToken'); // optional, kalau pakai token
 
-    if (!token) {
-      alert('Silakan login terlebih dahulu');
-      window.location.href = '/authentication/login.php';
-      return;
-    }
-
     try {
       setBidding(true);
       await placeBid(auction.auction_id, bidAmount, token);
@@ -124,9 +145,9 @@ const AuctionDetail = () => {
 
     const token = localStorage.getItem('adminToken');
     try {
-      await deleteAuction(auctionId, token);
+      await cancelAuction(auction.auction_id, token);
       alert('Lelang berhasil dibatalkan');
-      navigate('/auction');
+      loadAuctionDetail(); // refresh current price & bid history
     } catch (err) {
       alert('Gagal membatalkan lelang');
       console.error(err);
@@ -135,19 +156,18 @@ const AuctionDetail = () => {
 
   const handleStopAuction = async () => {
     if (!window.confirm('Apakah Anda yakin ingin menghentikan lelang ini sekarang? Pemenang saat ini akan menang.')) return;
-
+    
     const token = localStorage.getItem('adminToken');
     try {
-      await stopAuction(auctionId, token);
-
-      alert('Lelang berhasil dihentikan');
-      loadAuctionDetail();
+      await stopAuction(auction.auction_id, token);
+      alert('Auction Stopped!');
+      loadAuctionDetail(); // refresh current price & bid history
     } catch (err) {
-      alert('Gagal menghentikan lelang');
-      console.error(err);
+      alert(`Gagal berhenti: ${err.error || err.message || 'Unknown error'}`);
+      console.error('Error Stopping:', err);
     }
   };
-
+  
   // Edit Handlers
   const handleEditClick = () => {
     setEditForm({
@@ -237,7 +257,17 @@ const AuctionDetail = () => {
     <div className="p-5 max-w-7xl mx-auto">
       {/* Breadcrumb */}
       <div className="mb-5 text-gray-500 text-sm">
-        <span onClick={() => navigate('/auction')} className="cursor-pointer text-brand hover:underline">
+        <span
+          onClick={() => {
+            const role = localStorage.getItem('userRole');
+            if (role === 'SELLER') {
+              navigate('/auction/management');
+            } else {
+              navigate('/auction');
+            }
+          }}
+          className="cursor-pointer text-brand hover:underline"
+        >
           ← Kembali ke Lelang
         </span>
       </div>
@@ -399,6 +429,7 @@ const AuctionDetail = () => {
                 {(auction.status === 'active' || auction.status === 'scheduled') && (!auction.bid_count || auction.bid_count === 0) && (
                   <button
                     onClick={handleEditClick}
+                    disabled={auction.status === 'stopped'}
                     className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-semibold"
                   >
                     Edit Lelang
@@ -426,11 +457,12 @@ const AuctionDetail = () => {
           )}
 
           {/* Bid Form (Only for Buyers) */}
-          {!isSeller && (
+          {!isSeller && auction.status === 'active' && (
             <BidForm
               auction={auction}
               onBidSubmit={handleBidSubmit}
               loading={bidding}
+              balance={balance}
             />
           )}
 
