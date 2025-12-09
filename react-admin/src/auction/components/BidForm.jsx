@@ -8,7 +8,7 @@ const BidForm = ({ auction, onBidSubmit, loading = false, balance }) => {
     ? auction.starting_price
     : auction.current_price + auction.min_increment;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 

@@ -40,8 +40,24 @@ const AuctionDetail = () => {
   });
 
   useEffect(() => {
+    checkFeatureFlag();
     loadAuctionDetail();
   }, [auctionId]);
+
+  const checkFeatureFlag = async () => {
+    try {
+      const response = await fetch('/api/features/check?feature=auction_enabled', {
+        credentials: 'include'
+      });
+      const data = await response.json();
+      if (!data.enabled) {
+        const reason = data.reason || 'Fitur lelang sedang dinonaktifkan';
+        window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+      }
+    } catch (error) {
+      console.error('Failed to check feature flag:', error);
+    }
+  };
 
   useEffect(() => {
     if (lastMessage) {
@@ -117,6 +133,11 @@ const AuctionDetail = () => {
       const data = await fetchAuctionDetail(auctionId);
       setAuction(data);
     } catch (err) {
+      if (err.feature_disabled) {
+        const reason = err.message || 'Fitur lelang sedang dinonaktifkan';
+        window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+        return;
+      }
       setError('Gagal memuat detail lelang');
       console.error('Error loading auction:', err);
     } finally {
@@ -133,6 +154,11 @@ const AuctionDetail = () => {
       alert('Penawaran berhasil ditempatkan!');
       loadAuctionDetail(); // refresh current price & bid history
     } catch (err) {
+      if (err.feature_disabled) {
+        const reason = err.message || 'Fitur lelang sedang dinonaktifkan';
+        window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+        return;
+      }
       alert(`Gagal menempatkan penawaran: ${err.error || err.message || 'Unknown error'}`);
       console.error('Error placing bid:', err);
     } finally {
@@ -149,6 +175,11 @@ const AuctionDetail = () => {
       alert('Lelang berhasil dibatalkan');
       loadAuctionDetail(); // refresh current price & bid history
     } catch (err) {
+      if (err.feature_disabled) {
+        const reason = err.message || 'Fitur lelang sedang dinonaktifkan';
+        window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+        return;
+      }
       alert('Gagal membatalkan lelang');
       console.error(err);
     }
@@ -163,6 +194,11 @@ const AuctionDetail = () => {
       alert('Auction Stopped!');
       loadAuctionDetail(); // refresh current price & bid history
     } catch (err) {
+      if (err.feature_disabled) {
+        const reason = err.message || 'Fitur lelang sedang dinonaktifkan';
+        window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+        return;
+      }
       alert(`Gagal berhenti: ${err.error || err.message || 'Unknown error'}`);
       console.error('Error Stopping:', err);
     }
@@ -179,6 +215,7 @@ const AuctionDetail = () => {
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
+
     const token = localStorage.getItem('adminToken');
     try {
       await editAuction({
@@ -191,6 +228,11 @@ const AuctionDetail = () => {
       setEditing(false);
       loadAuctionDetail();
     } catch (err) {
+      if (err.feature_disabled) {
+        const reason = err.message || 'Fitur lelang sedang dinonaktifkan';
+        window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+        return;
+      }
       alert(`Gagal memperbarui lelang: ${err.error || err.message}`);
     }
   };

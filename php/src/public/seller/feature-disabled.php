@@ -1,3 +1,20 @@
+<?php
+require_once __DIR__ . '/../../app/init.php';
+require_once __DIR__ . '/../../app/utils/session.php';
+
+requireLogin();
+
+$feature = $_GET['feature'] ?? 'unknown';
+$reason = $_GET['reason'] ?? 'Fitur ini sedang tidak tersedia';
+
+$featureNames = [
+    'chat' => 'Chat',
+    'auction' => 'Lelang',
+    'checkout' => 'Checkout'
+];
+
+$featureName = $featureNames[$feature] ?? 'Fitur';
+?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
@@ -7,25 +24,7 @@
     <link rel="stylesheet" href="/assets/css/feature-disabled.css">
 </head>
 <body>
-    <?php
-    require_once __DIR__ . '/../../app/init.php';
-    require_once __DIR__ . '/../../app/utils/session.php';
-    
-    requireLogin();
-    
-    $feature = $_GET['feature'] ?? 'unknown';
-    $reason = $_GET['reason'] ?? 'Fitur ini sedang tidak tersedia';
-    
-    $featureNames = [
-        'chat' => 'Chat',
-        'auction' => 'Lelang',
-        'checkout' => 'Checkout'
-    ];
-    
-    $featureName = $featureNames[$feature] ?? 'Fitur';
-    
-    include __DIR__ . '/../../app/components/navbar.php';
-    ?>
+    <?php include __DIR__ . '/../../app/components/navbar.php'; ?>
 
     <div class="disabled-container">
         <div class="disabled-content">

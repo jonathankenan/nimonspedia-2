@@ -2,9 +2,11 @@
 require_once(__DIR__ . '/../../app/utils/session.php');
 require_once(__DIR__ . '/../../app/config/db.php');
 require_once(__DIR__ . '/../../app/models/product.php');
+require_once(__DIR__ . '/../../app/models/feature.php');
 require_once(__DIR__ . '/../../app/controllers/productController.php');
 
 use App\Models\Product;
+use App\Models\Feature;
 use App\Controllers\ProductController;
 
 requireRole('SELLER');
@@ -16,6 +18,11 @@ $productModel = new Product($conn);
 $data = $productModel->getProductsByStoreId($_SESSION['store_id'], $page, $perPage);
 $products = $data['products'];
 $totalPages = $data['totalPages'];
+
+// Check auction feature flag
+$featureModel = new Feature($conn);
+$auction_access = $featureModel->checkAccess($_SESSION['user_id'], 'auction_enabled');
+$auction_enabled = $auction_access['allowed'];
 ?>
 
 <!DOCTYPE html>
@@ -74,12 +81,18 @@ $totalPages = $data['totalPages'];
                                 <?php if (!empty($product['auction_status'])): ?>
                                     <button class="edit-button" disabled style="opacity: 0.5; cursor: not-allowed;">Edit</button>
                                     <button class="delete-button" disabled style="opacity: 0.5; cursor: not-allowed;">Hapus</button>
-                                    <a href="/auction/<?= htmlspecialchars($product['auction_id']) ?>" class="auction-button" style="background-color: #f59e0b; color: white; padding: 8px 12px; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">Lihat Lelang</a>
+                                    <?php if ($auction_enabled): ?>
+                                        <a href="/auction/<?= htmlspecialchars($product['auction_id']) ?>" class="auction-button" style="background-color: #f59e0b; color: white; padding: 8px 12px; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">Lihat Lelang</a>
+                                    <?php endif; ?>
                                 <?php else: ?>
                                     <a href="/seller/edit_produk.php?id=<?= htmlspecialchars($product['product_id']) ?>" class="edit-button">Edit</a>
                                     <button onclick="confirmDelete(<?= htmlspecialchars($product['product_id']) ?>)" class="delete-button">Hapus</button>
                                     <?php if ($product['stock'] > 0): ?>
-                                        <a href="/admin/seller/auction/create?productId=<?= htmlspecialchars($product['product_id']) ?>" class="auction-button" style="background-color: #0A75BD; color: white; padding: 8px 12px; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">Jadikan Lelang</a>
+                                        <?php if ($auction_enabled): ?>
+                                            <a href="/admin/seller/auction/create?productId=<?= htmlspecialchars($product['product_id']) ?>" class="auction-button" style="background-color: #0A75BD; color: white; padding: 8px 12px; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">Jadikan Lelang</a>
+                                        <?php else: ?>
+                                            <a href="/disabled.php?reason=<?= urlencode($auction_access['reason'] ?? 'Fitur lelang sedang dinonaktifkan') ?>" class="auction-button" style="background-color: #0A75BD; color: white; padding: 8px 12px; border-radius: 6px; text-decoration: none; font-size: 0.9rem;">Jadikan Lelang</a>
+                                        <?php endif; ?>
                                     <?php endif; ?>
                                 <?php endif; ?>
                             </div>

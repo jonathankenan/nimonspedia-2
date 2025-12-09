@@ -9,10 +9,24 @@ const MyBids = () => {
     const [error, setError] = useState('');
 
     useEffect(() => {
+        checkFeatureFlag();
         loadBids();
     }, []);
 
-    const loadBids = async () => {
+        const checkFeatureFlag = async () => {
+            try {
+                const response = await fetch('/api/features/check?feature=auction_enabled', {
+                    credentials: 'include'
+                });
+                const data = await response.json();
+                if (!data.enabled) {
+                    const reason = data.reason || 'Fitur lelang sedang dinonaktifkan';
+                    window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+                }
+            } catch (error) {
+                console.error('Failed to check feature flag:', error);
+            }
+        };    const loadBids = async () => {
         try {
             setLoading(true);
             setError('');
@@ -30,11 +44,23 @@ const MyBids = () => {
                     credentials: 'include' // Send cookies for PHP session
                 });
                 const result = await response.json();
+                
+                if (result.feature_disabled) {
+                    const reason = result.message || 'Fitur lelang sedang dinonaktifkan';
+                    window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+                    return;
+                }
+                
                 data = result.data || result;
             }
 
             setBids(Array.isArray(data) ? data : []);
         } catch (err) {
+            if (err.response?.data?.feature_disabled || err.feature_disabled) {
+                const reason = err.response?.data?.message || err.message || 'Fitur lelang sedang dinonaktifkan';
+                window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+                return;
+            }
             console.error('Error loading bids:', err);
             setError('Gagal memuat tawaran');
         } finally {
