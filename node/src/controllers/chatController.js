@@ -1,4 +1,5 @@
 const dbPool = require('../config/db');
+const checkAccess = require('../utils/featureAccess'); // (kenan) [ADDED] Import feature access helper
 
 // sanitize HTML to prevent XSS
 function sanitizeHtml(text) {
@@ -16,6 +17,17 @@ function sanitizeHtml(text) {
 async function getChatRooms(req, res) {
   try {
     const user = req.user;
+
+    // (Kenan) Check Feature Flag (Restrictive)
+    const access = await checkAccess(user.user_id, 'chat_enabled');
+    if (!access.allowed) {
+      return res.status(403).json({ 
+        error: access.reason,
+        redirect_url: `/disabled.php?reason=${encodeURIComponent(access.reason)}`
+      });
+    }
+    // udah
+
     const { search } = req.query;
 
     let query, params;
@@ -87,6 +99,17 @@ async function getChatRooms(req, res) {
 async function getMessages(req, res) {
   try {
     const user = req.user;
+
+    // (Kenan) Check Feature Flag (Restrictive)
+    const access = await checkAccess(user.user_id, 'chat_enabled');
+    if (!access.allowed) {
+      return res.status(403).json({ 
+        error: access.reason,
+        redirect_url: `/disabled.php?reason=${encodeURIComponent(access.reason)}`
+      });
+    }
+    // udah
+
     const { storeId, buyerId } = req.params;
     const { limit = 50, before } = req.query;
 
@@ -204,16 +227,15 @@ async function sendMessage(req, res) {
       return res.status(403).json({ error: 'Access denied' });
     }
 
-    // Check feature flag
-    const [featureCheck] = await dbPool.execute(
-      `SELECT is_enabled FROM user_feature_access 
-       WHERE user_id = ? AND feature_name = 'chat_enabled'`,
-      [user.user_id]
-    );
-
-    if (featureCheck.length > 0 && !featureCheck[0].is_enabled) {
-      return res.status(403).json({ error: 'Chat feature is disabled for your account' });
+    // [ADDED] Check feature flag (Restrictive) - Replaces the old manual check
+    const access = await checkAccess(user.user_id, 'chat_enabled');
+    if (!access.allowed) {
+      return res.status(403).json({ 
+        error: access.reason,
+        redirect_url: `/disabled.php?reason=${encodeURIComponent(access.reason)}`
+      });
     }
+    // [END ADDED]
 
     // Sanitize content to prevent XSS
     content = sanitizeHtml(content);

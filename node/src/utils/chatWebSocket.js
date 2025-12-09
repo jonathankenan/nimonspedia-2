@@ -1,6 +1,7 @@
 const { Server } = require('socket.io');
 const dbPool = require('../config/db');
 const { authenticateWebSocket } = require('../middleware/sessionAuth');
+const checkAccess = require('./featureAccess'); // [ADDED] Import feature access helper
 const { sendChatNotification } = require('../services/pushNotificationService');
 
 let io;
@@ -88,6 +89,17 @@ function initializeChatWebSocket(server) {
     // New message
     socket.on('new_message', async (data) => {
       try {
+        // (kenan) Check Feature Flag (Restrictive) before broadcasting
+        const access = await checkAccess(user.user_id, 'chat_enabled');
+        if (!access.allowed) {
+          socket.emit('feature_disabled', { 
+            reason: access.reason, 
+            redirect_url: `/disabled.php?reason=${encodeURIComponent(access.reason)}`
+          });
+          return;
+        }
+        // udah
+
         const { store_id, buyer_id, message_id } = data;
         const roomKey = `${store_id}:${buyer_id}`;
 

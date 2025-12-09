@@ -26,6 +26,14 @@ function Chat() {
     loadUserRole();
   }, []);
 
+  // (kenan) Listen for feature disable event
+  useEffect(() => {
+    if (!socket?.isConnected) return;
+    socket.on('feature_disabled', (data) => window.location.href = data.redirect_url);
+    return () => socket.off('feature_disabled');
+  }, [socket.isConnected]);
+  //udah
+
   const checkFeatureFlag = async () => {
     try {
       const response = await fetch('/api/features/check?feature=chat_enabled', {
@@ -151,6 +159,9 @@ function Chat() {
         setActiveRoomId(roomKey);
       }
     } catch (error) {
+      // (kenan)Handle feature flag redirect
+      if (error.response?.data?.redirect_url) window.location.href = error.response.data.redirect_url;
+      if (error.redirect_url) window.location.href = error.redirect_url;
       console.error('Failed to load chat rooms:', error);
     } finally {
       setLoading(false);
