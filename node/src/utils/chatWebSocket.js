@@ -1,6 +1,7 @@
 const { Server } = require('socket.io');
 const dbPool = require('../config/db');
 const { authenticateWebSocket } = require('../middleware/sessionAuth');
+const { sendChatNotification } = require('../services/pushNotificationService');
 
 let io;
 const userSockets = new Map(); // Map<user_id, Set<socket_id>>
@@ -147,7 +148,23 @@ function initializeChatWebSocket(server) {
                 }
               });
             });
+
+            // Send push notification if user is not connected
+            await sendChatNotification(
+              otherUserId,
+              message.sender_name,
+              message.content,
+              { storeId: store_id, buyerId: buyer_id }
+            );
           }
+        } else if (otherUserId) {
+          // User is completely offline - send push notification
+          await sendChatNotification(
+            otherUserId,
+            message.sender_name,
+            message.content,
+            { storeId: store_id, buyerId: buyer_id }
+          );
         }
       } catch (error) {
         console.error('New message broadcast error:', error);
@@ -239,14 +256,6 @@ async function getStoreUserId(storeId) {
     console.error('Get store user error:', error);
     return null;
   }
-}
-
-/**
- * Send push notification (otw... hiks...)
- */
-async function sendPushNotification(userId, notification) {
-  // TODO: Implement web push notification
-  console.log(`Push notification for user ${userId}:`, notification);
 }
 
 module.exports = {

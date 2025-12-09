@@ -6,6 +6,8 @@ use App\Models\User;
 use App\Models\Order;
 require_once __DIR__ . '/../models/feature.php';
 use App\Models\Feature;
+require_once __DIR__ . '/../utils/pushNotificationHelper.php';
+use App\Utils\PushNotificationHelper;
 
 class CheckoutController {
     private $conn;
@@ -56,12 +58,43 @@ class CheckoutController {
         $orderModel = new Order($this->conn);
         $shippingAddress = $_POST['shipping_address'] ?? $user['address'];
         
-        $success = $orderModel->createOrderFromCart($this->userId, $itemsByStore, $shippingAddress);
+        $orderIds = $orderModel->createOrderFromCart($this->userId, $itemsByStore, $shippingAddress);
 
-        if ($success) {
+        if ($orderIds && is_array($orderIds) && count($orderIds) > 0) {
             $_SESSION['balance'] = $user['balance'] - $grandTotal;
             unset($_SESSION['checkout_error']);
             $_SESSION['order_success'] = "Pesanan Anda berhasil dibuat!";
+            
+            // Send notification to each seller
+            if (is_array($itemsByStore)) {
+                foreach ($itemsByStore as $storeId => $storeData) {
+                    // Get seller user_id from store
+                    $storeQuery = $this->conn->query("SELECT user_id FROM stores WHERE store_id = $storeId");
+                    if ($storeRow = $storeQuery->fetch_assoc()) {
+                        $sellerId = $storeRow['user_id'];
+                        
+                        // Find the order_id for this store
+                        $orderIdForStore = null;
+                        foreach ($orderIds as $oid) {
+                            $checkOrder = $this->conn->query("SELECT order_id FROM orders WHERE order_id = $oid AND store_id = $storeId");
+                            if ($checkOrder && $checkOrder->num_rows > 0) {
+                                $orderIdForStore = $oid;
+                                break;
+                            }
+                        }
+                        
+                        if ($orderIdForStore) {
+                            PushNotificationHelper::sendOrderNotification(
+                                $sellerId,
+                                'waiting_approval',
+                                $orderIdForStore,
+                                'SELLER'
+                            );
+                        }
+                    }
+                }
+            }
+            
             header('Location: /buyer/orders.php');
             exit;
         } else {

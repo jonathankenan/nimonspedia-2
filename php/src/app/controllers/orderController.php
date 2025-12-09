@@ -4,8 +4,10 @@ namespace App\Controllers;
 require_once __DIR__ . '/../models/order.php';
 require_once __DIR__ . '/../utils/json_response.php';
 require_once __DIR__ . '/../utils/session.php';
+require_once __DIR__ . '/../utils/pushNotificationHelper.php';
 
 use App\Models\Order;
+use App\Utils\PushNotificationHelper;
 
 class OrderController {
     private $orderModel;
@@ -95,6 +97,19 @@ class OrderController {
             }
 
             $this->orderModel->updateOrderStatus($orderId, $storeId, $status, $data);
+            
+            // Get order details for notification
+            $order = $this->orderModel->getOrderDetails($orderId, $storeId);
+            if ($order) {
+                // Send push notification to buyer
+                PushNotificationHelper::sendOrderNotification(
+                    $order['buyer_id'],
+                    $status,
+                    $orderId,
+                    'BUYER'
+                );
+            }
+            
             return jsonResponse(['message' => 'Order status updated successfully']);
         } catch (\Exception $e) {
             return jsonResponse(['error' => $e->getMessage()], 500);

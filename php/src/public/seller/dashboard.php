@@ -31,9 +31,11 @@ $totalRevenue = $orderModel->calculateTotalRevenueByStoreId($storeId);
 <html lang="id">
   <head>
     <meta charset="UTF-8">
+    <meta name="user-id" content="<?= htmlspecialchars($_SESSION['user_id']) ?>">
     <title>Dashboard Seller</title>
   <link rel="stylesheet" href="/assets/css/sellerDashboard.css">
   <link rel="stylesheet" href="/assets/css/toast.css">
+  <link rel="stylesheet" href="/assets/css/profile.css">
   
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -149,6 +151,47 @@ $totalRevenue = $orderModel->calculateTotalRevenueByStoreId($storeId);
           </div>
         </a>
       </div>
+
+      <!-- Push Notification Settings -->
+      <div class="store-info-card" style="margin-top: 30px;">
+        <h2>🔔 Push Notification Settings</h2>
+        <p style="color: #666; margin-bottom: 20px;">Kelola preferensi notifikasi push untuk kategori berbeda</p>
+        
+        <div id="notification-status" style="margin-bottom: 20px;">
+          <p>Status: <span id="subscription-status" style="font-weight: bold;">Loading...</span></p>
+          <button id="toggle-subscription" class="btn-primary" style="display: none;">Subscribe</button>
+        </div>
+
+        <div id="notification-categories" style="display: none;">
+          <div class="notification-option">
+            <label>
+              <input type="checkbox" id="chat_enabled" checked>
+              <span>Chat Messages - Notifikasi saat menerima pesan chat baru</span>
+            </label>
+          </div>
+          
+          <div class="notification-option">
+            <label>
+              <input type="checkbox" id="auction_enabled" checked>
+              <span>Auction Updates - Notifikasi tentang status dan bid lelang</span>
+            </label>
+          </div>
+          
+          <div class="notification-option">
+            <label>
+              <input type="checkbox" id="order_enabled" checked>
+              <span>Order Status - Notifikasi saat status pesanan berubah</span>
+            </label>
+          </div>
+
+          <button id="save-preferences" class="btn-primary" style="margin-top: 15px;">Simpan Preferensi</button>
+          <div id="preferences-message" style="margin-top: 10px; display: none;"></div>
+        </div>
+
+        <div id="notification-unsupported" style="display: none; padding: 15px; background: #fff3cd; border-radius: 5px; color: #856404;">
+          Push notifications tidak didukung di browser Anda.
+        </div>
+      </div>
     </div>
 
   <!-- Toast Notification -->
@@ -167,5 +210,6 @@ $totalRevenue = $orderModel->calculateTotalRevenueByStoreId($storeId);
     });
   </script>
   <script src="/assets/js/sellerDashboard.js"></script>
+  <script src="/assets/js/profile.js"></script>
   </body>
 </html>
