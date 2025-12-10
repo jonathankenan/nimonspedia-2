@@ -80,7 +80,7 @@ class AuctionController {
     try {
       // --- 1. Ambil auction + seller ---
       const [auctionRows] = await conn.query(`
-        SELECT u.user_id AS seller_id, a.status, a.current_price, a.min_increment, a.starting_price, a.end_time
+        SELECT u.user_id AS seller_id, a.status, a.current_price, a.min_increment, a.starting_price
         FROM auctions a
         JOIN products p ON a.product_id = p.product_id
         JOIN stores s ON p.store_id = s.store_id
@@ -94,10 +94,6 @@ class AuctionController {
       if (auction.seller_id === userId) {
         return res.status(403).json({ error: "You cannot bid on your own auction" });
       }
-      if (auction.status !== 'active' || new Date(auction.end_time) < new Date()) {
-        return res.status(400).json({ error: "Auction is not active" });
-      }
-
       const requiredMinBid = auction.current_price === 0 ? auction.starting_price : auction.current_price + auction.min_increment;
       if (bid_amount < requiredMinBid) {
         return res.status(400).json({ error: `Bid must be >= ${requiredMinBid}` });
@@ -408,6 +404,23 @@ class AuctionController {
       const conn = await dbPool.getConnection();
       await conn.beginTransaction();
 
+      // --- 0. cek ada auction active ---
+      const [activeRows] = await conn.query(`
+        SELECT auction_id 
+        FROM auctions 
+        WHERE status = 'active'
+        LIMIT 1
+      `);
+      const activeAuction = activeRows[0] || null;
+
+      // Jika ada active auction, start_time tidak boleh < now
+      if (activeAuction && new Date(start_time) <= new Date()) {
+        await conn.rollback();
+        return res.status(400).json({ 
+          error: "Tidak bisa membuat auction baru saat ada auction aktif. Pilih waktu mulai setelah auction aktif selesai." 
+        });
+      }
+
       // --- 1. cek kepemilikan produk & stock ---
       const [productRows] = await conn.query(`
         SELECT p.product_id, p.stock, s.user_id AS owner_id
@@ -438,7 +451,6 @@ class AuctionController {
 
       // --- 2. hitung end_time default 1 jam ---
       const startDate = new Date(start_time);
-      const endDate = new Date(startDate.getTime() + 60*60*1000); // +60 menit
       const now = new Date();
       let status = 'scheduled';
       if (startDate <= now) {
@@ -448,9 +460,9 @@ class AuctionController {
       // --- 3. insert auction ---
       const [result] = await conn.query(`
         INSERT INTO auctions
-          (product_id, starting_price, current_price, min_increment, quantity, start_time, end_time, status)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
-        [product_id, starting_price, starting_price, min_increment, quantity, start_time, endDate, status]);
+          (product_id, starting_price, current_price, min_increment, quantity, start_time, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [product_id, starting_price, starting_price, min_increment, quantity, start_time, status]);
 
       const auction_id = result.insertId;
 
@@ -471,7 +483,6 @@ class AuctionController {
         min_increment,
         quantity,
         start_time: new Date(start_time).toISOString(), // UTC-safe
-        end_time: endDate.toISOString(),
         status: status
       });
 
@@ -487,7 +498,6 @@ class AuctionController {
           min_increment,
           quantity,
           start_time,
-          end_time: endDate.toISOString(),
           status: status
         }
       });

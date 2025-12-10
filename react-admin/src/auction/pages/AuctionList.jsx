@@ -43,52 +43,39 @@ const AuctionList = () => {
   // Handle live update: new auction
   useEffect(() => {
     if (lastMessage?.type === 'auction_created') {
-      const now = new Date();
-      const startTime = new Date(lastMessage.start_time);
-      const endTime = new Date(lastMessage.end_time);
-
-      // Tentukan status live
-      const liveStatus = startTime <= now && now <= endTime ? 'active' : 'scheduled';
-
-      // Masukkan ke list jika sesuai tab saat ini
-      if (liveStatus === activeTab) {
+      // Masukkan auction baru ke list jika sesuai tab saat ini
+      if (lastMessage.status === activeTab) {
         setAuctions(prev => [lastMessage, ...prev]);
       }
     }
   }, [lastMessage, activeTab]);
-
-  // Helper: determine current status based on time
-  const computeStatus = (auction) => {
-    const now = new Date();
-    const startTime = new Date(auction.start_time);
-    const endTime = new Date(auction.end_time);
-
-    if (now < startTime) return 'scheduled';
-    if (startTime <= now && now <= endTime) return 'active';
-    return 'ended';
-  };
 
   const loadAuctions = async () => {
     try {
       setLoading(true);
       setError('');
 
+      // fetch tanpa status
       const response = await fetchAuctions(LIMIT, offset, {
-        status: activeTab,
         search: debouncedSearch
       });
 
       const data = response.data || response;
 
-      // Client-side filtering fallback
-      let filteredData = data.map(a => ({ ...a, status: computeStatus(a) }))
-        .filter(a => {
-          const statusMatch = a.status === activeTab;
-          const searchMatch = !debouncedSearch ||
+      // Tentukan status real-time client-side
+      const now = new Date();
+      const filteredData = data
+        .map(a => {
+          const startTime = new Date(a.start_time);
+          let status = 'scheduled';
+          if (startTime <= now) status = 'active';
+          return { ...a, status };
+        })
+        .filter(a => a.status === activeTab &&
+          (!debouncedSearch ||
             a.product_name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-            a.store_name.toLowerCase().includes(debouncedSearch.toLowerCase());
-          return statusMatch && searchMatch;
-        });
+            a.store_name.toLowerCase().includes(debouncedSearch.toLowerCase()))
+        );
 
       if (offset === 0) {
         setAuctions(filteredData);

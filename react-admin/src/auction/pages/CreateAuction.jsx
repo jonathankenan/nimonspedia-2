@@ -111,16 +111,6 @@ const CreateAuction = () => {
             return;
         }
 
-        // if (!formData.end_time) {
-        //     setError('Waktu selesai wajib diisi');
-        //     return;
-        // }
-
-        // if (new Date(formData.end_time) <= new Date(formData.start_time)) {
-        //     setError('Waktu selesai harus lebih besar dari waktu mulai');
-        //     return;
-        // }
-
         try {
             setSubmitting(true);
 

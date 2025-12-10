@@ -5,6 +5,7 @@ import BidForm from '../components/BidForm';
 import BidHistory from '../components/BidHistory';
 import { useWebSocket } from '../../shared/hooks/useWebSocket';
 import { useCountdown } from '../hooks/useCountdown';
+import { useAuctionCountdown } from '../hooks/useAuctionCountdown';
 
 const AuctionDetail = () => {
   const { auctionId } = useParams();
@@ -39,6 +40,17 @@ const AuctionDetail = () => {
     }
   });
 
+  const shouldStartCountdown = auction?.status === 'active' && auction.bid_count > 0;
+
+  const bidTargetTime = auction?.last_bid_time
+    ? new Date(auction.last_bid_time).getTime() + 15000
+    : new Date().getTime() + 15000;
+
+  const { seconds, formattedTime: activeCountdown, reset: resetCountdown } = useAuctionCountdown(
+    bidTargetTime,
+    () => loadAuctionDetail()
+  );
+
   useEffect(() => {
     loadAuctionDetail();
   }, [auctionId]);
@@ -52,6 +64,7 @@ const AuctionDetail = () => {
   // Real-time update via WebSocket
   useEffect(() => {
     if (lastMessage?.type === 'auction_bid_update' && lastMessage.auction_id === parseInt(auctionId)) {
+      resetCountdown(); 
       loadAuctionDetail();
     }
   }, [lastMessage, auctionId]);
@@ -438,7 +451,7 @@ const AuctionDetail = () => {
                   {auction.status === 'scheduled' ? 'Mulai Dalam' : 'Berakhir Dalam'}
                 </div>
                 <div className={`text-lg font-bold ${auction.status === 'active' ? 'text-red-600' : 'text-gray-800'}`}>
-                  {formattedTime}
+                  {auction.status === 'active' ? activeCountdown : formattedTime}
                 </div>
               </div>
             </div>

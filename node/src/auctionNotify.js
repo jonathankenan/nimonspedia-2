@@ -48,7 +48,6 @@ app.post('/notify_bid', (req, res) => {
         min_increment,
         quantity,
         start_time,
-        end_time: endDate.toISOString(),
         status: status  
       });
       break;
