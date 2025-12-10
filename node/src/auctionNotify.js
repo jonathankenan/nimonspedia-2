@@ -36,6 +36,22 @@ app.post('/notify_bid', (req, res) => {
         timestamp: new Date().toISOString()
       });
       break;
+    case 'auction_created':
+      broadcastMessage({
+        type: 'auction_created',
+        auction_id,
+        product_id,
+        product_name: productInfo.product_name,
+        store_name: productInfo.store_name,
+        starting_price,
+        current_price: starting_price,
+        min_increment,
+        quantity,
+        start_time,
+        end_time: endDate.toISOString(),
+        status: status  
+      });
+      break;
     default:
       return res.status(400).send({ ok: false, message: 'Unknown type' });
   }

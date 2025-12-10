@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useWebSocket } from '../../shared/hooks/useWebSocket';
 import { fetchAuctions, fetchSellerActiveAuction } from '../api/auctionApi';
 import AuctionCard from '../components/AuctionCard';
 
@@ -13,30 +14,9 @@ const AuctionList = () => {
   const [activeTab, setActiveTab] = useState('active'); // 'active' or 'scheduled'
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const { lastMessage } = useWebSocket();
 
   const userRole = localStorage.getItem('userRole');
-
-  // Redirect Sellers
-  // useEffect(() => {
-  //   if (userRole === 'SELLER') {
-  //     const checkSellerAuction = async () => {
-  //       const token = localStorage.getItem('adminToken');
-  //       if (token) {
-  //         const auctionId = await fetchSellerActiveAuction(token);
-  //         if (auctionId) {
-  //           navigate(`/auction/${auctionId}`);
-  //         } else {
-  //           // If no active auction, redirect to dashboard or products
-  //           window.location.href = '/seller/kelola_produk.php';
-  //         }
-  //       } else {
-  //         window.location.href = '/seller/dashboard.php';
-  //       }
-  //     };
-  //     checkSellerAuction();
-  //   }
-  // }, [userRole, navigate]);
-
   const LIMIT = 12;
 
   // Debounce search query
@@ -45,7 +25,6 @@ const AuctionList = () => {
       setDebouncedSearch(searchQuery);
       setOffset(0); // Reset pagination on search change
     }, 500);
-
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
@@ -54,20 +33,46 @@ const AuctionList = () => {
     setOffset(0);
   }, [activeTab]);
 
+  // Load auctions
   useEffect(() => {
     if (userRole !== 'SELLER') {
       loadAuctions();
     }
   }, [offset, activeTab, debouncedSearch, userRole]);
 
+  // Handle live update: new auction
+  useEffect(() => {
+    if (lastMessage?.type === 'auction_created') {
+      const now = new Date();
+      const startTime = new Date(lastMessage.start_time);
+      const endTime = new Date(lastMessage.end_time);
+
+      // Tentukan status live
+      const liveStatus = startTime <= now && now <= endTime ? 'active' : 'scheduled';
+
+      // Masukkan ke list jika sesuai tab saat ini
+      if (liveStatus === activeTab) {
+        setAuctions(prev => [lastMessage, ...prev]);
+      }
+    }
+  }, [lastMessage, activeTab]);
+
+  // Helper: determine current status based on time
+  const computeStatus = (auction) => {
+    const now = new Date();
+    const startTime = new Date(auction.start_time);
+    const endTime = new Date(auction.end_time);
+
+    if (now < startTime) return 'scheduled';
+    if (startTime <= now && now <= endTime) return 'active';
+    return 'ended';
+  };
+
   const loadAuctions = async () => {
     try {
       setLoading(true);
       setError('');
 
-      // Pass filters to API
-      // Note: Assuming fetchAuctions supports status and search params
-      // If not, we might need to filter client-side or update API
       const response = await fetchAuctions(LIMIT, offset, {
         status: activeTab,
         search: debouncedSearch
@@ -75,22 +80,15 @@ const AuctionList = () => {
 
       const data = response.data || response;
 
-      // Client-side filtering if API doesn't support it (fallback)
-      // This is a safeguard, ideally API handles this
-      let filteredData = data;
-      if (!response.filtered && (activeTab || debouncedSearch)) {
-        filteredData = data.filter(auction => {
-          const statusMatch = activeTab === 'active'
-            ? auction.status === 'active'
-            : auction.status === 'scheduled';
-
+      // Client-side filtering fallback
+      let filteredData = data.map(a => ({ ...a, status: computeStatus(a) }))
+        .filter(a => {
+          const statusMatch = a.status === activeTab;
           const searchMatch = !debouncedSearch ||
-            auction.product_name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-            auction.store_name.toLowerCase().includes(debouncedSearch.toLowerCase());
-
+            a.product_name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+            a.store_name.toLowerCase().includes(debouncedSearch.toLowerCase());
           return statusMatch && searchMatch;
         });
-      }
 
       if (offset === 0) {
         setAuctions(filteredData);
@@ -122,16 +120,15 @@ const AuctionList = () => {
         </p>
       </div>
 
-      {/* Controls Section: Tabs & Search */}
+      {/* Tabs & Search */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-        {/* Tabs */}
         <div className="flex bg-gray-100 p-1 rounded-lg">
           <button
             onClick={() => setActiveTab('active')}
             className={`px-6 py-2 rounded-md text-sm font-semibold transition-all ${activeTab === 'active'
               ? 'bg-white text-brand shadow-sm'
               : 'text-gray-500 hover:text-gray-700'
-              }`}
+            }`}
           >
             Sedang Berlangsung
           </button>
@@ -140,13 +137,12 @@ const AuctionList = () => {
             className={`px-6 py-2 rounded-md text-sm font-semibold transition-all ${activeTab === 'scheduled'
               ? 'bg-white text-brand shadow-sm'
               : 'text-gray-500 hover:text-gray-700'
-              }`}
+            }`}
           >
             Akan Datang
           </button>
         </div>
 
-        {/* Search */}
         <div className="relative w-full md:w-72">
           <input
             type="text"

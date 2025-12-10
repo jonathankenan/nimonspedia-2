@@ -1,6 +1,7 @@
 const dbPool = require('../config/db'); 
 const AuctionModel = require('../models/auctionModel');
 const fetch = require('node-fetch');
+const { broadcastMessage } = require('../utils/websocket');
 
 class AuctionController {
   static async getAuctions(req, res) {
@@ -378,6 +379,122 @@ class AuctionController {
     } catch (error) {
       console.error('Error in getUserBalance:', error);
       res.status(500).json({ error: 'Failed to fetch user balance' });
+    }
+  }
+
+  static async createAuction(req, res) {
+    try {
+      const userId = req.user.user_id;
+      if (req.user.role !== 'SELLER') {
+        return res.status(403).json({ error: "Unauthorized: only sellers can create auctions" });
+      }
+
+      const {
+        product_id,
+        starting_price,
+        min_increment,
+        quantity,
+        start_time
+      } = req.body;
+
+      if (!product_id || !starting_price || !min_increment || !quantity || !start_time) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      if (starting_price <= 0 || min_increment <= 0 || quantity <= 0) {
+        return res.status(400).json({ error: "Invalid numeric values" });
+      }
+
+      const conn = await dbPool.getConnection();
+      await conn.beginTransaction();
+
+      // --- 1. cek kepemilikan produk & stock ---
+      const [productRows] = await conn.query(`
+        SELECT p.product_id, p.stock, s.user_id AS owner_id
+        FROM products p
+        JOIN stores s ON p.store_id = s.store_id
+        WHERE p.product_id = ?`, [product_id]);
+
+      const [productInfoRows] = await conn.query(`
+        SELECT p.product_name, s.store_name
+        FROM products p
+        JOIN stores s ON p.store_id = s.store_id
+        WHERE p.product_id = ?`, [product_id]);
+      
+      const product = productRows[0];
+      const productInfo = productInfoRows[0];
+      if (!product) {
+        await conn.rollback();
+        return res.status(404).json({ error: "Product not found" });
+      }
+      if (product.owner_id !== userId) {
+        await conn.rollback();
+        return res.status(403).json({ error: "Product does not belong to seller" });
+      }
+      if (quantity > product.stock) {
+        await conn.rollback();
+        return res.status(400).json({ error: "Not enough stock" });
+      }
+
+      // --- 2. hitung end_time default 1 jam ---
+      const startDate = new Date(start_time);
+      const endDate = new Date(startDate.getTime() + 60*60*1000); // +60 menit
+      const now = new Date();
+      let status = 'scheduled';
+      if (startDate <= now) {
+          status = 'active';
+      }
+
+      // --- 3. insert auction ---
+      const [result] = await conn.query(`
+        INSERT INTO auctions
+          (product_id, starting_price, current_price, min_increment, quantity, start_time, end_time, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        [product_id, starting_price, starting_price, min_increment, quantity, start_time, endDate, status]);
+
+      const auction_id = result.insertId;
+
+      // --- 4. kurangi stock produk ---
+      await conn.query(`UPDATE products SET stock = stock - ? WHERE product_id = ?`, [quantity, product_id]);
+
+      await conn.commit();
+
+      // --- 5. Notify WS supaya buyer langsung lihat auction baru ---
+      broadcastMessage({
+        type: 'auction_created',
+        auction_id,
+        product_id,
+        product_name: productInfo.product_name,
+        store_name: productInfo.store_name,
+        starting_price,
+        current_price: starting_price,
+        min_increment,
+        quantity,
+        start_time: new Date(start_time).toISOString(), // UTC-safe
+        end_time: endDate.toISOString(),
+        status: status
+      });
+
+      return res.json({
+        success: true,
+        data: {
+          auction_id,
+          product_id,
+          product_name: productInfo.product_name,
+          store_name: productInfo.store_name,
+          starting_price,
+          current_price: starting_price,
+          min_increment,
+          quantity,
+          start_time,
+          end_time: endDate.toISOString(),
+          status: status
+        }
+      });
+
+    } catch (err) {
+      console.error("Error creating auction:", err);
+      return res.status(500).json({ error: "Failed to create auction" });
     }
   }
 }

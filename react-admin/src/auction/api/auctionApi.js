@@ -149,20 +149,18 @@ export const fetchSellerProducts = async (token, id = null) => {
  */
 export const createAuction = async (auctionData, token) => {
   try {
-    const response = await axios.post(
-      '/seller/api/create-auction.php',
-      auctionData,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-    return response.data.data || response.data;
-  } catch (error) {
-    console.error('Error creating auction:', error);
-    throw error.response?.data || error;
+    const res = await fetch('/api/auction/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(auctionData)
+    });
+    return await res.json();
+  } catch (err) {
+    console.error("Failed to create auction:", err);
+    return { success: false, error: err.message };
   }
 };
 
