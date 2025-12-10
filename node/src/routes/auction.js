@@ -25,6 +25,9 @@ router.post('/:auctionId/cancel', authenticateRest, AuctionController.cancelAuct
 // POST /api/auction/create
 router.post('/create', authenticateRest, AuctionController.createAuction);
 
+// POST /api/auction/edit
+router.post('/:auctionId/edit', authenticateRest, AuctionController.editAuction);
+
 // Get user's active bids
 router.get('/user/active-bids', verifyToken, AuctionController.getUserActiveBids);
 

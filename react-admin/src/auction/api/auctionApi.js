@@ -169,20 +169,19 @@ export const createAuction = async (auctionData, token) => {
  */
 export const editAuction = async (auctionData, token) => {
   try {
-    const response = await axios.put(
-      '/seller/api/edit-auction.php',
-      auctionData,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-    return response.data.data || response.data;
-  } catch (error) {
-    console.error('Error editing auction:', error);
-    throw error.response?.data || error;
+    const res = await fetch(`${API_BASE}/${auctionData.auction_id}/edit`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(auctionData)
+    });
+
+    return await res.json();
+  } catch (err) {
+    console.error("Failed to edit auction:", err);
+    return { success: false, error: err.message };
   }
 };
 

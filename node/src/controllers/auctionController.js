@@ -497,6 +497,116 @@ class AuctionController {
       return res.status(500).json({ error: "Failed to create auction" });
     }
   }
+
+  static async editAuction(req, res) {
+    let conn;
+    try {
+      const userId = req.user.user_id;
+      if (req.user.role !== 'SELLER') {
+        return res.status(403).json({ error: "Unauthorized: only sellers can edit auctions" });
+      }
+
+      const { auctionId } = req.params;
+      const { starting_price, min_increment } = req.body;
+
+      if (!auctionId) return res.status(400).json({ error: "Missing auctionId" });
+
+      conn = await dbPool.getConnection();
+      await conn.beginTransaction();
+
+      // --- 1. Check auction exists & belongs to seller ---
+      const [rows] = await conn.query(`
+        SELECT a.auction_id, a.product_id, a.status, s.user_id AS owner_id
+        FROM auctions a
+        JOIN products p ON a.product_id = p.product_id
+        JOIN stores s ON p.store_id = s.store_id
+        WHERE a.auction_id = ?`, [auctionId]);
+
+      const auction = rows[0];
+      if (!auction) {
+        await conn.rollback();
+        return res.status(404).json({ error: "Auction not found" });
+      }
+
+      if (auction.owner_id !== userId) {
+        await conn.rollback();
+        return res.status(403).json({ error: "Unauthorized: Auction does not belong to you" });
+      }
+
+      // --- 2. Check status ---
+      if (['ended', 'cancelled'].includes(auction.status)) {
+        await conn.rollback();
+        return res.status(400).json({ error: `Cannot edit auction with status: ${auction.status}` });
+      }
+
+      // --- 3. Check existing bids ---
+      const [bidRows] = await conn.query(`
+        SELECT COUNT(*) AS bid_count
+        FROM auction_bids
+        WHERE auction_id = ?`, [auctionId]);
+
+      const bidCount = bidRows[0]?.bid_count || 0;
+      if (bidCount > 0) {
+        await conn.rollback();
+        return res.status(400).json({ error: "Cannot edit auction that already has bids" });
+      }
+
+      // --- 4. Build updates ---
+      const updates = [];
+      const params = [];
+
+      if (starting_price != null) {
+        if (starting_price <= 0) {
+          await conn.rollback();
+          return res.status(400).json({ error: "Invalid starting price" });
+        }
+        updates.push("starting_price = ?", "current_price = ?");
+        params.push(starting_price, starting_price);
+      }
+
+      if (min_increment != null) {
+        if (min_increment <= 0) {
+          await conn.rollback();
+          return res.status(400).json({ error: "Invalid min increment" });
+        }
+        updates.push("min_increment = ?");
+        params.push(min_increment);
+      }
+
+      if (updates.length === 0) {
+        await conn.rollback();
+        return res.status(400).json({ error: "No fields to update" });
+      }
+
+      params.push(auctionId);
+
+      // --- 5. Update database ---
+      await conn.query(`UPDATE auctions SET ${updates.join(", ")} WHERE auction_id = ?`, params);
+      await conn.commit();
+
+      // --- 6. Live update via WebSocket ---
+      broadcastMessage({
+        type: 'auction_updated',
+        auction_id: parseInt(auctionId),
+        ...(starting_price !== undefined && { starting_price }),
+        ...(min_increment !== undefined && { min_increment })
+      });
+
+      return res.json({
+        success: true,
+        data: {
+          auction_id: parseInt(auctionId),
+          message: "Auction updated successfully"
+        }
+      });
+    } catch (err) {
+      if (conn) await conn.rollback();
+      console.error("Error updating auction:", err);
+      return res.status(500).json({ error: "Failed to update auction" });
+    } finally {
+      if (conn) conn.release();
+    }
+  }
 }
 
 module.exports = AuctionController;

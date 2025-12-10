@@ -52,6 +52,14 @@ app.post('/notify_bid', (req, res) => {
         status: status  
       });
       break;
+    case 'auction_updated':
+      broadcastMessage({
+        type: 'auction_updated',
+        auction_id: data.auction_id,
+        ...(data.starting_price !== undefined && { starting_price: data.starting_price }),
+        ...(data.min_increment !== undefined && { min_increment: data.min_increment })
+      });
+      break;
     default:
       return res.status(400).send({ ok: false, message: 'Unknown type' });
   }

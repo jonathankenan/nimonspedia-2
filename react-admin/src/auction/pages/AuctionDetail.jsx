@@ -20,8 +20,8 @@ const AuctionDetail = () => {
   // Edit State
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({
-    starting_price: '',
-    min_increment: ''
+    starting_price: auction?.starting_price || '',
+    min_increment: auction?.min_increment || ''
   });
 
   // User Info
@@ -87,6 +87,16 @@ const AuctionDetail = () => {
     if (lastMessage?.type === 'auction_cancelled' && lastMessage.auction_id === parseInt(auctionId)) {
       setAuction(prev => ({ ...prev, status: 'cancelled' }));
       alert('Lelang telah dibatalkan');
+    }
+  }, [lastMessage, auctionId]);
+
+  useEffect(() => {
+    if (lastMessage?.type === 'auction_updated' && lastMessage.auction_id === parseInt(auctionId)) {
+      setAuction(prev => ({
+        ...prev,
+        starting_price: lastMessage.starting_price ?? prev.starting_price,
+        min_increment: lastMessage.min_increment ?? prev.min_increment,
+      }));
     }
   }, [lastMessage, auctionId]);
 
@@ -171,8 +181,8 @@ const AuctionDetail = () => {
   // Edit Handlers
   const handleEditClick = () => {
     setEditForm({
-      starting_price: auction.starting_price,
-      min_increment: auction.min_increment
+      starting_price: auction?.starting_price,
+      min_increment: auction?.min_increment
     });
     setEditing(true);
   };
@@ -184,7 +194,7 @@ const AuctionDetail = () => {
       await editAuction({
         auction_id: auction.auction_id,
         starting_price: parseFloat(editForm.starting_price),
-        min_increment: parseFloat(editForm.min_increment)
+        min_increment: parseFloat(editForm.min_increment),
       }, token);
 
       alert('Lelang berhasil diperbarui');
@@ -300,6 +310,16 @@ const AuctionDetail = () => {
                   min="1000"
                   step="1000"
                   required
+                />
+              </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
+                <textarea
+                  value={editForm.description}
+                  onChange={e => setEditForm({ ...editForm, description: e.target.value })}
+                  className="w-full p-2 border rounded"
+                  rows={4}
+                  placeholder="Optional"
                 />
               </div>
               <div className="flex justify-end gap-2">
