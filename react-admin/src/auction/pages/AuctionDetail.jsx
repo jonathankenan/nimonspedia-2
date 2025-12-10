@@ -48,7 +48,20 @@ const AuctionDetail = () => {
 
   const { seconds, formattedTime: activeCountdown, reset: resetCountdown } = useAuctionCountdown(
     bidTargetTime,
-    () => loadAuctionDetail()
+    async () => {
+      try {
+        // stop auction otomatis
+        await stopAuction(auction.auction_id, localStorage.getItem('adminToken'));
+        // update UI
+        setAuction(prev => ({ ...prev, status: 'ended' }));
+        // reload detail kalau perlu
+        await loadAuctionDetail();
+        alert('Lelang berakhir otomatis!');
+      } catch (err) {
+        console.error('Gagal menghentikan lelang otomatis:', err);
+      }
+    },
+    true 
   );
 
   useEffect(() => {

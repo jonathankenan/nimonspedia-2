@@ -10,7 +10,6 @@ class AuctionController {
       const offset = parseInt(req.query.offset) || 0;
 
       const auctions = await AuctionModel.getActiveAuctions(limit, offset);
-
       res.json({
         success: true,
         data: auctions,

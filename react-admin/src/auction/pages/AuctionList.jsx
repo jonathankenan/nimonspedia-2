@@ -16,7 +16,6 @@ const AuctionList = () => {
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const { lastMessage } = useWebSocket();
 
-  const userRole = localStorage.getItem('userRole');
   const LIMIT = 12;
 
   // Debounce search query
@@ -35,10 +34,8 @@ const AuctionList = () => {
 
   // Load auctions
   useEffect(() => {
-    if (userRole !== 'SELLER') {
       loadAuctions();
-    }
-  }, [offset, activeTab, debouncedSearch, userRole]);
+  }, [offset, activeTab, debouncedSearch]);
 
   // Handle live update: new auction
   useEffect(() => {
@@ -60,23 +57,22 @@ const AuctionList = () => {
         search: debouncedSearch
       });
 
+      console.log(response);
+
       const data = response.data || response;
 
       // Tentukan status real-time client-side
-      const now = new Date();
       const filteredData = data
-        .map(a => {
-          const startTime = new Date(a.start_time);
-          let status = 'scheduled';
-          if (startTime <= now) status = 'active';
-          return { ...a, status };
-        })
+        // pastikan hanya yang active/scheduled
+        .filter(a => a.status === 'active' || a.status === 'scheduled')
         .filter(a => a.status === activeTab &&
           (!debouncedSearch ||
             a.product_name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
             a.store_name.toLowerCase().includes(debouncedSearch.toLowerCase()))
         );
 
+      console.log(filteredData);
+      
       if (offset === 0) {
         setAuctions(filteredData);
       } else {
@@ -100,7 +96,7 @@ const AuctionList = () => {
     <div className="p-5 max-w-7xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-brand mb-2">
-          🔨 Daftar Lelang
+          Daftar Lelang
         </h1>
         <p className="text-gray-500 m-0">
           Jelajahi produk yang tersedia untuk dilelang
