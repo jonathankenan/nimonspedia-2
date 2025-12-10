@@ -361,11 +361,20 @@ const AuctionDetail = () => {
             </h2>
 
             <div className="mb-4">
-              <div className="text-sm text-gray-500 mb-1">
-                Toko
-              </div>
+              <div className="text-sm text-gray-500 mb-1">Toko</div>
               <div className="text-lg font-semibold text-gray-800">
-                {auction.store_name}
+                {userRole === 'BUYER' ? (
+                  <a
+                    href={`http://localhost:8080/store/detail.php?id=${auction.store_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    {auction.store_name}
+                  </a>
+                ) : (
+                  auction.store_name
+                )}
               </div>
             </div>
 
