@@ -1,4 +1,6 @@
+const dbPool = require('../config/db'); 
 const AuctionModel = require('../models/auctionModel');
+const fetch = require('node-fetch');
 
 class AuctionController {
   static async getAuctions(req, res) {
@@ -57,86 +59,297 @@ class AuctionController {
   }
 
   static async placeBid(req, res) {
+    const auctionId = Number(req.params.auctionId);
+    let { bid_amount } = req.body;
+    const userId = req.user.user_id;
+    const role = req.user.role;
+
+    if (role !== 'BUYER') {
+      return res.status(403).json({ error: "Unauthorized: only buyers can place bids" });
+    }
+
+    bid_amount = Number(bid_amount);
+    if (!auctionId || !bid_amount || bid_amount <= 0) {
+      return res.status(400).json({ error: "Missing or invalid bid parameters" });
+    }
+
+    const conn = await dbPool.getConnection();
+    await conn.beginTransaction();
+
     try {
-      const { auctionId } = req.params;
-      const { bidAmount } = req.body;
-      const bidderId = req.user.user_id;
+      // --- 1. Ambil auction + seller ---
+      const [auctionRows] = await conn.query(`
+        SELECT u.user_id AS seller_id, a.status, a.current_price, a.min_increment, a.starting_price, a.end_time
+        FROM auctions a
+        JOIN products p ON a.product_id = p.product_id
+        JOIN stores s ON p.store_id = s.store_id
+        JOIN users u ON s.user_id = u.user_id
+        WHERE a.auction_id = ?`, [auctionId]);
 
-      // Validate input
-      if (!auctionId || !bidAmount || bidAmount <= 0) {
-        return res.status(400).json({ error: 'Invalid auction ID or bid amount' });
+      const auction = auctionRows[0];
+      if (!auction) {
+        return res.status(404).json({ error: "Auction not found" });
+      }
+      if (auction.seller_id === userId) {
+        return res.status(403).json({ error: "You cannot bid on your own auction" });
+      }
+      if (auction.status !== 'active' || new Date(auction.end_time) < new Date()) {
+        return res.status(400).json({ error: "Auction is not active" });
       }
 
-      // Get previous highest bidder BEFORE placing new bid (for notification)
-      const currentAuction = await AuctionModel.getAuctionDetail(auctionId);
-      const previousWinnerId = currentAuction ? currentAuction.winner_id : null;
+      const requiredMinBid = auction.current_price === 0 ? auction.starting_price : auction.current_price + auction.min_increment;
+      if (bid_amount < requiredMinBid) {
+        return res.status(400).json({ error: `Bid must be >= ${requiredMinBid}` });
+      }
 
-      const bid = await AuctionModel.placeBid(auctionId, bidderId, bidAmount);
+      // --- 2. Highest previous bid ---
+      const [prevBidRows] = await conn.query(`
+        SELECT bidder_id, bid_amount 
+        FROM auction_bids 
+        WHERE auction_id = ? 
+        ORDER BY bid_amount DESC, bid_time ASC 
+        LIMIT 1`, [auctionId]);
+      const prevBid = prevBidRows[0] || null;
 
-      // Broadcast bid update
-      const { broadcastMessage } = require('../utils/websocket');
-      broadcastMessage({
-        type: 'auction_bid_update',
-        auction_id: auctionId,
-        current_price: bidAmount,
-        bidder_name: req.user.userName || 'Someone', // Assuming userName is in token/req.user
-        timestamp: new Date().toISOString()
-      });
+      // --- 3. User previous bid ---
+      const [myPrevBidRows] = await conn.query(`
+        SELECT bid_amount
+        FROM auction_bids
+        WHERE auction_id = ? AND bidder_id = ?
+        ORDER BY bid_time DESC
+        LIMIT 1`, [auctionId, userId]);
+      const myPrevBidAmount = myPrevBidRows[0]?.bid_amount || 0;
 
-      // Send Outbid Notification
-      if (previousWinnerId && previousWinnerId !== bidderId) {
-        // In a real app, we would send to specific user via WebSocket or Push
-        // For now, we broadcast an event that clients can filter
-        broadcastMessage({
-          type: 'notification_outbid',
-          auction_id: auctionId,
-          user_id: previousWinnerId, // Target user
-          product_name: currentAuction.product_name,
-          new_amount: bidAmount,
-          message: `You have been outbid on ${currentAuction.product_name}!`
+      const amountToDeduct = bid_amount - myPrevBidAmount;
+      if (amountToDeduct > 0) {
+        await conn.query(`UPDATE users SET balance = balance - ? WHERE user_id = ?`, [amountToDeduct, userId]);
+      }
+
+      // --- 4. Refund previous bidder (bukan diri sendiri) ---
+      if (prevBid && prevBid.bidder_id !== userId) {
+        await conn.query(`UPDATE users SET balance = balance + ? WHERE user_id = ?`, [prevBid.bid_amount, prevBid.bidder_id]);
+      }
+
+      // --- 5. Update current_price ---
+      await conn.query(`UPDATE auctions SET current_price = ? WHERE auction_id = ?`, [bid_amount, auctionId]);
+
+      // --- 6. Insert new bid ---
+      await conn.query(`
+        INSERT INTO auction_bids (auction_id, bidder_id, bid_amount, bid_time)
+        VALUES (?, ?, ?, NOW())`, [auctionId, userId, bid_amount]);
+
+      await conn.commit();
+
+      // --- 7. Notify Node.js WebSocket ---
+      try {
+        await fetch('http://node:3003/notify_bid', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'auction_bid_update',
+            auction_id: auctionId,
+            current_price: bid_amount,
+            bidder_name: req.user.name
+          })
         });
+      } catch (err) {
+        console.warn("Failed to notify WS:", err);
       }
 
-      res.json({
-        success: true,
-        message: 'Bid placed successfully',
-        data: bid
-      });
-    } catch (error) {
-      console.error('Error in placeBid:', error);
-      res.status(400).json({ error: error.message || 'Failed to place bid' });
+      return res.json({ success: true });
+
+    } catch (err) {
+      await conn.rollback();
+      console.error("Error placing bid:", err);
+      return res.status(500).json({ error: "Failed to place bid" });
+    } finally {
+      conn.release();
     }
   }
 
   static async stopAuction(req, res) {
+    const auctionId = Number(req.params.auctionId);
+    const userId = req.user.user_id;
+    const role = req.user.role;
+
+    if (role !== 'SELLER') {
+      return res.status(403).json({ error: "Unauthorized: only sellers can stop auctions" });
+    }
+
+    if (!auctionId) {
+      return res.status(400).json({ error: "Missing auction_id" });
+    }
+
+    const conn = await dbPool.getConnection();
+    await conn.beginTransaction();
+
     try {
-      const { auctionId } = req.params;
-      const userId = req.user.user_id;
+      // --- 1. Update status auction ---
+      await conn.query(
+        `UPDATE auctions SET status = 'ended', end_time = NOW() WHERE auction_id = ?`,
+        [auctionId]
+      );
 
-      const result = await AuctionModel.stopAuction(auctionId, userId);
+      // --- 2. Ambil highest bid ---
+      const [highestBidRows] = await conn.query(
+        `SELECT bidder_id, bid_amount 
+         FROM auction_bids 
+         WHERE auction_id = ? 
+         ORDER BY bid_amount DESC, bid_time ASC 
+         LIMIT 1`,
+        [auctionId]
+      );
+      const highestBid = highestBidRows[0] || null;
 
-      // Send Win Notification
-      if (result.winner_id) {
-        const { broadcastMessage } = require('../utils/websocket');
-        broadcastMessage({
-          type: 'notification_win',
-          auction_id: auctionId,
-          user_id: result.winner_id, // Target user
-          product_name: result.product_name,
-          message: `Congratulations! You won the auction for ${result.product_name}!`
-        });
+      let orderId = null;
+
+      if (highestBid) {
+        const winnerId = highestBid.bidder_id;
+        const amount = highestBid.bid_amount;
+
+        // --- 3. Ambil store_id dari product ---
+        const [storeRows] = await conn.query(
+          `SELECT p.store_id 
+           FROM products p
+           JOIN auctions a ON p.product_id = a.product_id
+           WHERE a.auction_id = ?`,
+          [auctionId]
+        );
+        const storeId = storeRows[0]?.store_id;
+
+        // --- 4. Ambil alamat buyer ---
+        const [userRows] = await conn.query(
+          `SELECT address FROM users WHERE user_id = ?`,
+          [winnerId]
+        );
+        const shippingAddress = userRows[0]?.address || '';
+
+        // --- 5. Insert order ---
+        const [orderResult] = await conn.query(
+          `INSERT INTO orders (buyer_id, store_id, total_price, shipping_address, status)
+           VALUES (?, ?, ?, ?, 'approved')`,
+          [winnerId, storeId, amount, shippingAddress]
+        );
+        orderId = orderResult.insertId;
+
+        // --- 6. Update auction dengan winner_id ---
+        await conn.query(
+          `UPDATE auctions SET winner_id = ? WHERE auction_id = ?`,
+          [winnerId, auctionId]
+        );
       }
 
-      res.json({
+      await conn.commit();
+
+      // --- 7. Notify WebSocket ---
+      try {
+        await fetch('http://node:3003/notify_bid', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'auction_stopped',
+            auction_id: auctionId,
+            order_id: orderId,
+            timestamp: new Date().toISOString()
+          })
+        });
+      } catch (err) {
+        console.warn("Failed to notify WS:", err);
+      }
+
+      return res.json({
         success: true,
         message: 'Auction stopped successfully',
-        data: result
+        data: { order_id: orderId }
       });
-    } catch (error) {
-      console.error('Error in stopAuction:', error);
-      res.status(400).json({ error: error.message || 'Failed to stop auction' });
+
+    } catch (err) {
+      await conn.rollback();
+      console.error("Error stopping auction:", err);
+      return res.status(500).json({ error: "Failed to stop auction" });
+    } finally {
+      conn.release();
     }
   }
+  
+  static async cancelAuction(req, res) {
+    const auctionId = Number(req.params.auctionId);
+    const userId = req.user.user_id;
+    const role = req.user.role;
+
+    if (role !== 'SELLER') {
+      return res.status(403).json({ error: "Unauthorized: only sellers can cancel auctions" });
+    }
+
+    if (!auctionId) {
+      return res.status(400).json({ error: "Missing auction_id" });
+    }
+
+    const conn = await dbPool.getConnection();
+    await conn.beginTransaction();
+
+    try {
+      // --- 1. Check if auction has any bids ---
+      const [bidCountRows] = await conn.query(
+        `SELECT COUNT(*) AS bid_count FROM auction_bids WHERE auction_id = ?`,
+        [auctionId]
+      );
+      const bidCount = bidCountRows[0]?.bid_count || 0;
+
+      if (bidCount > 0) {
+        return res.status(400).json({ error: "Auction already has bids, cannot cancel" });
+      }
+
+      // --- 2. Cancel auction ---
+      await conn.query(
+        `UPDATE auctions SET status = 'cancelled', end_time = NOW() WHERE auction_id = ?`,
+        [auctionId]
+      );
+
+      // --- 3. Rollback product stock ---
+      const [auctionInfoRows] = await conn.query(
+        `SELECT product_id, quantity FROM auctions WHERE auction_id = ?`,
+        [auctionId]
+      );
+      const auctionInfo = auctionInfoRows[0];
+      if (auctionInfo) {
+        await conn.query(
+          `UPDATE products SET stock = stock + ? WHERE product_id = ?`,
+          [auctionInfo.quantity, auctionInfo.product_id]
+        );
+      }
+
+      await conn.commit();
+
+      // --- 4. Notify WebSocket ---
+      try {
+        await fetch('http://node:3003/notify_bid', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            type: 'auction_cancelled',
+            auction_id: auctionId,
+            timestamp: new Date().toISOString()
+          })
+        });
+      } catch (err) {
+        console.warn("Failed to notify WS:", err);
+      }
+
+      return res.json({
+        success: true,
+        message: "Auction cancelled successfully"
+      });
+
+    } catch (err) {
+      await conn.rollback();
+      console.error("Error cancelling auction:", err);
+      return res.status(500).json({ error: "Failed to cancel auction" });
+    } finally {
+      conn.release();
+    }
+  }
+
   static async getUserActiveBids(req, res) {
     try {
       const userId = req.user.user_id;
@@ -152,6 +365,7 @@ class AuctionController {
       res.status(500).json({ error: 'Failed to fetch user bids' });
     }
   }
+
   static async getUserBalance(req, res) {
     try {
       const userId = req.user.user_id;

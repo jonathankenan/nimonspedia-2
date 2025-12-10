@@ -48,23 +48,19 @@ export const fetchBidHistory = async (auctionId, limit = 50) => {
 /**
  * Place a bid (requires authentication)
  */
-export const placeBid = async (auctionId, bidAmount, token) => {
-  const res = await fetch('/api/auction/place-bid.php', {
-    method: 'POST',
-    credentials: 'include', // penting agar session cookie ikut
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}` // optional kalau pakai token
-    },
-    body: JSON.stringify({ auction_id: auctionId, bid_amount: bidAmount })
-  });
+export const placeBid = async (auctionId, bidAmount) => {
+  try {
+    const res = await axios.post(
+      `${API_BASE}/${auctionId}/bid`,
+      { bid_amount: bidAmount },
+      { withCredentials: true } 
+    );
 
-  if (!res.ok) {
-    const err = await res.json();
-    throw err;
+    return res.data;
+  } catch (error) {
+    console.error("Error placing bid:", error.response?.data || error);
+    throw error;
   }
-
-  return res.json();
 };
 
 /**
@@ -238,39 +234,25 @@ export const deleteAuction = async (auctionId, token) => {
  * Stop auction (Node.js API)
  */
 export const stopAuction = async (auctionId, token) => {
-  const res = await fetch('/api/auction/stop-auction.php', {
+  const res = await fetch(`${API_BASE}/${auctionId}/stop`, {
     method: 'POST',
-    credentials: 'include', // penting agar session cookie ikut
-    headers: {
+    credentials: 'include',
+    headers: { 
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}` // optional kalau pakai token
-    },
-    body: JSON.stringify({ auction_id: auctionId})
+      'Authorization': `Bearer ${token}`
+    }
   });
-
-  if (!res.ok) {
-    const err = await res.json();
-    throw err;
-  }
-
   return res.json();
 };
 
 export const cancelAuction = async (auctionId, token) => {
-  const res = await fetch('/api/auction/cancel-auction.php', {
+  const res = await fetch(`${API_BASE}/${auctionId}/cancel`, {
     method: 'POST',
-    credentials: 'include', // penting agar session cookie ikut
-    headers: {
+    credentials: 'include',
+    headers: { 
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}` // optional kalau pakai token
-    },
-    body: JSON.stringify({ auction_id: auctionId})
+      'Authorization': `Bearer ${token}`
+    }
   });
-
-  if (!res.ok) {
-    const err = await res.json();
-    throw err;
-  }
-
   return res.json();
 };
