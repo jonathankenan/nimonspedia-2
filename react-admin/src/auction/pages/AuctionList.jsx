@@ -37,6 +37,15 @@ const AuctionList = () => {
       loadAuctions();
   }, [offset, activeTab, debouncedSearch]);
 
+  // (kenan) Listen for feature disable event
+  useEffect(() => {
+    if (lastMessage?.type === 'feature_disabled') {
+      const reason = lastMessage.reason || 'Fitur lelang sedang dinonaktifkan';
+      window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+    }
+  }, [lastMessage]);
+  // udah
+
   // Handle live update: new auction
   useEffect(() => {
     if (lastMessage?.type === 'auction_created') {
@@ -61,6 +70,14 @@ const AuctionList = () => {
 
       const data = response.data || response;
 
+      // (kenan) Check if response indicates feature is disabled
+      if (data && (data.feature_disabled || data.error)) {
+        const reason = data.message || data.error || 'Fitur lelang sedang dinonaktifkan';
+        window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+        return;
+      }
+      // udah
+
       // Tentukan status real-time client-side
       const filteredData = data
         // pastikan hanya yang active/scheduled
@@ -81,6 +98,14 @@ const AuctionList = () => {
 
       setHasMore(filteredData.length === LIMIT);
     } catch (err) {
+      // (kenan) Check for feature_disabled in error
+      if (err.feature_disabled || err.error === 'Feature disabled') {
+        // Message sudah di-format dengan benar dari API layer
+        const reason = err.message || 'Fitur lelang sedang dinonaktifkan';
+        window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+        return;
+      }
+      // udah
       console.error('Error loading auctions:', err);
       setError('Gagal memuat lelang');
     } finally {

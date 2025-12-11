@@ -2,9 +2,11 @@ import { useEffect, useState } from 'react';
 import { toast } from "react-toastify";
 import { useNavigate } from 'react-router-dom';
 import { fetchSellerProducts, createAuction } from '../api/auctionApi';
+import { useWebSocket } from '../../shared/hooks/useWebSocket';
 
 const CreateAuction = () => {
     const navigate = useNavigate();
+    const { lastMessage } = useWebSocket();
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -30,6 +32,15 @@ const CreateAuction = () => {
         }
         loadProduct();
     }, [preSelectedProductId]);
+
+    // (kenan) Listen for feature disable event
+    useEffect(() => {
+        if (lastMessage?.type === 'feature_disabled') {
+            const reason = lastMessage.reason || 'Fitur lelang sedang dinonaktifkan';
+            window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+        }
+    }, [lastMessage]);
+    // udah
 
     const loadProduct = async () => {
         try {
@@ -136,6 +147,7 @@ const CreateAuction = () => {
                 throw new Error('Gagal mendapatkan ID lelang baru');
             }
         } catch (err) {
+            console.error('Create auction error:', err);
             setError(err.message || 'Gagal membuat lelang');
         } finally {
             setSubmitting(false);

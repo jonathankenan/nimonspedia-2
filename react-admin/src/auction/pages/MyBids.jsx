@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { fetchUserActiveBids } from '../api/auctionApi';
+import { useWebSocket } from '../../shared/hooks/useWebSocket';
 
 const MyBids = () => {
     const navigate = useNavigate();
+    const { lastMessage } = useWebSocket();
     const [bids, setBids] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -12,6 +14,15 @@ const MyBids = () => {
         checkFeatureFlag();
         loadBids();
     }, []);
+
+    // (kenan) Listen for feature disable event
+    useEffect(() => {
+        if (lastMessage?.type === 'feature_disabled') {
+            const reason = lastMessage.reason || 'Fitur lelang sedang dinonaktifkan';
+            window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+        }
+    }, [lastMessage]);
+    // udah
 
         const checkFeatureFlag = async () => {
             try {
@@ -56,8 +67,9 @@ const MyBids = () => {
 
             setBids(Array.isArray(data) ? data : []);
         } catch (err) {
-            if (err.response?.data?.feature_disabled || err.feature_disabled) {
-                const reason = err.response?.data?.message || err.message || 'Fitur lelang sedang dinonaktifkan';
+            if (err.feature_disabled || err.error === 'Feature disabled') {
+                // Message sudah di-format dengan benar dari API layer
+                const reason = err.message || 'Fitur lelang sedang dinonaktifkan';
                 window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
                 return;
             }
@@ -140,7 +152,23 @@ const MyBids = () => {
                         Jelajahi lelang dan mulai menawar
                     </div>
                     <button
-                        onClick={() => navigate('/auction')}
+                        onClick={async () => {
+                            try {
+                                const response = await fetch('/api/features/check?feature=auction_enabled', {
+                                    credentials: 'include'
+                                });
+                                const data = await response.json();
+                                if (!data.enabled) {
+                                    const reason = data.reason || 'Fitur lelang sedang dinonaktifkan';
+                                    window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+                                } else {
+                                    navigate('/auction');
+                                }
+                            } catch (error) {
+                                console.error('Failed to check feature flag:', error);
+                                navigate('/auction');
+                            }
+                        }}
                         className="px-6 py-3 bg-brand text-white rounded-lg font-semibold hover:bg-[#085f9a] transition-colors"
                     >
                         Lihat Lelang
@@ -154,7 +182,23 @@ const MyBids = () => {
                         return (
                             <div
                                 key={bid.auction_id}
-                                onClick={() => navigate(`/auction/${bid.auction_id}`)}
+                                onClick={async () => {
+                                    try {
+                                        const response = await fetch('/api/features/check?feature=auction_enabled', {
+                                            credentials: 'include'
+                                        });
+                                        const data = await response.json();
+                                        if (!data.enabled) {
+                                            const reason = data.reason || 'Fitur lelang sedang dinonaktifkan';
+                                            window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+                                        } else {
+                                            navigate(`/auction/${bid.auction_id}`);
+                                        }
+                                    } catch (error) {
+                                        console.error('Failed to check feature flag:', error);
+                                        navigate(`/auction/${bid.auction_id}`);
+                                    }
+                                }}
                                 className={`bg-white rounded-xl overflow-hidden cursor-pointer transition-all duration-200 hover:-translate-y-1 hover:shadow-lg ${isWinning ? 'border-2 border-emerald-500' : 'border border-gray-200'
                                     }`}
                             >

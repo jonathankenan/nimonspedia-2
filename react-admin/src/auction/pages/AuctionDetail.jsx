@@ -83,6 +83,15 @@ const AuctionDetail = () => {
     loadAuctionDetail();
   }, [auctionId]);
 
+  // (kenan) Listen for feature disable event
+  useEffect(() => {
+    if (lastMessage?.type === 'feature_disabled') {
+      const reason = lastMessage.reason || 'Fitur lelang sedang dinonaktifkan';
+      window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+    }
+  }, [lastMessage]);
+  // udah
+
   useEffect(() => {
     if (lastMessage) {
       console.log("Received WS message:", lastMessage);
@@ -168,6 +177,14 @@ const AuctionDetail = () => {
       const data = await fetchAuctionDetail(auctionId);
       setAuction(data);
     } catch (err) {
+      // (kenan) Check for feature_disabled in error
+      if (err.feature_disabled || err.error === 'Feature disabled') {
+        // Message sudah di-format dengan benar dari API layer
+        const reason = err.message || 'Fitur lelang sedang dinonaktifkan';
+        window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+        return;
+      }
+      // udah
       setError('Gagal memuat detail lelang');
       console.error('Error loading auction:', err);
     } finally {
@@ -309,12 +326,31 @@ const AuctionDetail = () => {
       {/* Breadcrumb */}
       <div className="mb-5 text-gray-500 text-sm">
         <span
-          onClick={() => {
-            const role = localStorage.getItem('userRole');
-            if (role === 'SELLER') {
-              navigate('/auction/management');
-            } else {
-              navigate('/auction');
+          onClick={async () => {
+            try {
+              const response = await fetch('/api/features/check?feature=auction_enabled', {
+                credentials: 'include'
+              });
+              const data = await response.json();
+              if (!data.enabled) {
+                const reason = data.reason || 'Fitur lelang sedang dinonaktifkan';
+                window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+              } else {
+                const role = localStorage.getItem('userRole');
+                if (role === 'SELLER') {
+                  navigate('/auction/management');
+                } else {
+                  navigate('/auction');
+                }
+              }
+            } catch (error) {
+              console.error('Failed to check feature flag:', error);
+              const role = localStorage.getItem('userRole');
+              if (role === 'SELLER') {
+                navigate('/auction/management');
+              } else {
+                navigate('/auction');
+              }
             }
           }}
           className="cursor-pointer text-brand hover:underline"

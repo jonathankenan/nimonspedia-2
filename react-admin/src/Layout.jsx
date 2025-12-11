@@ -9,6 +9,27 @@ const Layout = ({ children }) => {
     const [balance, setBalance] = useState(0);
     const [sellerAuctionId, setSellerAuctionId] = useState(null);
 
+    // (kenan) Helper function untuk cek auction feature flag
+    const handleAuctionNavigation = async (e, path) => {
+        e.preventDefault();
+        try {
+            const response = await fetch('/api/features/check?feature=auction_enabled', {
+                credentials: 'include'
+            });
+            const data = await response.json();
+            if (!data.enabled) {
+                const reason = data.reason || 'Fitur lelang sedang dinonaktifkan';
+                window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+            } else {
+                navigate(path);
+            }
+        } catch (error) {
+            console.error('Failed to check feature flag:', error);
+            navigate(path); // Fallback jika check gagal
+        }
+    };
+    // udah
+
     useEffect(() => {
         const token = localStorage.getItem('adminToken');
 
@@ -77,9 +98,9 @@ const Layout = ({ children }) => {
                     {/* BUYER Links */}
                     {userRole === 'BUYER' && (
                         <>
-                            <Link to="/auction" className="nav-link">
+                            <a href="/auction" onClick={(e) => handleAuctionNavigation(e, '/auction')} className="nav-link">
                                 Auction
-                            </Link>
+                            </a>
                             <a href="/buyer/cart.php" className="nav-link">
                                 Keranjang
                             </a>
@@ -107,9 +128,9 @@ const Layout = ({ children }) => {
                                 Kelola Produk
                             </a>
                             {sellerAuctionId && (
-                                <Link to={`/ auction / ${sellerAuctionId} `} className="nav-link">
+                                <a href={`/auction/${sellerAuctionId}`} onClick={(e) => handleAuctionNavigation(e, `/auction/${sellerAuctionId}`)} className="nav-link">
                                     Auction
-                                </Link>
+                                </a>
                             )}
                             <a href="/seller/order_management.php" className="nav-link">
                                 Lihat Pesanan

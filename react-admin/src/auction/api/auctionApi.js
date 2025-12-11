@@ -10,9 +10,27 @@ export const fetchAuctions = async (limit = 20, offset = 0) => {
     const response = await axios.get(`${API_BASE}/list`, {
       params: { limit, offset }
     });
+    // (kenan) Check if response indicates feature disabled
+    if (response.data.feature_disabled || response.data.error === 'Feature disabled') {
+      throw {
+        feature_disabled: true,
+        message: response.data.message || response.data.error || 'Fitur lelang sedang dinonaktifkan',
+        error: 'Feature disabled'
+      };
+    }
+    // udah
     return response.data;
   } catch (error) {
     console.error('Error fetching auctions:', error);
+    // (kenan) Pass through feature_disabled errors - ambil message dari response.data.error atau response.data.message
+    if (error.feature_disabled || error.response?.data?.feature_disabled || error.response?.status === 403) {
+      throw {
+        feature_disabled: true,
+        message: error.response?.data?.error || error.response?.data?.message || error.message || 'Fitur lelang sedang dinonaktifkan',
+        error: 'Feature disabled'
+      };
+    }
+    // udah
     throw error;
   }
 };
@@ -23,9 +41,27 @@ export const fetchAuctions = async (limit = 20, offset = 0) => {
 export const fetchAuctionDetail = async (auctionId) => {
   try {
     const response = await axios.get(`${API_BASE}/${auctionId}`);
+    // (kenan) Check if response indicates feature disabled
+    if (response.data.feature_disabled || response.data.error === 'Feature disabled') {
+      throw {
+        feature_disabled: true,
+        message: response.data.message || response.data.error || 'Fitur lelang sedang dinonaktifkan',
+        error: 'Feature disabled'
+      };
+    }
+    // udah
     return response.data.data;
   } catch (error) {
     console.error('Error fetching auction detail:', error);
+    // (kenan) Pass through feature_disabled errors - ambil message dari response.data.error atau response.data.message
+    if (error.feature_disabled || error.response?.data?.feature_disabled || error.response?.status === 403) {
+      throw {
+        feature_disabled: true,
+        message: error.response?.data?.error || error.response?.data?.message || error.message || 'Fitur lelang sedang dinonaktifkan',
+        error: 'Feature disabled'
+      };
+    }
+    // udah
     throw error;
   }
 };
@@ -96,9 +132,27 @@ export const fetchUserActiveBids = async (token) => {
         }
       }
     );
+    // (kenan) Check if response indicates feature disabled
+    if (response.data.feature_disabled || response.data.error === 'Feature disabled') {
+      throw {
+        feature_disabled: true,
+        message: response.data.message || response.data.error || 'Fitur lelang sedang dinonaktifkan',
+        error: 'Feature disabled'
+      };
+    }
+    // udah
     return response.data.data;
   } catch (error) {
     console.error('Error fetching user active bids:', error);
+    // (kenan) Pass through feature_disabled errors - ambil message dari response.data.error atau response.data.message
+    if (error.feature_disabled || error.response?.data?.feature_disabled || error.response?.status === 403) {
+      throw {
+        feature_disabled: true,
+        message: error.response?.data?.error || error.response?.data?.message || error.message || 'Fitur lelang sedang dinonaktifkan',
+        error: 'Feature disabled'
+      };
+    }
+    // udah
     throw error;
   }
 };
@@ -116,9 +170,28 @@ export const fetchSellerAuctions = async (token) => {
         }
       }
     );
-    return response.data.data || response.data;
+    // (kenan) Check if response indicates feature disabled
+    const data = response.data.data || response.data;
+    if (response.data.feature_disabled) {
+      throw {
+        feature_disabled: true,
+        message: response.data.message || 'Fitur lelang sedang dinonaktifkan',
+        error: 'Feature disabled'
+      };
+    }
+    return data;
+    // udah
   } catch (error) {
     console.error('Error fetching seller auctions:', error);
+    // (kenan) Pass through feature_disabled errors - ambil message dari response.data.error atau response.data.message
+    if (error.feature_disabled || error.response?.data?.feature_disabled || error.response?.status === 403) {
+      throw {
+        feature_disabled: true,
+        message: error.response?.data?.error || error.response?.data?.message || error.message || 'Fitur lelang sedang dinonaktifkan',
+        error: 'Feature disabled'
+      };
+    }
+    // udah
     throw error.response?.data || error;
   }
 };

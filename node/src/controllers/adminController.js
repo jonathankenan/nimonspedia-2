@@ -194,6 +194,18 @@ class AdminController {
       
       // Simpan ke Redis juga (opsional, tapi bagus untuk performa Node.js lain)
       await redisClient.hSet('feature_flags', featureName, enabled ? '1' : '0');
+
+      // (kenan) Broadcast feature disabled untuk auction_enabled via WebSocket
+      if (!enabled && featureName === 'auction_enabled') {
+        const { broadcastMessage } = require('../utils/websocket');
+        broadcastMessage({
+          type: 'feature_disabled',
+          feature: featureName,
+          reason: reason || 'Fitur lelang sedang dinonaktifkan',
+          timestamp: new Date().toISOString()
+        });
+      }
+      // udah
       
       res.json({ success: true, feature: featureName, enabled });
     } catch (error) {

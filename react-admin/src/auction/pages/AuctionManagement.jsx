@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';  
 import { useNavigate } from 'react-router-dom';  
 import { fetchSellerAuctions } from '../api/auctionApi';  
-import AuctionCard from '../components/AuctionCard';  
+import AuctionCard from '../components/AuctionCard';
+import { useWebSocket } from '../../shared/hooks/useWebSocket';  
 
 const AuctionManagement = () => {  
   const navigate = useNavigate();  
+  const { lastMessage } = useWebSocket();
   const [auctions, setAuctions] = useState([]);  
   const [loading, setLoading] = useState(true);  
   const [error, setError] = useState('');  
@@ -14,7 +16,16 @@ const AuctionManagement = () => {
   useEffect(() => {  
     checkFeatureFlag();
     loadAuctions();  
-  }, [debouncedSearch]);  
+  }, [debouncedSearch]);
+
+  // (kenan) Listen for feature disable event
+  useEffect(() => {
+    if (lastMessage?.type === 'feature_disabled') {
+      const reason = lastMessage.reason || 'Fitur lelang sedang dinonaktifkan';
+      window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+    }
+  }, [lastMessage]);
+  // udah  
 
   const checkFeatureFlag = async () => {
     try {
@@ -49,8 +60,16 @@ const AuctionManagement = () => {
         const data = await fetchSellerAuctions(token); 
         console.log('Seller auctions:', data); 
 
+        // (kenan) Check if response indicates feature is disabled
+        if (data && (data.feature_disabled || data.error)) {
+            const reason = data.message || data.error || 'Fitur lelang sedang dinonaktifkan';
+            window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+            return;
+        }
+        // udah
+
         if (!Array.isArray(data)) {
-        throw new Error('Server returned non-array data');
+            throw new Error('Server returned non-array data');
         }
 
         const filtered = data.filter(a =>  
@@ -60,11 +79,14 @@ const AuctionManagement = () => {
         );  
         setAuctions(filtered);  
     } catch (err) {  
-        if (err.response?.data?.feature_disabled || err.feature_disabled) {
-            const reason = err.response?.data?.message || err.message || 'Fitur lelang sedang dinonaktifkan';
+        // (kenan) Check various error response formats for feature_disabled
+        if (err.feature_disabled || err.error === 'Feature disabled') {
+            // Message sudah di-format dengan benar dari API layer
+            const reason = err.message || 'Fitur lelang sedang dinonaktifkan';
             window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
             return;
         }
+        // udah
         console.error(err);  
         setError(err.message || 'Gagal memuat lelang');  
         setAuctions([]);
@@ -74,9 +96,25 @@ const AuctionManagement = () => {
     };
 
 
-  const handleCardClick = (auctionId) => {  
-    navigate(`/auction/${auctionId}`);  
-  };  
+  // (kenan) Check feature flag sebelum navigate
+  const handleCardClick = async (auctionId) => {
+    try {
+      const response = await fetch('/api/features/check?feature=auction_enabled', {
+        credentials: 'include'
+      });
+      const data = await response.json();
+      if (!data.enabled) {
+        const reason = data.reason || 'Fitur lelang sedang dinonaktifkan';
+        window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+      } else {
+        navigate(`/auction/${auctionId}`);
+      }
+    } catch (error) {
+      console.error('Failed to check feature flag:', error);
+      navigate(`/auction/${auctionId}`); // Fallback
+    }
+  };
+  // udah  
 
   return (  
     <div className="p-5 max-w-7xl mx-auto">  

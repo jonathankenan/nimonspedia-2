@@ -20,9 +20,25 @@ const AuctionCard = ({ auction }) => {
   const targetTime = status === 'scheduled' ? start_time : auction.last_bid_time; 
   const { formattedTime } = useCountdown(showCountdown ? targetTime : null);
 
-  const handleClick = () => {
-    navigate(`/auction/${auction_id}`);
+  // (kenan) Check auction feature flag sebelum navigate
+  const handleClick = async () => {
+    try {
+      const response = await fetch('/api/features/check?feature=auction_enabled', {
+        credentials: 'include'
+      });
+      const data = await response.json();
+      if (!data.enabled) {
+        const reason = data.reason || 'Fitur lelang sedang dinonaktifkan';
+        window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+      } else {
+        navigate(`/auction/${auction_id}`);
+      }
+    } catch (error) {
+      console.error('Failed to check feature flag:', error);
+      navigate(`/auction/${auction_id}`); // Fallback jika check gagal
+    }
   };
+  // udah
 
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat('id-ID', {

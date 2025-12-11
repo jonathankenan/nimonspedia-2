@@ -2,10 +2,38 @@ const dbPool = require('../config/db');
 const AuctionModel = require('../models/auctionModel');
 const fetch = require('node-fetch');
 const { broadcastMessage } = require('../utils/websocket');
+const checkAccess = require('../utils/featureAccess');
 
 class AuctionController {
+  
+  // Helper untuk handle feature disabled
+  static handleFeatureDenied(res, access) {
+    // (kenan) Broadcast feature disabled via WebSocket untuk realtime notification
+    broadcastMessage({
+      type: 'feature_disabled',
+      feature: 'auction_enabled',
+      reason: access.reason || 'Fitur lelang sedang dinonaktifkan',
+      timestamp: new Date().toISOString()
+    });
+    // udah
+    
+    return res.status(403).json({ 
+      error: access.reason,
+      feature_disabled: true,
+      redirect_url: `/disabled.php?reason=${encodeURIComponent(access.reason)}`
+    });
+  }
+
   static async getAuctions(req, res) {
     try {
+      // Feature Flag Check
+      const userId = req.user ? req.user.user_id : null;
+      const access = await checkAccess(userId, 'auction_enabled');
+      
+      if (!access.allowed) {
+        return AuctionController.handleFeatureDenied(res, access);
+      }
+
       const limit = parseInt(req.query.limit) || 20;
       const offset = parseInt(req.query.offset) || 0;
 
@@ -23,6 +51,14 @@ class AuctionController {
 
   static async getAuctionDetail(req, res) {
     try {
+      // Feature Flag Check
+      const userId = req.user ? req.user.user_id : null;
+      const access = await checkAccess(userId, 'auction_enabled');
+      
+      if (!access.allowed) {
+        return AuctionController.handleFeatureDenied(res, access);
+      }
+
       const { auctionId } = req.params;
 
       const auction = await AuctionModel.getAuctionDetail(auctionId);
@@ -43,6 +79,14 @@ class AuctionController {
 
   static async getBidHistory(req, res) {
     try {
+      // Feature Flag Check
+      const userId = req.user ? req.user.user_id : null;
+      const access = await checkAccess(userId, 'auction_enabled');
+      
+      if (!access.allowed) {
+        return AuctionController.handleFeatureDenied(res, access);
+      }
+
       const { auctionId } = req.params;
       const limit = parseInt(req.query.limit) || 50;
 
@@ -66,6 +110,12 @@ class AuctionController {
 
     if (role !== 'BUYER') {
       return res.status(403).json({ error: "Unauthorized: only buyers can place bids" });
+    }
+
+    // Feature Flag Check
+    const access = await checkAccess(userId, 'auction_enabled');
+    if (!access.allowed) {
+      return AuctionController.handleFeatureDenied(res, access);
     }
 
     bid_amount = Number(bid_amount);
@@ -411,6 +461,13 @@ class AuctionController {
   static async createAuction(req, res) {
     try {
       const userId = req.user.user_id;
+      
+      // Feature Flag Check
+      const access = await checkAccess(userId, 'auction_enabled');
+      if (!access.allowed) {
+        return AuctionController.handleFeatureDenied(res, access);
+      }
+      
       if (req.user.role !== 'SELLER') {
         return res.status(403).json({ error: "Unauthorized: only sellers can create auctions" });
       }
