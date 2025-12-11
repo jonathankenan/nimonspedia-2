@@ -181,10 +181,6 @@ class AuctionController {
     const userId = req.user.user_id;
     const role = req.user.role;
 
-    if (role !== 'SELLER') {
-      return res.status(403).json({ error: "Unauthorized: only sellers can stop auctions" });
-    }
-
     if (!auctionId) {
       return res.status(400).json({ error: "Missing auction_id" });
     }

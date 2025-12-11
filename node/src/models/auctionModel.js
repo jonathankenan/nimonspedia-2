@@ -99,11 +99,22 @@ class AuctionModel {
 
       const auctions = rows.map(a => {
         const start = new Date(a.start_time);
-        const end = new Date(a.end_time);
+        const end = a.end_time ? new Date(a.end_time) : null;
 
-        let status = "scheduled";
-        if (now >= start && now < end) status = "active";
-        if (now >= end) status = "ended";
+        let status = 'scheduled';
+
+        if (a.db_status === 'cancelled') {
+          status = 'cancelled';
+        } else if (a.db_status === 'stopped') {
+          status = 'ended';
+        } else if (!end && now >= start) {
+          // end_time null & sudah mulai → active
+          status = 'active';
+        } else if (end && now >= end) {
+          status = 'ended';
+        } else if (now >= start && (!end || now < end)) {
+          status = 'active';
+        }
 
         return { ...a, status };
       });
