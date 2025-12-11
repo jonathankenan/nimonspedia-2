@@ -12,8 +12,24 @@ const AuctionManagement = () => {
   const [debouncedSearch, setDebouncedSearch] = useState('');  
 
   useEffect(() => {  
+    checkFeatureFlag();
     loadAuctions();  
   }, [debouncedSearch]);  
+
+  const checkFeatureFlag = async () => {
+    try {
+      const response = await fetch('/api/features/check?feature=auction_enabled', {
+        credentials: 'include'
+      });
+      const data = await response.json();
+      if (!data.enabled) {
+        const reason = data.reason || 'Fitur lelang sedang dinonaktifkan';
+        window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+      }
+    } catch (error) {
+      console.error('Failed to check feature flag:', error);
+    }
+  };  
 
   // Debounce search  
   useEffect(() => {  
@@ -44,6 +60,11 @@ const AuctionManagement = () => {
         );  
         setAuctions(filtered);  
     } catch (err) {  
+        if (err.response?.data?.feature_disabled || err.feature_disabled) {
+            const reason = err.response?.data?.message || err.message || 'Fitur lelang sedang dinonaktifkan';
+            window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+            return;
+        }
         console.error(err);  
         setError(err.message || 'Gagal memuat lelang');  
         setAuctions([]);

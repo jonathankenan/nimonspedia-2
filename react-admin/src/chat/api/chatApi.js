@@ -32,12 +32,23 @@ export const getMessages = async (storeId, buyerId, limit = 50, before = null) =
  * Send a new message
  */
 export const sendMessage = async (storeId, buyerId, messageType, content, productId = null) => {
-  const response = await api.post(`/rooms/${storeId}/${buyerId}/messages`, {
-    message_type: messageType,
-    content: content,
-    product_id: productId
-  });
-  return response.data;
+  try {
+    const response = await api.post(`/rooms/${storeId}/${buyerId}/messages`, {
+      message_type: messageType,
+      content: content,
+      product_id: productId
+    });
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 403 && error.response?.data?.error) {
+      throw { 
+        feature_disabled: true, 
+        message: error.response.data.error,
+        redirect_url: error.response.data.redirect_url
+      };
+    }
+    throw error;
+  }
 };
 
 /**

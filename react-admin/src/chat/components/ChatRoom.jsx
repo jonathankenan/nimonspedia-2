@@ -164,6 +164,11 @@ function ChatRoom({ room, userRole, socket, onBack, productIdToSend, onProductSe
         }
       }
     } catch (error) {
+      if (error.feature_disabled) {
+        const reason = error.message || 'Fitur chat sedang dinonaktifkan';
+        window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+        return;
+      }
       console.error('Failed to send message:', error);
       alert(error.response?.data?.error || 'Gagal mengirim pesan');
     } finally {
@@ -209,6 +214,11 @@ function ChatRoom({ room, userRole, socket, onBack, productIdToSend, onProductSe
         fileInputRef.current.value = '';
       }
     } catch (error) {
+      if (error.feature_disabled) {
+        const reason = error.message || 'Fitur chat sedang dinonaktifkan';
+        window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+        return;
+      }
       console.error('Failed to upload image:', error);
       alert('Gagal mengirim gambar');
     } finally {
@@ -265,6 +275,11 @@ function ChatRoom({ room, userRole, socket, onBack, productIdToSend, onProductSe
         }
       }
     } catch (error) {
+      if (error.feature_disabled) {
+        const reason = error.message || 'Fitur chat sedang dinonaktifkan';
+        window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
+        return;
+      }
       console.error('Failed to send product:', error);
       alert('Gagal mengirim produk');
     } finally {

@@ -18,17 +18,23 @@ $name = $_SESSION['name'] ?? 'Guest';
 $balance = $_SESSION['balance'] ?? 0;
 $cart_count = $_SESSION['cart_count'] ?? 0;
 
+// Default state (Hidup jika tidak ada user login/config)
 $can_checkout = true;
-$can_chat = true; // (kenan) [TAMBAHAN] Default true
+$can_chat = true; 
+$can_auction = true; // (kenan) [TAMBAHAN BARU] Default true untuk Auction
 
 if ($user_id) {
     // 1. Cek Checkout
     $access = $featureModel->checkAccess($user_id, 'checkout_enabled');
     $can_checkout = $access['allowed'];
 
-    // 2. (kenan) [TAMBAHAN] Cek Chat
+    // 2. Cek Chat
     $chat_access = $featureModel->checkAccess($user_id, 'chat_enabled');
     $can_chat = $chat_access['allowed'];
+
+    // 3. (kenan) [TAMBAHAN BARU] Cek Auction
+    $auction_access = $featureModel->checkAccess($user_id, 'auction_enabled');
+    $can_auction = $auction_access['allowed'];
 }
 
 // --- JWT GENERATION FOR REACT ADMIN ---
@@ -37,7 +43,7 @@ if (isset($_SESSION['user_id'])) {
     $secret = 'rahasia_negara_nimons'; 
     $header = json_encode(['typ' => 'JWT', 'alg' => 'HS256']);
     
-    // (kenan) [PERBAIKAN] Payload disesuaikan agar cocok dengan Node.js Controller
+    // Payload disesuaikan agar cocok dengan Node.js Controller
     $payload = json_encode([
         'user_id' => $_SESSION['user_id'], 
         'userId' => $_SESSION['user_id'],   
@@ -76,11 +82,11 @@ if (isset($_SESSION['user_id'])) {
 
 <nav>
     <div class="nav-left">
-    <?php if ($role === 'SELLER'): ?>
-    <a href="/seller/dashboard.php">Nimonspedia</a>
-    <?php else: ?>
-    <a href="/index.php">Nimonspedia</a>
-    <?php endif; ?>
+        <?php if ($role === 'SELLER'): ?>
+            <a href="/seller/dashboard.php">Nimonspedia</a>
+        <?php else: ?>
+            <a href="/index.php">Nimonspedia</a>
+        <?php endif; ?>
     </div>
 
     <div class="nav-right">
@@ -90,7 +96,10 @@ if (isset($_SESSION['user_id'])) {
             <a href="/authentication/register_role.php">Daftar</a>
 
         <?php elseif ($role === 'BUYER'): ?>
-            <a href="/auction">Lelang</a>
+            
+            <?php if ($can_auction): ?>
+                <a href="/auction">Lelang</a>
+            <?php endif; ?>
             
             <?php if ($can_chat): ?>
                 <a href="/admin/chat">Chat</a>
@@ -104,24 +113,26 @@ if (isset($_SESSION['user_id'])) {
                     <?php endif; ?>
                 </a>
             <?php endif; ?>
+            
             <a href="#" id="balance-link">
                 Balance: Rp <?= number_format($balance ?? 0, 0, ',', '.') ?>
             </a>
 
-        <div class="dropdown">
-            <button id="dropdownToggle" class="dropdown-toggle"><?= htmlspecialchars($name) ?></button>
-            <div id="dropdownMenu" class="dropdown-content">
-                <a href="/buyer/profile.php">Profile</a>
-                <a href="/buyer/orders.php">Order History</a>
-                <a href="/authentication/logout.php">Logout</a>
+            <div class="dropdown">
+                <button id="dropdownToggle" class="dropdown-toggle"><?= htmlspecialchars($name) ?></button>
+                <div id="dropdownMenu" class="dropdown-content">
+                    <a href="/buyer/profile.php">Profile</a>
+                    <a href="/buyer/orders.php">Order History</a>
+                    <a href="/authentication/logout.php">Logout</a>
+                </div>
             </div>
-        </div>
 
         <?php elseif ($role === 'SELLER'): ?>
             <?php
                 // Fetch active auction for seller
                 $seller_auction_id = null;
-                if (isset($_SESSION['user_id'])) {
+                // Optimization: Hanya query jika fitur lelang aktif
+                if (isset($_SESSION['user_id']) && $can_auction) {
                     require_once __DIR__ . '/../config/db.php';
                     $stmt = $conn->prepare("SELECT store_id FROM stores WHERE user_id = ?");
                     $stmt->bind_param("i", $_SESSION['user_id']);
@@ -148,16 +159,21 @@ if (isset($_SESSION['user_id'])) {
                 }
             ?>
             <a href="/seller/dashboard.php">Dashboard</a>
-            <a href="/auction/management">Lelang</a>
+            
+            <?php if ($can_auction): ?>
+                <a href="/auction/management">Lelang</a>
+            <?php endif; ?>
+            
             <a href="/seller/kelola_produk.php">Kelola Produk</a>
             
             <?php if ($can_chat): ?>
                 <a href="/admin/chat">Chat</a>
             <?php endif; ?>
 
-            <?php if ($seller_auction_id): ?>
+            <?php if ($seller_auction_id && $can_auction): ?>
                 <a href="/admin/auction/<?= $seller_auction_id ?>">Auction</a>
             <?php endif; ?>
+            
             <a href="/seller/order_management.php">Lihat Pesanan</a>
             <a href="/seller/tambah_produk.php">Tambah Produk</a>
             <a href="/authentication/logout.php">Logout</a>

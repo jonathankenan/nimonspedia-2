@@ -1,8 +1,26 @@
 const AuctionModel = require('../models/auctionModel');
+const checkAccess = require('../utils/featureAccess'); // (kenan) [ADDED] Import feature access helper
 
 class AuctionController {
+  
+  // Helper internal untuk menangani response error feature flag
+  static handleFeatureDenied(res, access) {
+    return res.status(403).json({ 
+      error: access.reason,
+      redirect_url: `/disabled.php?reason=${encodeURIComponent(access.reason)}`
+    });
+  }
+
   static async getAuctions(req, res) {
     try {
+      // [ADDED] Feature Flag Check
+      const userId = req.user ? req.user.user_id : null;
+      const access = await checkAccess(userId, 'auction_enabled');
+      
+      if (!access.allowed) {
+        return AuctionController.handleFeatureDenied(res, access);
+      }
+
       const limit = parseInt(req.query.limit) || 20;
       const offset = parseInt(req.query.offset) || 0;
 
@@ -21,6 +39,14 @@ class AuctionController {
 
   static async getAuctionDetail(req, res) {
     try {
+      // [ADDED] Feature Flag Check
+      const userId = req.user ? req.user.user_id : null;
+      const access = await checkAccess(userId, 'auction_enabled');
+      
+      if (!access.allowed) {
+        return AuctionController.handleFeatureDenied(res, access);
+      }
+
       const { auctionId } = req.params;
 
       const auction = await AuctionModel.getAuctionDetail(auctionId);
@@ -41,6 +67,14 @@ class AuctionController {
 
   static async getBidHistory(req, res) {
     try {
+      // [ADDED] Feature Flag Check
+      const userId = req.user ? req.user.user_id : null;
+      const access = await checkAccess(userId, 'auction_enabled');
+      
+      if (!access.allowed) {
+        return AuctionController.handleFeatureDenied(res, access);
+      }
+
       const { auctionId } = req.params;
       const limit = parseInt(req.query.limit) || 50;
 
@@ -58,6 +92,14 @@ class AuctionController {
 
   static async placeBid(req, res) {
     try {
+      // [ADDED] Feature Flag Check
+      const userId = req.user.user_id;
+      const access = await checkAccess(userId, 'auction_enabled');
+      
+      if (!access.allowed) {
+        return AuctionController.handleFeatureDenied(res, access);
+      }
+
       const { auctionId } = req.params;
       const { bidAmount } = req.body;
       const bidderId = req.user.user_id;
@@ -79,14 +121,12 @@ class AuctionController {
         type: 'auction_bid_update',
         auction_id: auctionId,
         current_price: bidAmount,
-        bidder_name: req.user.userName || 'Someone', // Assuming userName is in token/req.user
+        bidder_name: req.user.userName || 'Someone', 
         timestamp: new Date().toISOString()
       });
 
       // Send Outbid Notification
       if (previousWinnerId && previousWinnerId !== bidderId) {
-        // In a real app, we would send to specific user via WebSocket or Push
-        // For now, we broadcast an event that clients can filter
         broadcastMessage({
           type: 'notification_outbid',
           auction_id: auctionId,
@@ -110,9 +150,16 @@ class AuctionController {
 
   static async stopAuction(req, res) {
     try {
-      const { auctionId } = req.params;
+      // [ADDED] Feature Flag Check
       const userId = req.user.user_id;
+      const access = await checkAccess(userId, 'auction_enabled');
+      
+      if (!access.allowed) {
+        return AuctionController.handleFeatureDenied(res, access);
+      }
 
+      const { auctionId } = req.params;
+      
       const result = await AuctionModel.stopAuction(auctionId, userId);
 
       // Send Win Notification
@@ -137,9 +184,16 @@ class AuctionController {
       res.status(400).json({ error: error.message || 'Failed to stop auction' });
     }
   }
+
   static async getUserActiveBids(req, res) {
     try {
+      // [ADDED] Feature Flag Check
       const userId = req.user.user_id;
+      const access = await checkAccess(userId, 'auction_enabled');
+      
+      if (!access.allowed) {
+        return AuctionController.handleFeatureDenied(res, access);
+      }
 
       const bids = await AuctionModel.getUserActiveBids(userId);
 
@@ -152,9 +206,17 @@ class AuctionController {
       res.status(500).json({ error: 'Failed to fetch user bids' });
     }
   }
+
   static async getUserBalance(req, res) {
     try {
+      // [ADDED] Feature Flag Check
       const userId = req.user.user_id;
+      const access = await checkAccess(userId, 'auction_enabled');
+      
+      if (!access.allowed) {
+        return AuctionController.handleFeatureDenied(res, access);
+      }
+
       const balance = await AuctionModel.getUserBalance(userId);
 
       res.json({

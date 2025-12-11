@@ -13,6 +13,13 @@ export const fetchAuctions = async (limit = 20, offset = 0) => {
     return response.data;
   } catch (error) {
     console.error('Error fetching auctions:', error);
+    if (error.response?.status === 403 && error.response?.data?.error) {
+      throw { 
+        feature_disabled: true, 
+        message: error.response.data.error,
+        response: error.response 
+      };
+    }
     throw error;
   }
 };
@@ -26,6 +33,13 @@ export const fetchAuctionDetail = async (auctionId) => {
     return response.data.data;
   } catch (error) {
     console.error('Error fetching auction detail:', error);
+    if (error.response?.status === 403 && error.response?.data?.error) {
+      throw { 
+        feature_disabled: true, 
+        message: error.response.data.error,
+        response: error.response 
+      };
+    }
     throw error;
   }
 };
@@ -59,12 +73,17 @@ export const placeBid = async (auctionId, bidAmount, token) => {
     body: JSON.stringify({ auction_id: auctionId, bid_amount: bidAmount })
   });
 
+  const data = await res.json();
+  
+  if (data.feature_disabled) {
+    throw { feature_disabled: true, message: data.message };
+  }
+  
   if (!res.ok) {
-    const err = await res.json();
-    throw err;
+    throw data;
   }
 
-  return res.json();
+  return data;
 };
 
 /**
@@ -120,9 +139,18 @@ export const fetchSellerAuctions = async (token) => {
         }
       }
     );
-    return response.data.data || response.data;
+    
+    const data = response.data.data || response.data;
+    if (data.feature_disabled) {
+      throw { feature_disabled: true, message: data.message };
+    }
+    
+    return data;
   } catch (error) {
     console.error('Error fetching seller auctions:', error);
+    if (error.response?.data?.feature_disabled) {
+      throw { feature_disabled: true, message: error.response.data.message };
+    }
     throw error.response?.data || error;
   }
 };
@@ -163,9 +191,18 @@ export const createAuction = async (auctionData, token) => {
         }
       }
     );
-    return response.data.data || response.data;
+    
+    const data = response.data.data || response.data;
+    if (data.feature_disabled) {
+      throw { feature_disabled: true, message: data.message };
+    }
+    
+    return data;
   } catch (error) {
     console.error('Error creating auction:', error);
+    if (error.response?.data?.feature_disabled) {
+      throw { feature_disabled: true, message: error.response.data.message };
+    }
     throw error.response?.data || error;
   }
 };
@@ -185,9 +222,18 @@ export const editAuction = async (auctionData, token) => {
         }
       }
     );
-    return response.data.data || response.data;
+    
+    const data = response.data.data || response.data;
+    if (data.feature_disabled) {
+      throw { feature_disabled: true, message: data.message };
+    }
+    
+    return data;
   } catch (error) {
     console.error('Error editing auction:', error);
+    if (error.response?.data?.feature_disabled) {
+      throw { feature_disabled: true, message: error.response.data.message };
+    }
     throw error.response?.data || error;
   }
 };
@@ -248,12 +294,17 @@ export const stopAuction = async (auctionId, token) => {
     body: JSON.stringify({ auction_id: auctionId})
   });
 
+  const data = await res.json();
+  
+  if (data.feature_disabled) {
+    throw { feature_disabled: true, message: data.message };
+  }
+  
   if (!res.ok) {
-    const err = await res.json();
-    throw err;
+    throw data;
   }
 
-  return res.json();
+  return data;
 };
 
 export const cancelAuction = async (auctionId, token) => {
@@ -267,10 +318,15 @@ export const cancelAuction = async (auctionId, token) => {
     body: JSON.stringify({ auction_id: auctionId})
   });
 
+  const data = await res.json();
+  
+  if (data.feature_disabled) {
+    throw { feature_disabled: true, message: data.message };
+  }
+  
   if (!res.ok) {
-    const err = await res.json();
-    throw err;
+    throw data;
   }
 
-  return res.json();
+  return data;
 };

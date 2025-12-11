@@ -1,13 +1,29 @@
 <?php
 require_once __DIR__ . '/../../../app/utils/session.php';
 require_once __DIR__ . '/../../../app/config/db.php';
+require_once __DIR__ . '/../../../app/models/feature.php';
 require_once __DIR__ . '/../../../app/utils/json_response.php';
+
+use App\Models\Feature;
 
 ensureJsonResponse();
 
 // --- AUTH CHECK ---
 if (!isLoggedIn() || $_SESSION['role'] !== 'SELLER') {
     return sendError("Unauthorized", 401);
+}
+
+// Check auction feature flag
+$featureModel = new Feature($conn);
+$auction_access = $featureModel->checkAccess($_SESSION['user_id'], 'auction_enabled');
+if (!$auction_access['allowed']) {
+    header('Content-Type: application/json');
+    echo json_encode([
+        'ok' => false,
+        'feature_disabled' => true,
+        'message' => $auction_access['reason'] ?? 'Fitur lelang dinonaktifkan'
+    ]);
+    exit;
 }
 
 $user_id = $_SESSION['user_id'];

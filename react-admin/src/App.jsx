@@ -8,6 +8,7 @@ import AuctionManagement from './auction/pages/AuctionManagement';
 import CreateAuction from './auction/pages/CreateAuction';
 import MyBids from './auction/pages/MyBids';
 import Chat from './chat/pages/Chat';
+import FeatureDisabled from './pages/FeatureDisabled';
 import Layout from './Layout';
 
 // Komponen Proteksi dengan Role-Based Access
@@ -153,6 +154,9 @@ function App() {
           </Layout>
         </ProtectedRoute>
       } />
+
+      {/* Feature Disabled Page */}
+      <Route path="/feature-disabled" element={<FeatureDisabled />} />
 
       {/* Redirect sembarang URL yang salah ke Home */}
       <Route path="*" element={<Navigate to="/" replace />} />
