@@ -5,6 +5,7 @@ import BidForm from '../components/BidForm';
 import BidHistory from '../components/BidHistory';
 import { useWebSocket } from '../../shared/hooks/useWebSocket';
 import { useCountdown } from '../hooks/useCountdown';
+import { useAuctionCountdown } from '../hooks/useAuctionCountdown';
 
 const AuctionDetail = () => {
   const { auctionId } = useParams();
@@ -20,8 +21,8 @@ const AuctionDetail = () => {
   // Edit State
   const [editing, setEditing] = useState(false);
   const [editForm, setEditForm] = useState({
-    starting_price: '',
-    min_increment: ''
+    starting_price: auction?.starting_price || '',
+    min_increment: auction?.min_increment || ''
   });
 
   // User Info
@@ -38,6 +39,30 @@ const AuctionDetail = () => {
       loadAuctionDetail();
     }
   });
+
+  const shouldStartCountdown = auction?.status === 'active' && auction.bid_count > 0;
+
+  const bidTargetTime = auction?.last_bid_time
+    ? new Date(auction.last_bid_time).getTime() + 15000
+    : new Date().getTime() + 15000;
+
+  const { seconds, formattedTime: activeCountdown, reset: resetCountdown } = useAuctionCountdown(
+    bidTargetTime,
+    async () => {
+      try {
+        // stop auction otomatis
+        await stopAuction(auction.auction_id, localStorage.getItem('adminToken'));
+        // update UI
+        setAuction(prev => ({ ...prev, status: 'ended' }));
+        // reload detail kalau perlu
+        await loadAuctionDetail();
+        alert('Lelang berakhir otomatis!');
+      } catch (err) {
+        console.error('Gagal menghentikan lelang otomatis:', err);
+      }
+    },
+    true 
+  );
 
   useEffect(() => {
     checkFeatureFlag();
@@ -68,6 +93,7 @@ const AuctionDetail = () => {
   // Real-time update via WebSocket
   useEffect(() => {
     if (lastMessage?.type === 'auction_bid_update' && lastMessage.auction_id === parseInt(auctionId)) {
+      resetCountdown(); 
       loadAuctionDetail();
     }
   }, [lastMessage, auctionId]);
@@ -103,6 +129,16 @@ const AuctionDetail = () => {
     if (lastMessage?.type === 'auction_cancelled' && lastMessage.auction_id === parseInt(auctionId)) {
       setAuction(prev => ({ ...prev, status: 'cancelled' }));
       alert('Lelang telah dibatalkan');
+    }
+  }, [lastMessage, auctionId]);
+
+  useEffect(() => {
+    if (lastMessage?.type === 'auction_updated' && lastMessage.auction_id === parseInt(auctionId)) {
+      setAuction(prev => ({
+        ...prev,
+        starting_price: lastMessage.starting_price ?? prev.starting_price,
+        min_increment: lastMessage.min_increment ?? prev.min_increment,
+      }));
     }
   }, [lastMessage, auctionId]);
 
@@ -207,8 +243,8 @@ const AuctionDetail = () => {
   // Edit Handlers
   const handleEditClick = () => {
     setEditForm({
-      starting_price: auction.starting_price,
-      min_increment: auction.min_increment
+      starting_price: auction?.starting_price,
+      min_increment: auction?.min_increment
     });
     setEditing(true);
   };
@@ -221,7 +257,7 @@ const AuctionDetail = () => {
       await editAuction({
         auction_id: auction.auction_id,
         starting_price: parseFloat(editForm.starting_price),
-        min_increment: parseFloat(editForm.min_increment)
+        min_increment: parseFloat(editForm.min_increment),
       }, token);
 
       alert('Lelang berhasil diperbarui');
@@ -344,6 +380,16 @@ const AuctionDetail = () => {
                   required
                 />
               </div>
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
+                <textarea
+                  value={editForm.description}
+                  onChange={e => setEditForm({ ...editForm, description: e.target.value })}
+                  className="w-full p-2 border rounded"
+                  rows={4}
+                  placeholder="Optional"
+                />
+              </div>
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
@@ -383,11 +429,20 @@ const AuctionDetail = () => {
             </h2>
 
             <div className="mb-4">
-              <div className="text-sm text-gray-500 mb-1">
-                Toko
-              </div>
+              <div className="text-sm text-gray-500 mb-1">Toko</div>
               <div className="text-lg font-semibold text-gray-800">
-                {auction.store_name}
+                {userRole === 'BUYER' ? (
+                  <a
+                    href={`http://localhost:8080/store/detail.php?id=${auction.store_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    {auction.store_name}
+                  </a>
+                ) : (
+                  auction.store_name
+                )}
               </div>
             </div>
 
@@ -451,14 +506,13 @@ const AuctionDetail = () => {
                   {auction.status === 'scheduled' ? 'Mulai Dalam' : 'Berakhir Dalam'}
                 </div>
                 <div className={`text-lg font-bold ${auction.status === 'active' ? 'text-red-600' : 'text-gray-800'}`}>
-                  {formattedTime}
+                  {auction.status === 'active' ? activeCountdown : formattedTime}
                 </div>
               </div>
             </div>
 
             <div className="mt-4 text-xs text-gray-500">
               <div>Mulai: {formatDate(auction.start_time)}</div>
-              <div>Selesai: {formatDate(auction.end_time)}</div>
             </div>
           </div>
 

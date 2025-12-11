@@ -7,7 +7,11 @@
     "start": "node src/index.js",
     "dev": "nodemon src/index.js"
   },
-  "keywords": ["websocket", "express", "admin"],
+  "keywords": [
+    "websocket",
+    "express",
+    "admin"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
@@ -19,9 +23,9 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "mysql2": "^3.6.5",
+    "node-fetch": "^2.7.0",
     "redis": "^4.6.11",
     "socket.io": "^4.6.1",
-    "web-push": "^3.6.7",
     "ws": "^8.14.2"
   },
   "devDependencies": {

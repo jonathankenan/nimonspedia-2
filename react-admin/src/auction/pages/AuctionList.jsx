@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useWebSocket } from '../../shared/hooks/useWebSocket';
 import { fetchAuctions, fetchSellerActiveAuction } from '../api/auctionApi';
 import AuctionCard from '../components/AuctionCard';
 
@@ -56,6 +57,7 @@ const AuctionList = () => {
   //     checkSellerAuction();
   //   }
   // }, [userRole, navigate]);
+  const { lastMessage } = useWebSocket();
 
   const LIMIT = 12;
 
@@ -65,7 +67,6 @@ const AuctionList = () => {
       setDebouncedSearch(searchQuery);
       setOffset(0); // Reset pagination on search change
     }, 500);
-
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
@@ -74,44 +75,47 @@ const AuctionList = () => {
     setOffset(0);
   }, [activeTab]);
 
+  // Load auctions
   useEffect(() => {
-    if (userRole !== 'SELLER') {
       loadAuctions();
+  }, [offset, activeTab, debouncedSearch]);
+
+  // Handle live update: new auction
+  useEffect(() => {
+    if (lastMessage?.type === 'auction_created') {
+      // Masukkan auction baru ke list jika sesuai tab saat ini
+      if (lastMessage.status === activeTab) {
+        setAuctions(prev => [lastMessage, ...prev]);
+      }
     }
-  }, [offset, activeTab, debouncedSearch, userRole]);
+  }, [lastMessage, activeTab]);
 
   const loadAuctions = async () => {
     try {
       setLoading(true);
       setError('');
 
-      // Pass filters to API
-      // Note: Assuming fetchAuctions supports status and search params
-      // If not, we might need to filter client-side or update API
+      // fetch tanpa status
       const response = await fetchAuctions(LIMIT, offset, {
-        status: activeTab,
         search: debouncedSearch
       });
 
+      console.log(response);
+
       const data = response.data || response;
 
-      // Client-side filtering if API doesn't support it (fallback)
-      // This is a safeguard, ideally API handles this
-      let filteredData = data;
-      if (!response.filtered && (activeTab || debouncedSearch)) {
-        filteredData = data.filter(auction => {
-          const statusMatch = activeTab === 'active'
-            ? auction.status === 'active'
-            : auction.status === 'scheduled';
+      // Tentukan status real-time client-side
+      const filteredData = data
+        // pastikan hanya yang active/scheduled
+        .filter(a => a.status === 'active' || a.status === 'scheduled')
+        .filter(a => a.status === activeTab &&
+          (!debouncedSearch ||
+            a.product_name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+            a.store_name.toLowerCase().includes(debouncedSearch.toLowerCase()))
+        );
 
-          const searchMatch = !debouncedSearch ||
-            auction.product_name.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
-            auction.store_name.toLowerCase().includes(debouncedSearch.toLowerCase());
-
-          return statusMatch && searchMatch;
-        });
-      }
-
+      console.log(filteredData);
+      
       if (offset === 0) {
         setAuctions(filteredData);
       } else {
@@ -140,23 +144,22 @@ const AuctionList = () => {
     <div className="p-5 max-w-7xl mx-auto">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-brand mb-2">
-          🔨 Daftar Lelang
+          Daftar Lelang
         </h1>
         <p className="text-gray-500 m-0">
           Jelajahi produk yang tersedia untuk dilelang
         </p>
       </div>
 
-      {/* Controls Section: Tabs & Search */}
+      {/* Tabs & Search */}
       <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
-        {/* Tabs */}
         <div className="flex bg-gray-100 p-1 rounded-lg">
           <button
             onClick={() => setActiveTab('active')}
             className={`px-6 py-2 rounded-md text-sm font-semibold transition-all ${activeTab === 'active'
               ? 'bg-white text-brand shadow-sm'
               : 'text-gray-500 hover:text-gray-700'
-              }`}
+            }`}
           >
             Sedang Berlangsung
           </button>
@@ -165,13 +168,12 @@ const AuctionList = () => {
             className={`px-6 py-2 rounded-md text-sm font-semibold transition-all ${activeTab === 'scheduled'
               ? 'bg-white text-brand shadow-sm'
               : 'text-gray-500 hover:text-gray-700'
-              }`}
+            }`}
           >
             Akan Datang
           </button>
         </div>
 
-        {/* Search */}
         <div className="relative w-full md:w-72">
           <input
             type="text"

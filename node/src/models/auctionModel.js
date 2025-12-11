@@ -68,37 +68,46 @@ class AuctionModel {
 
   static async getActiveAuctions(limit = 20, offset = 0) {
     try {
-      await this.updateAuctionStatuses();
-
+      // Ambil semua auction yang belum dibatalkan atau dihentikan
       const [rows] = await dbPool.query(`
-SELECT
-a.auction_id,
-  a.product_id,
-  a.starting_price,
-  a.current_price,
-  a.min_increment,
-  a.quantity,
-  a.start_time,
-  a.end_time,
-  a.status,
-  a.winner_id,
-  p.product_name,
-  p.price AS original_price,
-    p.main_image_path,
-    s.store_id,
-    s.store_name,
-    u.name AS seller_name,
-      (SELECT COUNT(*) FROM auction_bids WHERE auction_id = a.auction_id) AS bid_count
+        SELECT
+          a.auction_id,
+          a.product_id,
+          a.starting_price,
+          a.current_price,
+          a.min_increment,
+          a.quantity,
+          a.start_time,
+          a.status,
+          a.winner_id,
+          p.product_name,
+          p.price AS original_price,
+          p.main_image_path,
+          s.store_id,
+          s.store_name,
+          u.name AS seller_name,
+          (SELECT COUNT(*) FROM auction_bids WHERE auction_id = a.auction_id) AS bid_count
         FROM auctions a
         JOIN products p ON a.product_id = p.product_id
         JOIN stores s ON p.store_id = s.store_id
         JOIN users u ON s.user_id = u.user_id
-        WHERE a.status IN('active', 'scheduled')
+        WHERE a.status NOT IN ('stopped', 'cancelled')
         ORDER BY a.start_time DESC
-LIMIT ? OFFSET ?
-  `, [limit, offset]);
+        LIMIT ? OFFSET ?
+      `, [limit, offset]);
 
-      return rows;
+      // Tentukan status real-time berdasarkan start_time
+      const now = new Date();
+      const auctions = rows.map(a => {
+        const startTime = new Date(a.start_time);
+
+        let status = 'scheduled';
+        if (startTime <= now) status = 'active';
+
+        return { ...a, status };
+      });
+
+      return auctions;
     } catch (error) {
       console.error('Error fetching active auctions:', error);
       throw error;
@@ -111,31 +120,33 @@ LIMIT ? OFFSET ?
 
       const [rows] = await dbPool.query(`
         SELECT
-a.auction_id,
-  a.product_id,
-  a.starting_price,
-  a.current_price,
-  a.min_increment,
-  a.quantity,
-  a.start_time,
-  a.end_time,
-  a.status,
-  a.winner_id,
-  a.created_at,
-  p.product_name,
-  p.description,
-  p.price AS original_price,
-    p.main_image_path,
-    s.store_id,
-    s.store_name,
-    u.user_id AS seller_id,
-      u.name AS seller_name
+          a.auction_id,
+          a.product_id,
+          a.starting_price,
+          a.current_price,
+          a.min_increment,
+          a.quantity,
+          a.start_time,
+          a.end_time,
+          a.status,
+          a.winner_id,
+          a.created_at,
+          p.product_name,
+          p.description,
+          p.price AS original_price,
+          p.main_image_path,
+          s.store_id,
+          s.store_name,
+          u.user_id AS seller_id,
+          u.name AS seller_name,
+          -- ambil waktu bid terakhir
+          (SELECT MAX(bid_time) FROM auction_bids WHERE auction_id = a.auction_id) AS last_bid_time
         FROM auctions a
         JOIN products p ON a.product_id = p.product_id
         JOIN stores s ON p.store_id = s.store_id
         JOIN users u ON s.user_id = u.user_id
         WHERE a.auction_id = ?
-  `, [auctionId]);
+      `, [auctionId]);
 
       if (rows.length === 0) return null;
       return rows[0];
@@ -144,6 +155,7 @@ a.auction_id,
       throw error;
     }
   }
+
 
   static async getBidHistory(auctionId, limit = 50) {
     try {

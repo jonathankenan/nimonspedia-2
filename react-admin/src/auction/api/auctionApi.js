@@ -62,28 +62,29 @@ export const fetchBidHistory = async (auctionId, limit = 50) => {
 /**
  * Place a bid (requires authentication)
  */
-export const placeBid = async (auctionId, bidAmount, token) => {
-  const res = await fetch('/api/auction/place-bid.php', {
-    method: 'POST',
-    credentials: 'include', // penting agar session cookie ikut
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}` // optional kalau pakai token
-    },
-    body: JSON.stringify({ auction_id: auctionId, bid_amount: bidAmount })
-  });
+export const placeBid = async (auctionId, bidAmount) => {
+  try {
+    const res = await axios.post(
+      `${API_BASE}/${auctionId}/bid`,
+      { bid_amount: bidAmount },
+      { withCredentials: true } 
+    );
 
-  const data = await res.json();
-  
-  if (data.feature_disabled) {
-    throw { feature_disabled: true, message: data.message };
-  }
-  
-  if (!res.ok) {
-    throw data;
-  }
+    const data = await res.json();
+    
+    if (data.feature_disabled) {
+      throw { feature_disabled: true, message: data.message };
+    }
+    
+    if (!res.ok) {
+      throw data;
+    }
 
-  return data;
+    return data;
+  } catch (error) {
+    console.error("Error placing bid:", error.response?.data || error);
+    throw error;
+  }
 };
 
 /**
@@ -181,29 +182,18 @@ export const fetchSellerProducts = async (token, id = null) => {
  */
 export const createAuction = async (auctionData, token) => {
   try {
-    const response = await axios.post(
-      '/seller/api/create-auction.php',
-      auctionData,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-    
-    const data = response.data.data || response.data;
-    if (data.feature_disabled) {
-      throw { feature_disabled: true, message: data.message };
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Error creating auction:', error);
-    if (error.response?.data?.feature_disabled) {
-      throw { feature_disabled: true, message: error.response.data.message };
-    }
-    throw error.response?.data || error;
+    const res = await fetch('/api/auction/create', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(auctionData)
+    });
+    return await res.json();
+  } catch (err) {
+    console.error("Failed to create auction:", err);
+    return { success: false, error: err.message };
   }
 };
 
@@ -212,29 +202,19 @@ export const createAuction = async (auctionData, token) => {
  */
 export const editAuction = async (auctionData, token) => {
   try {
-    const response = await axios.put(
-      '/seller/api/edit-auction.php',
-      auctionData,
-      {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-    
-    const data = response.data.data || response.data;
-    if (data.feature_disabled) {
-      throw { feature_disabled: true, message: data.message };
-    }
-    
-    return data;
-  } catch (error) {
-    console.error('Error editing auction:', error);
-    if (error.response?.data?.feature_disabled) {
-      throw { feature_disabled: true, message: error.response.data.message };
-    }
-    throw error.response?.data || error;
+    const res = await fetch(`${API_BASE}/${auctionData.auction_id}/edit`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify(auctionData)
+    });
+
+    return await res.json();
+  } catch (err) {
+    console.error("Failed to edit auction:", err);
+    return { success: false, error: err.message };
   }
 };
 
@@ -284,14 +264,13 @@ export const deleteAuction = async (auctionId, token) => {
  * Stop auction (Node.js API)
  */
 export const stopAuction = async (auctionId, token) => {
-  const res = await fetch('/api/auction/stop-auction.php', {
+  const res = await fetch(`${API_BASE}/${auctionId}/stop`, {
     method: 'POST',
-    credentials: 'include', // penting agar session cookie ikut
-    headers: {
+    credentials: 'include',
+    headers: { 
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}` // optional kalau pakai token
-    },
-    body: JSON.stringify({ auction_id: auctionId})
+      'Authorization': `Bearer ${token}`
+    }
   });
 
   const data = await res.json();
@@ -308,14 +287,13 @@ export const stopAuction = async (auctionId, token) => {
 };
 
 export const cancelAuction = async (auctionId, token) => {
-  const res = await fetch('/api/auction/cancel-auction.php', {
+  const res = await fetch(`${API_BASE}/${auctionId}/cancel`, {
     method: 'POST',
-    credentials: 'include', // penting agar session cookie ikut
-    headers: {
+    credentials: 'include',
+    headers: { 
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}` // optional kalau pakai token
-    },
-    body: JSON.stringify({ auction_id: auctionId})
+      'Authorization': `Bearer ${token}`
+    }
   });
 
   const data = await res.json();

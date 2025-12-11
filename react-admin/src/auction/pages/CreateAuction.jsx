@@ -127,16 +127,6 @@ const CreateAuction = () => {
             return;
         }
 
-        // if (!formData.end_time) {
-        //     setError('Waktu selesai wajib diisi');
-        //     return;
-        // }
-
-        // if (new Date(formData.end_time) <= new Date(formData.start_time)) {
-        //     setError('Waktu selesai harus lebih besar dari waktu mulai');
-        //     return;
-        // }
-
         try {
             setSubmitting(true);
 
@@ -150,30 +140,10 @@ const CreateAuction = () => {
             };
 
             let result;
-            if (token) {
-                result = await createAuction(auctionData, token);
-            } else {
-                const response = await fetch('/seller/api/create-auction.php', {
-                    method: 'POST',
-                    credentials: 'include',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(auctionData)
-                });
-                const text = await response.text();
-                console.log('Raw response:', text);
+            result = await createAuction(auctionData, token);
 
-                let responseData;
-                try {
-                    responseData = JSON.parse(text);
-                } catch (e) {
-                    throw new Error('Server returned invalid JSON: ' + text.substring(0, 100));
-                }
-
-                if (!response.ok) throw new Error(responseData.error || 'Failed to create auction');
-                result = responseData.data || responseData;
-            }
-
-            const newAuctionId = result.auction_id;
+            console.log(result);
+            const newAuctionId = result.data?.auction_id || result.auction_id;
             if (newAuctionId) {
                 alert('Lelang berhasil dibuat!');
                 navigate(`/auction/${newAuctionId}`);
