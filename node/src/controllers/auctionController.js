@@ -178,9 +178,6 @@ class AuctionController {
 
   static async stopAuction(req, res) {
     const auctionId = Number(req.params.auctionId);
-    const userId = req.user.user_id;
-    const role = req.user.role;
-
     if (!auctionId) {
       return res.status(400).json({ error: "Missing auction_id" });
     }
@@ -190,10 +187,17 @@ class AuctionController {
 
     try {
       // --- 1. Update status auction ---
-      await conn.query(
-        `UPDATE auctions SET status = 'ended', end_time = NOW() WHERE auction_id = ?`,
+      const [updateResult] = await conn.query(
+        `UPDATE auctions 
+        SET status = 'ended', end_time = NOW() 
+        WHERE auction_id = ? AND status != 'ended'`,
         [auctionId]
       );
+
+      if (updateResult.affectedRows === 0) {
+        await conn.commit();
+        return res.json({ success: true, message: 'Auction already stopped' });
+      }
 
       // --- 2. Ambil highest bid ---
       const [highestBidRows] = await conn.query(
@@ -236,6 +240,24 @@ class AuctionController {
           [winnerId, storeId, amount, shippingAddress]
         );
         orderId = orderResult.insertId;
+
+        const [auctionRows] = await conn.query(
+          `SELECT product_id, quantity FROM auctions WHERE auction_id = ?`,
+          [auctionId]
+        );
+
+        const auctionData = auctionRows[0];
+
+        if (auctionData) {
+          const { product_id, quantity } = auctionData;
+          const subtotal = amount * quantity; // total price item
+
+          await conn.query(
+            `INSERT INTO order_items (order_id, product_id, quantity, price_at_order, subtotal)
+            VALUES (?, ?, ?, ?, ?)`,
+            [orderId, product_id, quantity, amount, subtotal]
+          );
+        }
 
         // --- 6. Update auction dengan winner_id ---
         await conn.query(

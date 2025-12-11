@@ -19,6 +19,7 @@ const AuctionDetail = () => {
   const { lastMessage } = useWebSocket();
   const [balance, setBalance] = useState(0);
   const [userId, setUserId] = useState(null);
+  const [hasStopped, setHasStopped] = useState(false);
 
   // Edit State
   const [editing, setEditing] = useState(false);
@@ -42,6 +43,17 @@ const AuctionDetail = () => {
     }
   });
 
+  const handleAutoStop = async () => {
+    if (hasStopped) return;
+    setHasStopped(true);
+
+    try {
+      await stopAuction(auction.auction_id, localStorage.getItem('adminToken'));
+      setAuction(prev => ({ ...prev, status: 'ended' }));
+      await loadAuctionDetail();
+    } catch (err) { console.error(err); }
+  };
+
   const shouldStartCountdown = auction?.status === 'active' && auction.bid_count > 0;
 
   const bidTargetTime = auction?.last_bid_time
@@ -51,6 +63,8 @@ const AuctionDetail = () => {
   const { seconds, formattedTime: activeCountdown, reset: resetCountdown } = useAuctionCountdown(
     bidTargetTime,
     async () => {
+      if (hasStopped) return;
+      setHasStopped(true);
       try {
         // stop auction otomatis
         await stopAuction(auction.auction_id, localStorage.getItem('adminToken'));
