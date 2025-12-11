@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { toast } from "react-toastify";
+import { confirmToast } from '../../shared/utils/confirmToast';
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchAuctionDetail, placeBid, cancelAuction, stopAuction, editAuction } from '../api/auctionApi';
 import BidForm from '../components/BidForm';
@@ -57,7 +58,6 @@ const AuctionDetail = () => {
         setAuction(prev => ({ ...prev, status: 'ended' }));
         // reload detail kalau perlu
         await loadAuctionDetail();
-        toast.success('Lelang berakhir otomatis!');
       } catch (err) {
         console.error('Gagal menghentikan lelang otomatis:', err);
       }
@@ -178,29 +178,31 @@ const AuctionDetail = () => {
   };
 
   const handleCancelAuction = async () => {
-    if (!window.confirm('Apakah Anda yakin ingin membatalkan lelang ini?')) return;
-
-    const token = localStorage.getItem('adminToken');
-    try {
-      await cancelAuction(auction.auction_id, token);
-      loadAuctionDetail();
-    } catch (err) {
-      toast.error('Gagal membatalkan lelang');
-      console.error(err);
-    }
+    confirmToast('Apakah Anda yakin ingin membatalkan lelang ini?', async () => {
+      const token = localStorage.getItem('adminToken');
+      try {
+        await cancelAuction(auction.auction_id, token);
+        loadAuctionDetail();
+        toast.success('Lelang berhasil dibatalkan');
+      } catch (err) {
+        toast.error('Gagal membatalkan lelang');
+        console.error(err);
+      }
+    });
   };
 
   const handleStopAuction = async () => {
-    if (!window.confirm('Apakah Anda yakin ingin menghentikan lelang ini sekarang? Pemenang saat ini akan menang.')) return;
-
-    const token = localStorage.getItem('adminToken');
-    try {
-      await stopAuction(auction.auction_id, token);
-      loadAuctionDetail();
-    } catch (err) {
-      toast.error(`Gagal menghentikan lelang: ${err.error || err.message || 'Unknown error'}`);
-      console.error('Error Stopping:', err);
-    }
+    confirmToast('Apakah Anda yakin ingin menghentikan lelang ini sekarang? Pemenang saat ini akan menang.', async () => {
+      const token = localStorage.getItem('adminToken');
+      try {
+        await stopAuction(auction.auction_id, token);
+        loadAuctionDetail();
+        toast.success('Lelang berhasil dihentikan');
+      } catch (err) {
+        toast.error(`Gagal menghentikan lelang: ${err.error || err.message || 'Unknown error'}`);
+        console.error(err);
+      }
+    });
   };
 
   // Edit Handlers
