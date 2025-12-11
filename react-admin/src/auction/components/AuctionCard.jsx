@@ -16,8 +16,9 @@ const AuctionCard = ({ auction }) => {
     bid_count
   } = auction;
 
-  const targetTime = status === 'scheduled' ? start_time : end_time;
-  const { formattedTime } = useCountdown(targetTime);
+  const showCountdown = status === 'scheduled' || status === 'active';
+  const targetTime = status === 'scheduled' ? start_time : auction.last_bid_time; 
+  const { formattedTime } = useCountdown(showCountdown ? targetTime : null);
 
   const handleClick = () => {
     navigate(`/auction/${auction_id}`);
@@ -104,7 +105,7 @@ const AuctionCard = ({ auction }) => {
           <div
             className={`font-semibold ${status === 'active' ? 'text-emerald-500' : 'text-gray-500'}`}
           >
-            {getTimeLabel()}: {formattedTime}
+            {getTimeLabel()}: {showCountdown ? formattedTime : '-'}
           </div>
         </div>
       </div>

@@ -471,7 +471,6 @@ const AuctionDetail = () => {
 
             <div className="mt-4 text-xs text-gray-500">
               <div>Mulai: {formatDate(auction.start_time)}</div>
-              <div>Selesai: {formatDate(auction.end_time)}</div>
             </div>
           </div>
 

@@ -20,6 +20,15 @@ app.post('/notify_bid', (req, res) => {
         bidder_name: data.bidder_name,
         timestamp: new Date().toISOString()
       });
+      if (data.balance_update) {
+        broadcastMessage({
+          type: 'balance_update',
+          user_id: data.balance_update.user_id,
+          balance: data.balance_update.balance,
+          timestamp: new Date().toISOString()
+        });
+      }
+
       break;
     case 'auction_stopped':
       broadcastMessage({

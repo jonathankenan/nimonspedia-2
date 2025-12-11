@@ -136,6 +136,13 @@ class AuctionController {
 
       await conn.commit();
 
+      // Ambil balance terbaru
+      const [[userRow]] = await conn.query(
+        `SELECT balance FROM users WHERE user_id = ?`,
+        [userId]
+      );
+      const newBalance = userRow.balance;
+
       // --- 7. Notify Node.js WebSocket ---
       try {
         await fetch('http://node:3003/notify_bid', {
@@ -145,7 +152,13 @@ class AuctionController {
             type: 'auction_bid_update',
             auction_id: auctionId,
             current_price: bid_amount,
-            bidder_name: req.user.name
+            bidder_name: req.user.name,
+
+            // balance update DISERTAKAN di dalamnya
+            balance_update: {
+              user_id: userId,
+              balance: newBalance
+            }
           })
         });
       } catch (err) {
