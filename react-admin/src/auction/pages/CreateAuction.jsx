@@ -22,7 +22,6 @@ const CreateAuction = () => {
     const preSelectedProductId = queryParams.get('productId');
 
     useEffect(() => {
-        checkFeatureFlag();
         if (!preSelectedProductId) {
             setError('Produk tidak ditemukan. Silakan pilih produk dari halaman Kelola Produk.');
             setLoading(false);
@@ -30,21 +29,6 @@ const CreateAuction = () => {
         }
         loadProduct();
     }, [preSelectedProductId]);
-
-    const checkFeatureFlag = async () => {
-        try {
-            const response = await fetch('/api/features/check?feature=auction_enabled', {
-                credentials: 'include'
-            });
-            const data = await response.json();
-            if (!data.enabled) {
-                const reason = data.reason || 'Fitur lelang sedang dinonaktifkan';
-                window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
-            }
-        } catch (error) {
-            console.error('Failed to check feature flag:', error);
-        }
-    };
 
     const loadProduct = async () => {
         try {
@@ -151,11 +135,6 @@ const CreateAuction = () => {
                 throw new Error('Gagal mendapatkan ID lelang baru');
             }
         } catch (err) {
-            if (err.feature_disabled) {
-                const reason = err.message || 'Fitur lelang sedang dinonaktifkan';
-                window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
-                return;
-            }
             setError(err.message || 'Gagal membuat lelang');
         } finally {
             setSubmitting(false);

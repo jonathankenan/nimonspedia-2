@@ -1,29 +1,11 @@
 const dbPool = require('../config/db'); 
 const AuctionModel = require('../models/auctionModel');
-const checkAccess = require('../utils/featureAccess'); // (kenan) [ADDED] Import feature access helper
 const fetch = require('node-fetch');
 const { broadcastMessage } = require('../utils/websocket');
 
 class AuctionController {
-  
-  // Helper internal untuk menangani response error feature flag
-  static handleFeatureDenied(res, access) {
-    return res.status(403).json({ 
-      error: access.reason,
-      redirect_url: `/disabled.php?reason=${encodeURIComponent(access.reason)}`
-    });
-  }
-
   static async getAuctions(req, res) {
     try {
-      // [ADDED] Feature Flag Check
-      const userId = req.user ? req.user.user_id : null;
-      const access = await checkAccess(userId, 'auction_enabled');
-      
-      if (!access.allowed) {
-        return AuctionController.handleFeatureDenied(res, access);
-      }
-
       const limit = parseInt(req.query.limit) || 20;
       const offset = parseInt(req.query.offset) || 0;
 
@@ -41,14 +23,6 @@ class AuctionController {
 
   static async getAuctionDetail(req, res) {
     try {
-      // [ADDED] Feature Flag Check
-      const userId = req.user ? req.user.user_id : null;
-      const access = await checkAccess(userId, 'auction_enabled');
-      
-      if (!access.allowed) {
-        return AuctionController.handleFeatureDenied(res, access);
-      }
-
       const { auctionId } = req.params;
 
       const auction = await AuctionModel.getAuctionDetail(auctionId);
@@ -69,14 +43,6 @@ class AuctionController {
 
   static async getBidHistory(req, res) {
     try {
-      // [ADDED] Feature Flag Check
-      const userId = req.user ? req.user.user_id : null;
-      const access = await checkAccess(userId, 'auction_enabled');
-      
-      if (!access.allowed) {
-        return AuctionController.handleFeatureDenied(res, access);
-      }
-
       const { auctionId } = req.params;
       const limit = parseInt(req.query.limit) || 50;
 
@@ -111,17 +77,6 @@ class AuctionController {
     await conn.beginTransaction();
 
     try {
-      // [ADDED] Feature Flag Check
-      const userId = req.user.user_id;
-      const access = await checkAccess(userId, 'auction_enabled');
-      
-      if (!access.allowed) {
-        return AuctionController.handleFeatureDenied(res, access);
-      }
-
-      const { auctionId } = req.params;
-      const { bidAmount } = req.body;
-      const bidderId = req.user.user_id;
       // --- 1. Ambil auction + seller ---
       const [auctionRows] = await conn.query(`
         SELECT u.user_id AS seller_id, a.status, a.current_price, a.min_increment, a.starting_price
@@ -238,14 +193,6 @@ class AuctionController {
     await conn.beginTransaction();
 
     try {
-      // [ADDED] Feature Flag Check
-      const userId = req.user.user_id;
-      const access = await checkAccess(userId, 'auction_enabled');
-      
-      if (!access.allowed) {
-        return AuctionController.handleFeatureDenied(res, access);
-      }
-
       // --- 1. Update status auction ---
       await conn.query(
         `UPDATE auctions SET status = 'ended', end_time = NOW() WHERE auction_id = ?`,
@@ -414,13 +361,7 @@ class AuctionController {
 
   static async getUserActiveBids(req, res) {
     try {
-      // [ADDED] Feature Flag Check
       const userId = req.user.user_id;
-      const access = await checkAccess(userId, 'auction_enabled');
-      
-      if (!access.allowed) {
-        return AuctionController.handleFeatureDenied(res, access);
-      }
 
       const bids = await AuctionModel.getUserActiveBids(userId);
 
@@ -436,14 +377,7 @@ class AuctionController {
 
   static async getUserBalance(req, res) {
     try {
-      // [ADDED] Feature Flag Check
       const userId = req.user.user_id;
-      const access = await checkAccess(userId, 'auction_enabled');
-      
-      if (!access.allowed) {
-        return AuctionController.handleFeatureDenied(res, access);
-      }
-
       const balance = await AuctionModel.getUserBalance(userId);
 
       res.json({

@@ -13,13 +13,6 @@ export const fetchAuctions = async (limit = 20, offset = 0) => {
     return response.data;
   } catch (error) {
     console.error('Error fetching auctions:', error);
-    if (error.response?.status === 403 && error.response?.data?.error) {
-      throw { 
-        feature_disabled: true, 
-        message: error.response.data.error,
-        response: error.response 
-      };
-    }
     throw error;
   }
 };
@@ -33,13 +26,6 @@ export const fetchAuctionDetail = async (auctionId) => {
     return response.data.data;
   } catch (error) {
     console.error('Error fetching auction detail:', error);
-    if (error.response?.status === 403 && error.response?.data?.error) {
-      throw { 
-        feature_disabled: true, 
-        message: error.response.data.error,
-        response: error.response 
-      };
-    }
     throw error;
   }
 };
@@ -70,17 +56,7 @@ export const placeBid = async (auctionId, bidAmount) => {
       { withCredentials: true } 
     );
 
-    const data = await res.json();
-    
-    if (data.feature_disabled) {
-      throw { feature_disabled: true, message: data.message };
-    }
-    
-    if (!res.ok) {
-      throw data;
-    }
-
-    return data;
+    return res.data;
   } catch (error) {
     console.error("Error placing bid:", error.response?.data || error);
     throw error;
@@ -140,18 +116,9 @@ export const fetchSellerAuctions = async (token) => {
         }
       }
     );
-    
-    const data = response.data.data || response.data;
-    if (data.feature_disabled) {
-      throw { feature_disabled: true, message: data.message };
-    }
-    
-    return data;
+    return response.data.data || response.data;
   } catch (error) {
     console.error('Error fetching seller auctions:', error);
-    if (error.response?.data?.feature_disabled) {
-      throw { feature_disabled: true, message: error.response.data.message };
-    }
     throw error.response?.data || error;
   }
 };
@@ -272,18 +239,7 @@ export const stopAuction = async (auctionId, token) => {
       'Authorization': `Bearer ${token}`
     }
   });
-
-  const data = await res.json();
-  
-  if (data.feature_disabled) {
-    throw { feature_disabled: true, message: data.message };
-  }
-  
-  if (!res.ok) {
-    throw data;
-  }
-
-  return data;
+  return res.json();
 };
 
 export const cancelAuction = async (auctionId, token) => {
@@ -295,16 +251,5 @@ export const cancelAuction = async (auctionId, token) => {
       'Authorization': `Bearer ${token}`
     }
   });
-
-  const data = await res.json();
-  
-  if (data.feature_disabled) {
-    throw { feature_disabled: true, message: data.message };
-  }
-  
-  if (!res.ok) {
-    throw data;
-  }
-
-  return data;
+  return res.json();
 };

@@ -28,7 +28,6 @@ app.post('/notify_bid', (req, res) => {
           timestamp: new Date().toISOString()
         });
       }
-
       break;
     case 'auction_stopped':
       broadcastMessage({

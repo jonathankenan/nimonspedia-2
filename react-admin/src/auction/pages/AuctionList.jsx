@@ -14,49 +14,6 @@ const AuctionList = () => {
   const [activeTab, setActiveTab] = useState('active'); // 'active' or 'scheduled'
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-
-  const userRole = localStorage.getItem('userRole');
-
-  // Check feature flag on mount
-  useEffect(() => {
-    checkFeatureFlag();
-  }, []);
-
-  const checkFeatureFlag = async () => {
-    try {
-      const response = await fetch('/api/features/check?feature=auction_enabled', {
-        credentials: 'include'
-      });
-      const data = await response.json();
-      if (!data.enabled) {
-        const reason = data.reason || 'Fitur lelang sedang dinonaktifkan';
-        window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
-      }
-    } catch (error) {
-      console.error('Failed to check feature flag:', error);
-    }
-  };
-
-  // Redirect Sellers
-  // useEffect(() => {
-  //   if (userRole === 'SELLER') {
-  //     const checkSellerAuction = async () => {
-  //       const token = localStorage.getItem('adminToken');
-  //       if (token) {
-  //         const auctionId = await fetchSellerActiveAuction(token);
-  //         if (auctionId) {
-  //           navigate(`/auction/${auctionId}`);
-  //         } else {
-  //           // If no active auction, redirect to dashboard or products
-  //           window.location.href = '/seller/kelola_produk.php';
-  //         }
-  //       } else {
-  //         window.location.href = '/seller/dashboard.php';
-  //       }
-  //     };
-  //     checkSellerAuction();
-  //   }
-  // }, [userRole, navigate]);
   const { lastMessage } = useWebSocket();
 
   const LIMIT = 12;
@@ -124,11 +81,6 @@ const AuctionList = () => {
 
       setHasMore(filteredData.length === LIMIT);
     } catch (err) {
-      if (err.feature_disabled) {
-        const reason = err.message || 'Fitur lelang sedang dinonaktifkan';
-        window.location.href = `/disabled.php?reason=${encodeURIComponent(reason)}`;
-        return;
-      }
       console.error('Error loading auctions:', err);
       setError('Gagal memuat lelang');
     } finally {

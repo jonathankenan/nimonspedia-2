@@ -26,6 +26,7 @@
     "node-fetch": "^2.7.0",
     "redis": "^4.6.11",
     "socket.io": "^4.6.1",
+    "web-push": "^3.6.7",
     "ws": "^8.14.2"
   },
   "devDependencies": {
