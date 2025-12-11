@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import Login from './admin/pages/Login';
 import Dashboard from './admin/pages/Dashboard';
 import AuctionList from './auction/pages/AuctionList';
@@ -91,76 +93,85 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
 
 function App() {
   return (
-    <Routes>
-      <Route path="/login" element={<Login />} />
+    <>
+      <ToastContainer
+        position="top-right"
+        autoClose={2500}
+        hideProgressBar={false}
+        pauseOnHover={false}
+        theme="light"
+      />
+      <Routes>
+        <Route path="/login" element={<Login />} />
 
-      {/* Admin Panel */}
-      <Route path="/" element={
-        <ProtectedRoute allowedRoles={['ADMIN']}>
-          <Dashboard />
-        </ProtectedRoute>
-      } />
+        {/* Admin Panel */}
+        <Route path="/" element={
+          <ProtectedRoute allowedRoles={['ADMIN']}>
+            <Dashboard />
+          </ProtectedRoute>
+        } />
 
-      {/* Auction Pages*/}
-      <Route path="/auction" element={
-        <ProtectedRoute allowedRoles={['BUYER']}>
-          <Layout>
-            <AuctionList />
-          </Layout>
-        </ProtectedRoute>
-      } />
+        {/* Auction Pages*/}
+        <Route path="/auction" element={
+          <ProtectedRoute allowedRoles={['BUYER']}>
+            <Layout>
+              <AuctionList />
+            </Layout>
+          </ProtectedRoute>
+        } />
 
-      {/* Auction Management */}
-      <Route path="/auction/management" element={
-        <ProtectedRoute allowedRoles={['SELLER']}>
-          <Layout>
-            <AuctionManagement />
-          </Layout>
-        </ProtectedRoute>
-      } />
+        {/* Auction Management */}
+        <Route path="/auction/management" element={
+          <ProtectedRoute allowedRoles={['SELLER']}>
+            <Layout>
+              <AuctionManagement />
+            </Layout>
+          </ProtectedRoute>
+        } />
 
 
-      <Route path="/auction/:auctionId" element={
-        <ProtectedRoute allowedRoles={['BUYER', 'SELLER']}>
-          <Layout>
-            <AuctionDetail />
-          </Layout>
-        </ProtectedRoute>
-      } />
+        <Route path="/auction/:auctionId" element={
+          <ProtectedRoute allowedRoles={['BUYER', 'SELLER']}>
+            <Layout>
+              <AuctionDetail />
+            </Layout>
+          </ProtectedRoute>
+        } />
 
-      {/* Buyer Bids */}
-      <Route path="/my-bids" element={
-        <ProtectedRoute allowedRoles={['BUYER']}>
-          <Layout>
-            <MyBids />
-          </Layout>
-        </ProtectedRoute>
-      } />
+        {/* Buyer Bids */}
+        <Route path="/my-bids" element={
+          <ProtectedRoute allowedRoles={['BUYER']}>
+            <Layout>
+              <MyBids />
+            </Layout>
+          </ProtectedRoute>
+        } />
 
-      {/* Seller Create Page */}
-      <Route path="/seller/auction/create" element={
-        <ProtectedRoute allowedRoles={['SELLER']}>
-          <Layout>
-            <CreateAuction />
-          </Layout>
-        </ProtectedRoute>
-      } />
+        {/* Seller Create Page */}
+        <Route path="/seller/auction/create" element={
+          <ProtectedRoute allowedRoles={['SELLER']}>
+            <Layout>
+              <CreateAuction />
+            </Layout>
+          </ProtectedRoute>
+        } />
 
-      {/* Chat Page (Buyer & Seller) */}
-      <Route path="/chat" element={
-        <ProtectedRoute allowedRoles={['BUYER', 'SELLER']}>
-          <Layout>
-            <Chat />
-          </Layout>
-        </ProtectedRoute>
-      } />
+        {/* Chat Page (Buyer & Seller) */}
+        <Route path="/chat" element={
+          <ProtectedRoute allowedRoles={['BUYER', 'SELLER']}>
+            <Layout>
+              <Chat />
+            </Layout>
+          </ProtectedRoute>
+        } />
 
-      {/* Feature Disabled Page */}
-      <Route path="/feature-disabled" element={<FeatureDisabled />} />
+        {/* Feature Disabled Page */}
+        <Route path="/feature-disabled" element={<FeatureDisabled />} />
 
-      {/* Redirect sembarang URL yang salah ke Home */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* Redirect sembarang URL yang salah ke Home */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </>
   );
 }
 

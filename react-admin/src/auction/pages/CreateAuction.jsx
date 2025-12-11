@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from "react-toastify";
 import { useNavigate } from 'react-router-dom';
 import { fetchSellerProducts, createAuction } from '../api/auctionApi';
 
@@ -129,7 +130,7 @@ const CreateAuction = () => {
             console.log(result);
             const newAuctionId = result.data?.auction_id || result.auction_id;
             if (newAuctionId) {
-                alert('Lelang berhasil dibuat!');
+                toast.success('Lelang berhasil dibuat!');
                 navigate(`/auction/${newAuctionId}`);
             } else {
                 throw new Error('Gagal mendapatkan ID lelang baru');

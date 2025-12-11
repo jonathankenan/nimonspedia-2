@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from "react-toastify";
 import { useParams, useNavigate } from 'react-router-dom';
 import { fetchAuctionDetail, placeBid, cancelAuction, stopAuction, editAuction } from '../api/auctionApi';
 import BidForm from '../components/BidForm';
@@ -56,7 +57,7 @@ const AuctionDetail = () => {
         setAuction(prev => ({ ...prev, status: 'ended' }));
         // reload detail kalau perlu
         await loadAuctionDetail();
-        alert('Lelang berakhir otomatis!');
+        toast.success('Lelang berakhir otomatis!');
       } catch (err) {
         console.error('Gagal menghentikan lelang otomatis:', err);
       }
@@ -105,14 +106,14 @@ const AuctionDetail = () => {
   useEffect(() => {
     if (lastMessage?.type === 'auction_stopped' && lastMessage.auction_id === parseInt(auctionId)) {
       setAuction(prev => ({ ...prev, status: 'ended' }));
-      alert('Lelang telah dihentikan');
+      toast.success('Lelang telah dihentikan');
     }
   }, [lastMessage, auctionId]);
 
   useEffect(() => {
     if (lastMessage?.type === 'auction_cancelled' && lastMessage.auction_id === parseInt(auctionId)) {
       setAuction(prev => ({ ...prev, status: 'cancelled' }));
-      alert('Lelang telah dibatalkan');
+      toast.success('Lelang telah dibatalkan');
     }
   }, [lastMessage, auctionId]);
 
@@ -166,10 +167,10 @@ const AuctionDetail = () => {
     try {
       setBidding(true);
       await placeBid(auction.auction_id, bidAmount, token);
-      alert('Penawaran berhasil ditempatkan!');
+      toast.success('Penawaran berhasil ditempatkan!');
       loadAuctionDetail(); // refresh current price & bid history
     } catch (err) {
-      alert(`Gagal menempatkan penawaran: ${err.error || err.message || 'Unknown error'}`);
+      toast.error(`Gagal menempatkan penawaran: ${err.error || err.message || 'Unknown error'}`);
       console.error('Error placing bid:', err);
     } finally {
       setBidding(false);
@@ -182,28 +183,26 @@ const AuctionDetail = () => {
     const token = localStorage.getItem('adminToken');
     try {
       await cancelAuction(auction.auction_id, token);
-      alert('Lelang berhasil dibatalkan');
-      loadAuctionDetail(); // refresh current price & bid history
+      loadAuctionDetail();
     } catch (err) {
-      alert('Gagal membatalkan lelang');
+      toast.error('Gagal membatalkan lelang');
       console.error(err);
     }
   };
 
   const handleStopAuction = async () => {
     if (!window.confirm('Apakah Anda yakin ingin menghentikan lelang ini sekarang? Pemenang saat ini akan menang.')) return;
-    
+
     const token = localStorage.getItem('adminToken');
     try {
       await stopAuction(auction.auction_id, token);
-      alert('Auction Stopped!');
-      loadAuctionDetail(); // refresh current price & bid history
+      loadAuctionDetail();
     } catch (err) {
-      alert(`Gagal berhenti: ${err.error || err.message || 'Unknown error'}`);
+      toast.error(`Gagal menghentikan lelang: ${err.error || err.message || 'Unknown error'}`);
       console.error('Error Stopping:', err);
     }
   };
-  
+
   // Edit Handlers
   const handleEditClick = () => {
     setEditForm({
@@ -223,11 +222,11 @@ const AuctionDetail = () => {
         min_increment: parseFloat(editForm.min_increment),
       }, token);
 
-      alert('Lelang berhasil diperbarui');
+      toast.success('Lelang berhasil diperbarui');
       setEditing(false);
       loadAuctionDetail();
     } catch (err) {
-      alert(`Gagal memperbarui lelang: ${err.error || err.message}`);
+      toast.error(`Gagal memperbarui lelang: ${err.error || err.message}`);
     }
   };
 

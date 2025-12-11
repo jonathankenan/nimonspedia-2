@@ -68,7 +68,6 @@ class AuctionModel {
 
   static async getActiveAuctions(limit = 20, offset = 0) {
     try {
-      // Ambil semua auction yang belum dibatalkan atau dihentikan
       const [rows] = await dbPool.query(`
         SELECT
           a.auction_id,
@@ -78,7 +77,8 @@ class AuctionModel {
           a.min_increment,
           a.quantity,
           a.start_time,
-          a.status,
+          a.end_time,
+          a.status AS db_status,
           a.winner_id,
           p.product_name,
           p.price AS original_price,
@@ -91,25 +91,26 @@ class AuctionModel {
         JOIN products p ON a.product_id = p.product_id
         JOIN stores s ON p.store_id = s.store_id
         JOIN users u ON s.user_id = u.user_id
-        WHERE a.status NOT IN ('stopped', 'cancelled')
         ORDER BY a.start_time DESC
         LIMIT ? OFFSET ?
       `, [limit, offset]);
 
-      // Tentukan status real-time berdasarkan start_time
       const now = new Date();
-      const auctions = rows.map(a => {
-        const startTime = new Date(a.start_time);
 
-        let status = 'scheduled';
-        if (startTime <= now) status = 'active';
+      const auctions = rows.map(a => {
+        const start = new Date(a.start_time);
+        const end = new Date(a.end_time);
+
+        let status = "scheduled";
+        if (now >= start && now < end) status = "active";
+        if (now >= end) status = "ended";
 
         return { ...a, status };
       });
 
       return auctions;
     } catch (error) {
-      console.error('Error fetching active auctions:', error);
+      console.error('Error fetching auctions:', error);
       throw error;
     }
   }
